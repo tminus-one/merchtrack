@@ -1,0 +1,86 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  clerkId        String    @unique
+  firstName      String    @default("nan")
+  lastName       String    @default("nan")
+  email          String    @unique
+  phone          String    @unique @default("nan")
+  courses        String    @default("nan")
+  isStaff        Boolean   @default(false)
+  isAdmin        Boolean   @default(false)
+  isSetupDone    Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  role           Role      @default(CUSTOMER)
+  // Relationships
+  listedProducts Product[]
+
+}
+
+model Product {
+  id            String          @id @default(cuid())
+  slug          String          @unique
+  title         String
+  description   String?
+  price         Json
+  discountLabel String?
+  rating        Float           @default(0.0)
+  reviewsCount  Int             @default(0)
+  imageUrl      String
+  imageUrlDark  String?
+  bestPrice     Boolean         @default(false)
+  inventory     Int             @default(0)
+  inventoryType InventoryType   @default(PREORDER)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  condition    Condition        @default(NEW)
+  deliveryType Delivery         @default(STANDARD)
+
+  // Relationships
+  category   Category? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+
+  postedBy   User   @relation(fields: [postedById], references: [id])
+  postedById String
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  products    Product[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+enum Condition {
+  NEW
+  USED
+}
+
+enum Delivery {
+  STANDARD
+  EXPRESS
+}
+
+enum InventoryType {
+  PREORDER
+  STOCK
+}
+
+enum Role {
+  CUSTOMER
+  STAFF_FACULTY
+  ALUMNI
+  OTHERS
+}
