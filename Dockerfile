@@ -3,11 +3,10 @@ LABEL author=gab-cat
 
 WORKDIR /app
 COPY . .
-COPY .env .env
 
 RUN npm install -g dotenv-cli
-ENV DATABASE_URL=$DATABASE_URL
-RUN dotenv -e .env -- npx prisma migrate deploy && pnpm run generate && pnpm run build
+ARG DATABASE_URL
+RUN DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy && pnpm run generate && pnpm run build
 
 # Stage: Runner
 FROM node:22.12.0-alpine3.21 AS runner
