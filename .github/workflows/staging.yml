@@ -18,6 +18,7 @@ jobs:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
 
     steps:
     - name: Check if actor is repository owner
@@ -35,8 +36,10 @@ jobs:
     - name: Create env file
       env:
         DATABASE_URL: ${{ env.DATABASE_URL }}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
       run: |
         echo "DATABASE_URL=${DATABASE_URL}" > .env
+        echo "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}" >> .env
 
     - name: Check IP
       run: curl ifconfig.me
