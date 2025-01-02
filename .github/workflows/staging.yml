@@ -38,6 +38,9 @@ jobs:
       run: |
         echo "DATABASE_URL=${DATABASE_URL}" > .env
 
+    - name: Check IP
+      run: curl ifconfig.me
+
     - name: Log in to Docker Hub
       uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
       with:
