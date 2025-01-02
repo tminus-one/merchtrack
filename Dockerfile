@@ -4,7 +4,7 @@ LABEL author=gab-cat
 WORKDIR /app
 COPY . .
 
-RUN npm install -g dotenv-cli
+RUN npm i -g pnpm@9.15.2 && pnpm add -g dotenv-cli@8.0.0
 ARG DATABASE_URL
 RUN DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy && pnpm run generate && pnpm run build
 
