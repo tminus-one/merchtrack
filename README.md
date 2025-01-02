@@ -18,8 +18,8 @@ Before setting up the project, ensure the following tools and versions are insta
 1. **Install Node.js**:
    Use `nvm` to install and switch to the required Node.js version:
    ```sh
-   nvm install 22.18.0
-   nvm use 22.18.0
+   nvm install 22.12.0
+   nvm use 22.12.0
    ```
 
 2. **Install Dependencies**:
