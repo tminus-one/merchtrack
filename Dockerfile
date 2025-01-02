@@ -5,11 +5,9 @@ WORKDIR /app
 COPY . .
 COPY .env .env
 
-RUN cat .env
-
+RUN pnpm install -g dotenv-cli
 ENV DATABASE_URL=$DATABASE_URL
-# Create .env file, output DATABASE_URL, run migrations and build
-RUN npx prisma migrate deploy && pnpm run generate && pnpm run build
+RUN dotenv -e .env -- npx prisma migrate deploy && pnpm run generate && pnpm run build
 
 # Stage: Runner
 FROM node:22.12.0-alpine3.21 AS runner
