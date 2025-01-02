@@ -6,7 +6,7 @@ COPY . .
 
 RUN npm i -g dotenv-cli@8.0.0
 ARG DATABASE_URL
-RUN DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy && npm run generate && npm run build
+RUN DATABASE_URL="$DATABASE_URL" npx prisma migrate deploy && npm run build
 
 # Stage: Runner
 FROM node:22.12.0-alpine3.21 AS runner
