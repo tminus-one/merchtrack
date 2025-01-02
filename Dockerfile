@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 COPY .env .env
 
-RUN pnpm install -g dotenv-cli
+RUN npm install -g dotenv-cli
 ENV DATABASE_URL=$DATABASE_URL
 RUN dotenv -e .env -- npx prisma migrate deploy && pnpm run generate && pnpm run build
 
