@@ -57,3 +57,5 @@ jobs:
           type=registry,ref=gabcat/merchtrack:staging
         cache-to: type=inline
         push: true
+        build-args: |
+          DATABASE_URL=${{ secrets.DATABASE_URL }}
