@@ -5,7 +5,7 @@ WORKDIR /app
 COPY . .
 COPY .env .env
 
-RUN ls -a
+RUN cat .env
 
 ENV DATABASE_URL=$DATABASE_URL
 # Create .env file, output DATABASE_URL, run migrations and build
