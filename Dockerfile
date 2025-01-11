@@ -4,9 +4,12 @@ LABEL author=gab-cat
 WORKDIR /app
 COPY . .
 
+ENV NODE_ENV=build
+
 RUN npm i -g dotenv-cli@8.0.0
 ARG DATABASE_URL
 ARG CLERK_PUBLISHABLE_KEY
+RUN npx next telemetry status
 RUN DATABASE_URL="$DATABASE_URL" \
 	NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY" \
 	npx prisma migrate deploy && \
@@ -19,7 +22,7 @@ LABEL author=gab-cat
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=build
+ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs && \
 	adduser --system --uid 1001 nextjs && \
