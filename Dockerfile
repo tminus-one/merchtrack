@@ -19,7 +19,7 @@ LABEL author=gab-cat
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV NODE_ENV=production
+ENV NODE_ENV=build
 
 RUN addgroup --system --gid 1001 nodejs && \
 	adduser --system --uid 1001 nextjs && \
