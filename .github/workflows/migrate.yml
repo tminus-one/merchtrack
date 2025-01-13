@@ -42,11 +42,11 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.environment }}" == "production" ]; then
             aws lightsail update-relational-database \
-              --relational-database-name your-production-database-name \
+              --relational-database-name merchtrack-db-sgp1 \
               --publicly-accessible
           else
             aws lightsail update-relational-database \
-              --relational-database-name your-staging-database-name \
+              --relational-database-name merchtrack-db-sgp1 \
               --publicly-accessible
           fi
 
@@ -72,10 +72,10 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.environment }}" == "production" ]; then
             aws lightsail update-relational-database \
-              --relational-database-name your-production-database-name \
+              --relational-database-name merchtrack-db-sgp1 \
               --no-publicly-accessible
           else
             aws lightsail update-relational-database \
-              --relational-database-name your-staging-database-name \
+              --relational-database-name merchtrack-db-sgp1 \
               --no-publicly-accessible
           fi
