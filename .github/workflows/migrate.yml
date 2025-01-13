@@ -1,4 +1,4 @@
-name: 5. MIGRATE - Database Migration
+name: 5. MIGRATION - Database Migration
 
 on:
   workflow_dispatch:
@@ -22,31 +22,42 @@ jobs:
       checks: write
 
     steps:
-      - name: Check if actor is repository owner
-        run: |
-          if [ "${{ github.actor }}" != "${{ github.repository_owner }}" ]; then
-            echo "This workflow can only be run by the repository owner."
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Install PostgreSQL Client Tools
         run: |
-          npm install -g pnpm@9.15.3 && pnpm install
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
 
-      - name: Create .env file
+      - name: Install AWS CLI
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+
+      - name: Configure AWS CLI
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ secrets.AWS_DEFAULT_REGION }}
+
+      - name: Open Database to Public Network
         run: |
           if [ "${{ github.event.inputs.environment }}" == "production" ]; then
-            echo "DATABASE_URL=${{ secrets.PRODUCTION }}" > .env
+            aws lightsail update-relational-database \
+              --relational-database-name your-production-database-name \
+              --publicly-accessible
           else
-            echo "DATABASE_URL=${{ secrets.STAGING }}" > .env
+            aws lightsail update-relational-database \
+              --relational-database-name your-staging-database-name \
+              --publicly-accessible
           fi
 
       - name: Backup Database before migration
         run: |
-          sudo systemctl start postgresql.service
           if [ "${{ github.event.inputs.environment }}" == "production" ]; then
             pg_dump ${{ secrets.PRODUCTION }} > backup.sql
           else
@@ -62,3 +73,15 @@ jobs:
       - name: Run Database Migration
         run: |
           pnpm prisma migrate deploy
+
+      - name: Close Database to Public Network
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            aws lightsail update-relational-database \
+              --relational-database-name your-production-database-name \
+              --no-publicly-accessible
+          else
+            aws lightsail update-relational-database \
+              --relational-database-name your-staging-database-name \
+              --no-publicly-accessible
+          fi
