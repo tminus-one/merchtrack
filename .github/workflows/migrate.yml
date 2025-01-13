@@ -25,20 +25,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install PostgreSQL Client Tools
+        run: |
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17
+
       - name: Configure AWS CLI
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set region ${{ secrets.AWS_DEFAULT_REGION }}
-
-          
-      - name: Create Database Snapshot
-        run: |
-          SNAPSHOT_NAME="merchtrack-db-sgp1-snapshot-$(date +%Y%m%d%H%M%S)"
-          aws lightsail create-relational-database-snapshot \
-            --relational-database-name merchtrack-db-sgp1 \
-            --relational-database-snapshot-name "$SNAPSHOT_NAME"
-          echo "Created snapshot: $SNAPSHOT_NAME"
 
 
       - name: Check Database Public Accessibility
@@ -55,6 +53,29 @@ jobs:
           aws lightsail update-relational-database \
             --relational-database-name merchtrack-db-sgp1 \
             --publicly-accessible
+
+
+      - name: Backup Database before migration
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            pg_dump ${{ secrets.PRODUCTION }} > backup.sql
+          else
+            pg_dump ${{ secrets.STAGING }} > backup.sql
+          fi
+
+      - name: Upload Database Backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: backup.sql
+
+      - name: Create .env file
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            echo "DATABASE_URL=${{ secrets.PRODUCTION }}" > .env
+          else
+            echo "DATABASE_URL=${{ secrets.STAGING }}" > .env
+          fi
 
 
       - name: Run Database Migration
