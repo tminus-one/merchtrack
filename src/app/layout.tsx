@@ -1,18 +1,16 @@
 import type { Metadata } from 'next';
-import { Poppins } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
 import { SEO } from '@/constants';
 import dynamic from 'next/dynamic';
 
-const DatadogInit = dynamic(() => import('@/components/misc/datadog-init'));
-
-const poppinsSans = Poppins({
-  variable: '--font-poppins-sans',
+const interSans = Inter({
+  variable: '--font-inter-sans',
   subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
 });
 
+const DatadogInit = dynamic(() => import('@/components/misc/datadog-init'));
 
 export const metadata: Metadata = {
   title: SEO.TITLE,
@@ -36,7 +34,9 @@ export default function RootLayout({
         </style>
       </head>
       <ClerkProvider>
-        <body className={`${poppinsSans.variable} antialiased`}>
+        <body
+          className={`${interSans.variable} antialiased`}
+        >
           {children}
           <DatadogInit />
         </body>
