@@ -60,6 +60,7 @@ type NonNegativeNumber = number & { __brand: 'NonNegativeNumber' };
  * const price = createNonNegativeNumber(100); // Returns 100
  * const invalidPrice = createNonNegativeNumber(-50); // Throws an error
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function createNonNegativeNumber(n: number): NonNegativeNumber {
   if (n < 0) throw new Error('Price cannot be negative');
   return n as NonNegativeNumber;

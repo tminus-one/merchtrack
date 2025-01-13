@@ -1,4 +1,4 @@
-name: 5. MIGRATE - Database Migration
+name: 5. MIGRATION - Database Migration
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ on:
 
 jobs:
   migrate-database:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: Migration
     permissions:
       contents: write
@@ -22,19 +22,44 @@ jobs:
       checks: write
 
     steps:
-      - name: Check if actor is repository owner
-        run: |
-          if [ "${{ github.actor }}" != "${{ github.repository_owner }}" ]; then
-            echo "This workflow can only be run by the repository owner."
-            exit 1
-          fi
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Configure AWS CLI
         run: |
-          npm install -g pnpm@9.15.3 && pnpm install
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region ${{ secrets.AWS_DEFAULT_REGION }}
+
+
+      - name: Check Database Public Accessibility
+        id: check-db
+        run: |
+          DB_INFO=$(aws lightsail get-relational-database --relational-database-name merchtrack-db-sgp1)
+          IS_PUBLIC=$(echo "$DB_INFO" | jq -r '.relationalDatabase.publiclyAccessible')
+          echo "is_public=$IS_PUBLIC" >> $GITHUB_OUTPUT
+
+
+      - name: Open Database to Public Network
+        if: ${{ steps.check-db.outputs.is_public == 'false' }}
+        run: |
+          aws lightsail update-relational-database \
+            --relational-database-name merchtrack-db-sgp1 \
+            --publicly-accessible
+
+      - name: Create Database Backup
+        uses: tj-actions/pg-dump@c826d55715b153f5572006e464e69b2bf0422fea # v3.0.1
+        with:
+          database_url: ${{ github.event.inputs.environment == 'production' && secrets.PRODUCTION || secrets.STAGING }}
+          postgresql_version: "17"  
+          path: "./backup.sql"
+          options: "-O"
+
+      - name: Upload Database Backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup
+          path: backup.sql
 
       - name: Create .env file
         run: |
@@ -44,21 +69,14 @@ jobs:
             echo "DATABASE_URL=${{ secrets.STAGING }}" > .env
           fi
 
-      - name: Backup Database before migration
-        run: |
-          sudo systemctl start postgresql.service
-          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
-            pg_dump ${{ secrets.PRODUCTION }} > backup.sql
-          else
-            pg_dump ${{ secrets.STAGING }} > backup.sql
-          fi
-
-      - name: Upload Database Backup
-        uses: actions/upload-artifact@v4
-        with:
-          name: database-backup
-          path: backup.sql
 
       - name: Run Database Migration
         run: |
-          pnpm prisma migrate deploy
+          npm install -g pnpm@9.15.3 && pnpm install && pnpm prisma migrate deploy
+
+      - name: Close Database to Public Network
+        run: |
+          aws lightsail update-relational-database \
+            --relational-database-name merchtrack-db-sgp1 \
+            --no-publicly-accessible
+
