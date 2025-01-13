@@ -54,14 +54,13 @@ jobs:
             --relational-database-name merchtrack-db-sgp1 \
             --publicly-accessible
 
-
-      - name: Backup Database before migration
-        run: |
-          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
-            pg_dump ${{ secrets.PRODUCTION }} > backup.sql
-          else
-            pg_dump ${{ secrets.STAGING }} > backup.sql
-          fi
+      - name: Create Database Backup
+        uses: tj-actions/pg-dump@c826d55715b153f5572006e464e69b2bf0422fea # v3.0.1
+        with:
+          database_url: ${{ github.event.inputs.environment == 'production' && secrets.PRODUCTION || secrets.STAGING }}
+          postgresql_version: "17"  
+          path: "./backup.sql"
+          options: "-O"
 
       - name: Upload Database Backup
         uses: actions/upload-artifact@v4
