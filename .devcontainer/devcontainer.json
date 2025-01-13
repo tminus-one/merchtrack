@@ -1,6 +1,6 @@
 {
   "name": "MerchTrack Dev Container",
-  "image": "mcr.microsoft.com/devcontainers/typescript-node:0-22",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
   "postCreateCommand": "npm i -g pnpm && pnpm install && echo 'Please create an .env file with the necessary environment variables.'",
   "extensions": [
     "dbaeumer.vscode-eslint",
