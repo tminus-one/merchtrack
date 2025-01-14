@@ -5,6 +5,9 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { SEO } from '@/constants';
 import dynamic from 'next/dynamic';
 
+const DatadogInit = dynamic(() => import('@/components/misc/datadog-init'));
+const Scripts = dynamic(() => import('@/components/misc/scripts'));
+
 const interSans = Inter({
   variable: '--font-inter-sans',
   subsets: ['latin'],
@@ -15,7 +18,6 @@ const poppinsSans = Poppins({
   weight: ['400', '700'], 
 });
 
-const DatadogInit = dynamic(() => import('@/components/misc/datadog-init'));
 
 export const metadata: Metadata = {
   title: SEO.TITLE,
@@ -44,6 +46,7 @@ export default function RootLayout({
         >
           {children}
           <DatadogInit />
+          <Scripts />
         </body>
       </ClerkProvider>
     </html>
