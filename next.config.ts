@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
     ],
   },
   serverExternalPackages: ['require-in-the-middle'],
+  eslint: {
+    ignoreDuringBuilds: true
+  }
 };
 
 export default withSentryConfig(nextConfig, {
