@@ -17,12 +17,7 @@ export default function GlobalError({ error }: Readonly<{ error: Error & { diges
     Sentry.showReportDialog();
   }, []);
 
-  const handleRetry = useCallback(() => {
-    window.location.reload();
-  }, []);
-
   return (
-    // skipcq: JS-0415
     <html lang="en">
       <body>
         <div className="flex min-h-screen items-center justify-center bg-gray-100">
@@ -32,12 +27,6 @@ export default function GlobalError({ error }: Readonly<{ error: Error & { diges
               We apologize for the inconvenience. Our team has been notified and is working to fix the issue.
             </p>
             <div className="space-y-4">
-              <button
-                onClick={handleRetry}
-                className="w-full rounded bg-blue-500 px-4 py-2 font-semibold text-white hover:bg-blue-600"
-              >
-                Try Again
-              </button>
               <button
                 onClick={handleReport}
                 className="w-full rounded bg-gray-500 px-4 py-2 font-semibold text-white hover:bg-gray-600"
