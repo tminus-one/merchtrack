@@ -11,17 +11,18 @@ const DatadogInit = dynamic(() => import('@/components/misc/datadog-init'));
 const interSans = Inter({
   variable: '--font-inter-sans',
   subsets: ['latin'],
+  weight: ['200','300','400','500','600','700', '800'], 
 });
 
 const poppinsSans = Poppins({
   subsets: ['latin'], 
-  weight: ['400', '700'], 
+  weight: ['200','300','400','500','600','700', '800'], 
 });
 
 
 export const metadata: Metadata = {
-  title: SEO.TITLE,
-  description: SEO.DESCRIPTION,
+  title: SEO.title,
+  description: SEO.description,
 };
 
 export default function RootLayout({
