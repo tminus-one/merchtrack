@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { Inter, Poppins } from 'next/font/google';
 import './globals.css';
 import { ClerkProvider } from '@clerk/nextjs';
-import { SEO } from '@/constants';
 import dynamic from 'next/dynamic';
+import { SEO } from '@/constants';
 import Scripts from '@/components/misc/scripts';
 
 const DatadogInit = dynamic(() => import('@/components/misc/datadog-init'));
@@ -41,7 +41,17 @@ export default function RootLayout({
         `}
         </style>
       </head>
-      <ClerkProvider>
+      <ClerkProvider appearance={{
+        elements: {
+          formButtonPrimary:
+                  "bg-inprogress hover:bg-inprogress hover:brightness-95 text-sm normal-case",
+
+          formButtonSecondary: "bg-inprogress text-sm normal-case",
+          footerActionText: " text-md",
+          footerActionLink:
+                  "text-inprogress hover:text-inprogress hover:brightness-95 font-semibold text-md",
+        },
+      }}>
         <body
           className={`${interSans.variable} antialiased`}
         >
