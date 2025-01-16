@@ -66,7 +66,6 @@ const HeaderLP = React.memo(() => {
           </button>
         </div>
         <AnimatePresence>
-          {showNav && (
             <motion.div 
               className="w-full items-center justify-between md:order-1 md:flex md:w-auto"
               id="navbar-cta"
@@ -96,7 +95,6 @@ const HeaderLP = React.memo(() => {
                 <HeaderLinks pathname={pathname}/>
               </ul>
             </motion.div>
-          )}
         </AnimatePresence>
       </div>
     </nav>
