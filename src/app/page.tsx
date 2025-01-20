@@ -1,6 +1,7 @@
 import HeaderLP from "@/components/public/header";
 import Footer from "@/components/public/footer";
 
+
 export default async function Home() {
   return (
     <div>
