@@ -21,9 +21,9 @@ model Product {
 
   // Relations
   category     Category?        @relation(fields: [categoryId], references: [id])
-  postedBy     User             @relation(fields: [postedById], references: [id])
-  orderItems   OrderItem[]      @relation("OrderItemToProduct")
+  postedBy     User             @relation(fields: [postedById], references: [id], onDelete: Cascade)
   variants     ProductVariant[] 
+  reviews      Review[]
 
   @@index([slug], name: "idx_product_slug")
   @@index([isDeleted], name: "idx_product_isDeleted")
@@ -40,9 +40,29 @@ model ProductVariant {
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
-  product      Product     @relation(fields: [productId], references: [id])
+  product      Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   // Index if you often query by sku:
   @@index([productId], name: "idx_variant_product-id")
+  // Cart items that reference this product variant
+  CartItem CartItem[]
+  OrderItem OrderItem[] @relation("OrderItemToVariant")
+}
+
+model Review {
+  id          String      @id @default(ulid())
+  productId   String
+  userId      String
+  rating      Int         @default(0)
+  comment     String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@index([productId], name: "idx_review_productId")
+  @@index([userId], name: "idx_review_userId")
 }
 
 enum InventoryType {

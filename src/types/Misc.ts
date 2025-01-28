@@ -11,6 +11,26 @@ export interface OrderItem {
   price: number
 }
 
+export enum Role {
+    PLAYER = "PLAYER",
+    STUDENT = "STUDENT",
+    STAFF_FACULTY = "STAFF_FACULTY",
+    ALUMNI = "ALUMNI",
+    OTHERS = "OTHERS"
+  }
+
+export enum College {
+    NOT_APPLICABLE = "NOT_APPLICABLE",
+    COCS = "COCS",
+    STEP = "STEP",
+    ABBS = "ABBS",
+    JPIA = "JPIA",
+    ACHSS = "ACHSS",
+    ANSA = "ANSA",
+    COL = "COL",
+    AXI = "AXI"
+  }
+
 export interface Order {
   id: string
   orderNo: string
@@ -27,9 +47,9 @@ export interface Order {
   balance: number
 }
 
-export interface StatusOption {
+export interface StatusOption<T = string> {
   label: string
-  value: OrderStatus | PaymentStatus | PaymentMethod | CustomerType
+  value: T
   variant?: "default" | "outline"
   className?: string
 }
