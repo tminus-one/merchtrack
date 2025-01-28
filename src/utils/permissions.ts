@@ -1,6 +1,7 @@
 // no-dd-sa:typescript-best-practices/boolean-prop-naming
 'use server';
 import prisma from "@/lib/db";
+import redis from '@/lib/redis';
 
 type ActionCode = 'logs' | 'reports' | 'profile' | 'users' | 'orders' | 'payments' | 'inventory' | 'dashboard' | 'settings';
 
@@ -18,7 +19,24 @@ type VerifyPermissionParams = {
   };
 }
 
+type UserPermission = {
+  permissionId: ActionCode;
+  canCreate: boolean;
+  canRead: boolean;
+  canUpdate: boolean;
+  canDelete: boolean;
+};
+
 // Use redis in the future to cache user permissions
+
+const getCachedPermissions = async (userId: string): Promise<UserPermission[] | null> => {
+  const cachedPermissions = await redis.get(`permissions:${userId}`);
+  return cachedPermissions ? JSON.parse(cachedPermissions) : null;
+};
+
+const setCachedPermissions = async (userId: string, permissions: UserPermission[]): Promise<void> => {
+  await redis.set(`permissions:${userId}`, JSON.stringify(permissions), 'EX', 3600); // Cache for 1 hour
+};
 
 /**
  * Verifies if a user has the required permissions for the specified action codes.
@@ -30,21 +48,29 @@ type VerifyPermissionParams = {
 export const verifyPermission = async (params: VerifyPermissionParams): Promise<boolean> => {
   const actionCodes = Object.keys(params.permissions) as ActionCode[];
 
-  console.time('Prisma Query Time');
-  const userPermissions = await prisma.userPermission.findMany({
-    where: {
-      userId: params.userId,
-      permissionId: { in: actionCodes }
-    },
-    select: {  
-      permissionId: true,
-      canCreate: true,
-      canRead: true,
-      canUpdate: true,
-      canDelete: true
+  // Check cache first
+  let userPermissions: UserPermission[] | null = await getCachedPermissions(params.userId);
+  if (!userPermissions) {
+    console.time('Prisma Query Time');
+    userPermissions = (await prisma.userPermission.findMany({
+      where: {
+        userId: params.userId,
+        permissionId: { in: actionCodes }
+      },
+      select: {  
+        permissionId: true,
+        canCreate: true,
+        canRead: true,
+        canUpdate: true,
+        canDelete: true
+      }
+    })) as UserPermission[];
+    console.timeEnd('Prisma Query Time');
+
+    if (userPermissions.length) {
+      await setCachedPermissions(params.userId, userPermissions);
     }
-  });
-  console.timeEnd('Prisma Query Time');
+  }
 
   if (!userPermissions.length) {
     return false;
