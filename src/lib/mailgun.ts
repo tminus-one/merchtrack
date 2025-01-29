@@ -2,6 +2,12 @@ import formData from 'form-data';
 import Mailgun, { type MessagesSendResult } from 'mailgun.js';
 
 const mailgunClientSingleton = () => {
+  if (!process.env.MAILGUN_API_KEY) {
+    throw new Error('MAILGUN_API_KEY is not defined');
+  }
+  if (!process.env.MAILGUN_DOMAIN) {
+    throw new Error('MAILGUN_DOMAIN is not defined');
+  }
   const mailgun = new Mailgun(formData);
   return mailgun.client({
     username: 'api',
