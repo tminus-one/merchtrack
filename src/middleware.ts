@@ -67,7 +67,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // Catch users who do not have `onboardingComplete: true` in their publicMetadata
   // Redirect them to the /onboarding route to complete onboarding
-  if (userId && !sessionClaims?.metadata?.isOnboardingCompleted) {
+  if (userId && !sessionClaims?.metadata?.isOnboardingCompleted && !isOnboardingRoute(req)) {
+    console.log('User is not onboarded', sessionClaims?.metadata);
     const onboardingUrl = new URL('/onboarding', req.url);
     return NextResponse.redirect(onboardingUrl);
   }
@@ -79,5 +80,8 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // If the user is logged in and the route is protected, let them view.
   if (userId && !isPublicRoute(req)) return NextResponse.next();
+}, {
+  authorizedParties: ['https://staging.merchtrack.tech', 'https://merchtrack.tech'],
+  afterSignUpUrl: '/onboarding',
 });
 
