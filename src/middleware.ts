@@ -63,16 +63,17 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // If the user isn't signed in and the route is private, redirect to sign-in
   if (!userId && !isPublicRoute(req)) return redirectToSignIn({ returnBackUrl: req.url });
+  
 
   // Catch users who do not have `onboardingComplete: true` in their publicMetadata
   // Redirect them to the /onboarding route to complete onboarding
-  if (userId && sessionClaims?.metadata?.isOnboardingCompleted !== true) {
+  if (userId && !sessionClaims?.metadata?.isOnboardingCompleted) {
     const onboardingUrl = new URL('/onboarding', req.url);
     return NextResponse.redirect(onboardingUrl);
   }
 
   // Check if the user is visiting an admin route but is not a staff member
-  if (userId && isAdminRoute(req) && sessionClaims?.metadata?.data?.isStaff !== true) {
+  if (userId && isAdminRoute(req) && !sessionClaims?.metadata?.data.isStaff) {
     return NextResponse.rewrite(new URL('/404', req.url));
   }
 
