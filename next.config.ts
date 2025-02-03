@@ -26,11 +26,6 @@ const nextConfig: NextConfig = {
     '@react-email/render',
     '@react-email/tailwind'
   ],
-  transpilePackages: [
-    '@react-email/components',
-    '@react-email/render',
-    '@react-email/html',
-  ],
   experimental: {
     serverActions: {
       bodySizeLimit: '10mb',
