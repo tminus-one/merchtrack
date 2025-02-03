@@ -38,6 +38,6 @@ RUN chown nextjs:nodejs .env && chown -R nextjs:nodejs /app
 USER nextjs
 EXPOSE 3000
 
-ENTRYPOINT ["bun", "--bun", "server.js"]
+ENTRYPOINT ["bun", "server.js"]
 
 
