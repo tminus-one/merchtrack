@@ -7,7 +7,7 @@ import { Heart, Star, Eye } from "lucide-react";
 import { FaTags } from "react-icons/fa";
 import { SlOptionsVertical } from "react-icons/sl";
 import Link from "next/link";
-import DOMPurify from 'dompurify';
+import DOMPurify from "isomorphic-dompurify";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
