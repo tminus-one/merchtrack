@@ -7,7 +7,7 @@ COPY . .
 ENV NODE_ENV=production
 ENV APP_ENV=build
 
-RUN bunx next telemetry disable && bunx dotenv-cli -e .env -- bun run build
+RUN bunx next telemetry disable && bun install && bunx dotenv-cli -e .env -- bun run build
 
 # Stage: Runner
 FROM oven/bun:1.2.2-alpine AS runner
