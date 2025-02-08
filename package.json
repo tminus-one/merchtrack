@@ -12,8 +12,7 @@
     "start": "next start",
     "lint": "next lint --fix",
     "postinstall": "prisma generate",
-    "migrate": "prisma migrate deploy",
-    "prepare": "husky install"
+    "migrate": "prisma migrate deploy"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.740.0",
