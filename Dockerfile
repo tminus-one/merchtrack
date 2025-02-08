@@ -8,7 +8,7 @@ ENV NODE_ENV=production
 ENV APP_ENV=build
 
 RUN npx next telemetry disable && \
-    npm ci && \
+    npm i && \
     npx dotenv-cli -e .env -- npm run build
 
 # Stage: Runner
