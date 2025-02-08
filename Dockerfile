@@ -1,4 +1,4 @@
-FROM gabcat/merchtrack:cache-bun AS builder
+FROM gabcat/merchtrack:cache AS builder
 LABEL author=gab-cat
 
 WORKDIR /app
@@ -7,10 +7,12 @@ COPY . .
 ENV NODE_ENV=production
 ENV APP_ENV=build
 
-RUN bunx next telemetry disable && bun install && bunx dotenv-cli -e .env -- bun run build
+RUN npx next telemetry disable && \
+    npm ci && \
+    npx dotenv-cli -e .env -- npm run build
 
 # Stage: Runner
-FROM oven/bun:1.2.2-alpine AS runner
+FROM node:22.12.0-alpine3.21 AS runner
 LABEL author=gab-cat
 
 WORKDIR /app
@@ -35,6 +37,6 @@ RUN chown -R nextjs:nodejs /app
 USER nextjs
 EXPOSE 3000
 
-ENTRYPOINT ["bun", "server.js"]
+CMD ["node", "server.js"]
 
 
