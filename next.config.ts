@@ -25,7 +25,7 @@ const nextConfig: NextConfig = {
     '@react-email/components',
     '@react-email/render',
     '@react-email/tailwind',
-    'react-dom/server',
+    'react-dom',
   ],
   experimental: {
     serverActions: {
