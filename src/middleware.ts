@@ -38,7 +38,6 @@ const isPublicRoute = createRouteMatcher([
   '/terms-of-service',
   '/privacy-policy',
   '/test',
-  '/admin(.*)', // Admin pages are now public
 ]);
 
 const isOnboardingRoute = createRouteMatcher([
