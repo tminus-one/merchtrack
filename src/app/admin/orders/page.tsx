@@ -2,12 +2,12 @@ import { type FC } from "react";
 import { BiDownload, BiTrash, BiUpload } from "react-icons/bi";
 import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
-import { getSessionData, getUserId } from "@/lib/auth";
 import { AdminTopbar } from "@/components/private/admin-topbar";
 import { OrdersTable } from "@/components/private/orders-table";
 import PageAnimation from "@/components/public/page-animation";
 import { verifyPermission } from "@/utils/permissions";
 import { Button } from "@/components/ui/button";
+import { getSessionData, getUserId } from "@/lib/auth";
 
 export const metadata = {
   title: 'Orders | Admin Dashboard',

@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
+import { FaBoxes, FaMoneyBill } from "react-icons/fa";
+import { BiSolidShoppingBagAlt } from "react-icons/bi";
+import { FaPersonCircleCheck, FaCheckToSlot } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 
 
@@ -15,57 +17,37 @@ function TrackOrderBody() {
       <div className='flex w-3/5 flex-col place-items-center rounded-md border-2 p-16'>
         <div className='flex w-full flex-row justify-between'>
           <div className='flex flex-col items-center justify-between'>
-            <Image
-              src="/img/data-pending-icon.png"
-              alt="Data Pending Icon"
-              width={50}
-              height={50}
-              className="mr-2"
-            />
+            <div className='flex items-center justify-center rounded-full bg-blue-100 p-4'>
+              <FaMoneyBill className='size-7 text-primary' />
+            </div>
             <p>To Pay</p>
             <div className="mt-4 size-4 rounded-full bg-blue-500"></div>
           </div>
           <div className='flex flex-col items-center justify-between'>
-            <Image
-              src="/img/product-icon.png"
-              alt="Product Icon"
-              width={50}
-              height={50}
-              className="mr-2"
-            />
+            <div className='flex items-center justify-center rounded-full bg-gray-100 p-4'>
+              <FaBoxes className='size-7 text-gray-500' />
+            </div>
             <p>Processing</p>
             <div className="mt-4 size-4 rounded-full bg-gray-200"></div>
           </div>
           <div className='flex flex-col items-center justify-between'>
-            <Image
-              src="/img/purchased-icon.png"
-              alt="Purchased Icon"
-              width={50}
-              height={50}
-              className="mr-2"
-            />
+            <div className='flex items-center justify-center rounded-full bg-gray-100 p-4'>
+              <BiSolidShoppingBagAlt className='size-7 text-gray-500' />
+            </div>
             <p>Finished</p>
             <div className="mt-4 size-4 rounded-full bg-gray-200"></div>
           </div>
           <div className='flex flex-col items-center justify-between'>
-            <Image
-              src="/img/truck-icon.png"
-              alt="Truck Icon"
-              width={50}
-              height={50}
-              className="mr-2"
-            />
+            <div className='flex items-center justify-center rounded-full bg-gray-100 p-4'>
+              <FaPersonCircleCheck className='size-7 text-gray-500' />
+            </div>
             <p>Distribution</p>
             <div className="mt-4 size-4 rounded-full bg-gray-200"></div>
           </div>
           <div className='flex flex-col items-center justify-between'>
-            <Image
-              src="/img/check-inbox-icon.png"
-              alt="Check Inbox Icon"
-              width={50}
-              height={50}
-              className="mr-2"
-            />
+            <div className='flex items-center justify-center rounded-full bg-gray-100 p-4'>
+              <FaCheckToSlot className='size-7 text-gray-500' />
+            </div>
             <p>Completed</p>
             <div className="mt-4 size-4 rounded-full bg-gray-200"></div>
           </div>
