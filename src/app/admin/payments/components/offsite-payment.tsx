@@ -1,5 +1,3 @@
-"use client";
-
 import type { OffsitePaymentRequest } from "@/types/payments";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,7 +8,7 @@ interface OffsitePaymentProps {
   onReject: (payment: OffsitePaymentRequest) => void;
 }
 
-export function OffsitePayment({ payments, onConfirm, onReject }: OffsitePaymentProps) {
+export function OffsitePayment({ payments, onConfirm, onReject }: Readonly<OffsitePaymentProps>) {
   return (
     <div className="rounded-lg border bg-white p-6">
       <h2 className="mb-4 text-lg font-semibold">OFFSITE PAYMENT</h2>

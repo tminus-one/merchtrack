@@ -26,8 +26,8 @@ export default class PaymentsPage extends React.Component<object, PaymentsPageSt
     const newTransaction: Transaction = {
       id: `TRX${this.state.transactions.length + 1}`.padStart(6, "0"),
       orderId,
-      orderNo: order?.orderNo || `#${orderId}`,
-      customerName: order?.customerName || "Customer",
+      orderNo: order?.orderNo ?? `#${orderId}`,
+      customerName: order?.customerName ?? "Customer",
       amount,
       paymentType: "onsite",
       date: new Date().toISOString().split("T")[0],
