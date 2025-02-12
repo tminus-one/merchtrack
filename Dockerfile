@@ -30,11 +30,11 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
 # Ensure environment file and app directory are owned by nextjs user
-RUN chown -R nextjs:nodejs /app && npm i -g bun
+RUN chown -R nextjs:nodejs /app
 
 USER nextjs
 EXPOSE 3000
 
-CMD ["bun", "server.js"]
+CMD ["node", "server.js"]
 
 
