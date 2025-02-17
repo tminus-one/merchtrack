@@ -8,23 +8,39 @@ import { createProductSchema, type CreateProductType } from "@/schema/products.s
 import { verifyPermission } from "@/utils/permissions";
 import type { ExtendedProduct } from "@/types/extended";
 import { uploadToR2 } from "@/lib/s3";
-
+import { createLog } from "@/actions/logs.actions";
 
 /**
- * Creates a new product with the specified details and updates the cache.
+ * Creates a new product with the specified details, updates the cache, and logs significant events.
  *
- * This asynchronous function first verifies if the user (specified by `userId`) has the necessary permissions to create a product.
- * It then validates the provided product data using a schema. If the user is not authorized or the data validation fails,
- * the function returns a failure response with an appropriate error message.
+ * This asynchronous function first checks if the user (identified by `userId`) has permission to create a product.
+ * If unauthorized, it logs the attempt and returns a failure response.
  *
- * Upon successful validation, a unique slug is generated based on the product title by checking for existing slugs in the database.
- * Temporary file data is removed from the product data before proceeding. The function then creates a new product record in the database,
- * including processing associated variants (with the variant price converted to a Decimal type), and sets up relationships with the category,
- * the user who posted it, and reviews. After successful creation, several cache entries related to products are updated.
+ * The function then validates the provided product data using a schema. On validation failure, it logs the error details
+ * and returns a failure response with the corresponding error message.
+ *
+ * Upon successful validation, it generates a unique slug based on the product title by ensuring that the slug does not already exist
+ * in the database. It then removes temporary file data from the input before creating a new product record in the database.
+ * The product record is created with processed variants (with variant prices converted to Decimal types) and appropriate relations
+ * to its category, the posting user, and reviews.
+ *
+ * After creating the product, several cache entries related to products are updated, and a successful creation log is recorded.
+ * Any errors encountered during the process are caught, logged, and result in a standardized error response.
  *
  * @param userId - The ID of the user attempting to create the product.
- * @param data - The product information conforming to CreateProductType, including title, variants, and related details.
- * @returns A promise that resolves to an object containing a success flag and either the created product data (on success) or an error message (on failure).
+ * @param data - The product information adhering to CreateProductType, which includes title, variants, and other related details.
+ * @returns A promise that resolves to an object containing:
+ *   - success: A boolean indicating whether the operation succeeded.
+ *   - data: The created product data on success.
+ *   - message: An error message on failure.
+ *
+ * @example
+ * const result = await createProduct("user123", productData);
+ * if (result.success) {
+ *   console.log("Product created:", result.data);
+ * } else {
+ *   console.error("Error creating product:", result.message);
+ * }
  */
 export async function createProduct(
   userId: string,
@@ -36,21 +52,35 @@ export async function createProduct(
       dashboard: { canRead: true },
     }
   })) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Product Creation Failed - Unauthorized",
+      systemText: `Unauthorized attempt to create product "${data.title}"`,
+      userText: "You are not authorized to create products."
+    });
     return {
       success: false,
       message: "You are not authorized to create products."
     };
   }
 
-  const safeData = await createProductSchema.safeParseAsync(data);
-  if (!safeData.success) {
-    return {
-      success: false,
-      message: safeData.error.errors[0].message
-    };
-  }
-
   try {
+    const safeData = await createProductSchema.safeParseAsync(data);
+    if (!safeData.success) {
+      await createLog({
+        userId,
+        createdById: userId,
+        reason: "Product Creation Failed - Invalid Data",
+        systemText: `Failed to create product "${data.title}": ${safeData.error.errors[0].message}`,
+        userText: safeData.error.errors[0].message
+      });
+      return {
+        success: false,
+        message: safeData.error.errors[0].message
+      };
+    }
+
     // Generate unique slug from title
     const slug = await generateUniqueSlug(
       data.title,
@@ -63,7 +93,6 @@ export async function createProduct(
     );
 
     delete data._tempFiles;
-
     const product = await prisma.product.create({
       data: {
         ...data,
@@ -89,19 +118,34 @@ export async function createProduct(
       setCached(`product:${product.id}`, product),
       setCached(`product:${product.slug}`, product),
       setCached('products:total', null),
-      ...Array.from({ length: 10 }, (_, i) => 
+      ...Array.from({ length: 10 }, (_, i) =>
         setCached(`products:${i + 1}:*`, null)
       )
     ]);
+
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Product Created Successfully",
+      systemText: `Created new product "${product.title}" (ID: ${product.id}) with ${product.variants.length} variants`,
+      userText: `Product "${product.title}" has been created successfully.`
+    });
 
     return {
       success: true,
       data: JSON.parse(JSON.stringify(product))
     };
   } catch (error) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Product Creation Error",
+      systemText: `Error creating product "${data.title}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+      userText: "An error occurred while creating the product."
+    });
     return {
       success: false,
-      message: (error as Error).message
+      message: error instanceof Error ? error.message : 'Failed to create product'
     };
   }
 }

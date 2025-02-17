@@ -11,21 +11,24 @@ import { GetObjectByTParams } from "@/types/extended";
 /**
  * Retrieves a paginated list of orders with optional field filtering.
  *
- * This asynchronous function fetches order data for the specified user after
- * verifying that the user has permission to access the dashboard. It calculates
- * pagination parameters using the provided query parameters, attempts to fetch
- * cached orders and the total order count, and if the data is not cached, queries
- * the database while including associated payment and customer details.
+ * This asynchronous function fetches order data for the specified user after verifying
+ * that the user has permission to access the dashboard. It calculates pagination parameters
+ * (skip, take, page) based on the provided query parameters and attempts to obtain cached
+ * orders and the total order count. In case of a cache miss, it performs a database transaction
+ * to fetch orders along with associated payment, customer, and order item details (including
+ * nested variant and product information).
  *
- * Order data is processed with the `removeFields` utility to filter out specified
- * fields based on `params.limitFields`. The response includes the order data along
- * with pagination metadata such as total count, current page, last page, and
- * indicators for next and previous pages.
+ * The retrieved orders are processed with the `removeFields` utility to filter out specified
+ * fields based on `params.limitFields`. The function returns a paginated response containing the
+ * list of processed orders and metadata including total number of orders, current page, last page,
+ * and flags indicating the availability of next and previous pages.
+ *
+ * If the user lacks the necessary permissions, a failure response with an appropriate message is returned.
  *
  * @param userId - The ID of the user requesting the orders.
- * @param params - Optional query parameters for pagination and field filtering.
- * @returns A Promise that resolves to an object indicating the success status,
- *          and on success, includes a paginated response containing the list of processed orders and metadata.
+ * @param params - Optional query parameters for pagination, filtering, and inclusion of related data.
+ * @returns A Promise that resolves to an object with a `success` property. On success, the object contains
+ *          a `data` field with the paginated list of orders and corresponding metadata.
  *
  * @example
  * ```typescript
@@ -58,26 +61,42 @@ export async function getOrders(
 
   const { skip, take, page } = calculatePagination(params);
 
-  let orders: ExtendedOrder[] | null = await getCached(`orders:${page}:${take}`);
-  let total = await getCached('orders:total');
+  // Create cache key that includes the where conditions
+  const cacheKey = `orders:${page}:${take}:${JSON.stringify(params)}`;
+  let orders: ExtendedOrder[] | null = await getCached(cacheKey);
+  let total = await getCached(`orders:total:${JSON.stringify(params)}`);
 
-  if (!orders) {
+  if (!orders || !total) {
     [orders, total] = await prisma.$transaction([
       prisma.order.findMany({
-        where: { isDeleted: false },
-        include: { payments: true, customer: true },
+        where: params.where,
+        include: {
+          ...params.include,
+          customer: true,
+          payments: true,
+          orderItems: {
+            include: {
+              variant: {
+                include: {
+                  product: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: params.orderBy,
         skip,
         take,
       }),
-      prisma.order.count({ where: { isDeleted: false } })
+      prisma.order.count({ where: params.where })
     ]);
 
-    await setCached(`orders:${page}:${take}`, orders);
-    await setCached('orders:total', total);
+    await setCached(cacheKey, orders);
+    await setCached(`orders:total:${JSON.stringify(params)}`, total);
   }
 
   const lastPage = Math.ceil(total as number / take);
-  const processedOrders = orders.map(order => 
+  const processedOrders = orders?.map(order => 
     removeFields(order, params.limitFields)
   );
 
@@ -95,7 +114,6 @@ export async function getOrders(
     }
   };
 }
-
 
 /**
  * Retrieves an order by its ID after verifying user permissions and applying field filtering.
@@ -155,6 +173,15 @@ export async function getOrderById({userId, orderId, limitFields}: GetObjectByTP
       include: {
         payments: true,
         customer: true,
+        orderItems: {
+          include: {
+            variant: {
+              include: {
+                product: true
+              }
+            }
+          }
+        }
       }
     });
 

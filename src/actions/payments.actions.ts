@@ -1,12 +1,13 @@
 'use server';
 
-import { Payment } from "@prisma/client";
+import { OrderPaymentStatus, Payment, PaymentSite, PaymentStatus, PaymentMethod, Prisma } from "@prisma/client";
 import prisma from "@/lib/db";
 import { verifyPermission } from "@/utils/permissions";
 import { getCached, setCached } from "@/lib/redis";
 import { QueryParams, PaginatedResponse } from "@/types/common";
 import { calculatePagination, removeFields } from "@/utils/query.utils";
 import { GetObjectByTParams } from "@/types/extended";
+import { createLog } from '@/actions/logs.actions';
 
 /**
  * Retrieves a paginated list of payments for the specified user.
@@ -28,8 +29,6 @@ import { GetObjectByTParams } from "@/types/extended";
  *       - lastPage: The last available page number.
  *       - hasNextPage: Boolean indicating if a next page exists.
  *       - hasPrevPage: Boolean indicating if a previous page exists.
- *   - message: A success or error message.
- *   - errors: Optional error details if the operation fails.
  *
  * @example
  * // Retrieve the first page of payments with default pagination settings
@@ -64,11 +63,12 @@ export async function getPayments(
     if (!payments || !total) {
       [payments, total] = await prisma.$transaction([
         prisma.payment.findMany({
-          where: { isDeleted: false },
+          where: { isDeleted: false, ...params.where },
           include: {
             order: true,
             user: true,
           },
+          orderBy: params.orderBy,
           skip,
           take
         }),
@@ -325,4 +325,645 @@ export async function getPaymentsByOrderId({ userId, orderId, limitFields }: Get
     success: true,
     data: JSON.parse(JSON.stringify(processedPayments))
   };
+}
+
+/**
+ * Processes a payment for a specified order.
+ *
+ * This function verifies the user's permission to process payments, retrieves the associated order from the database,
+ * and validates that the new payment amount does not exceed the order total. If the order is valid and the amount is acceptable,
+ * a new payment record is created and associated with the order. The function also updates the order's payment status
+ * (and order status if the order becomes fully paid), logs the operation, and invalidates related caches.
+ *
+ * @param userId - The ID of the user processing the payment.
+ * @param orderId - The ID of the order to which the payment is applied.
+ * @param amount - The payment amount.
+ * @param paymentMethod - The method used for the payment.
+ * @param paymentSite - The site or point from which the payment is processed.
+ * @param paymentStatus - The status of the payment (e.g., pending, completed).
+ * @param referenceNo - (Optional) A reference number for the payment.
+ * @param memo - (Optional) A memo or note for the payment.
+ * @param transactionId - (Optional) A unique transaction identifier.
+ * @param paymentProvider - (Optional) The provider handling the payment.
+ * @param limitFields - (Optional) An array of field names to remove from the returned payment object.
+ *
+ * @returns A Promise that resolves to an object containing:
+ *  - success: A boolean indicating whether the payment processing was successful.
+ *  - data: The processed Payment object with sensitive fields removed if `limitFields` is provided (on success).
+ *  - message: An error message if the operation fails.
+ *  - errors: (Optional) Additional error details.
+ *
+ * @example
+ * const result = await processPayment({
+ *   userId: "user123",
+ *   orderId: "order456",
+ *   amount: 1000,
+ *   paymentMethod: PaymentMethod.CREDIT_CARD,
+ *   paymentSite: PaymentSite.ONLINE,
+ *   paymentStatus: PaymentStatus.COMPLETED,
+ *   transactionId: "txn789"
+ * });
+ *
+ * if (result.success) {
+ *   console.log("Payment processed:", result.data);
+ * } else {
+ *   console.error("Payment failed:", result.message);
+ * }
+ */
+export async function processPayment({ 
+  userId, 
+  orderId,
+  amount,
+  paymentMethod,
+  paymentSite,
+  paymentStatus,  
+  referenceNo,
+  memo,
+  transactionId,
+  paymentProvider,
+  limitFields
+}: {
+  userId: string;
+  orderId: string;
+  amount: number;
+  paymentMethod: PaymentMethod;
+  paymentSite: PaymentSite;
+  paymentStatus: PaymentStatus;
+  referenceNo?: string;
+  memo?: string;
+  transactionId?: string;
+  paymentProvider?: string;
+  limitFields?: string[];
+}): Promise<ActionsReturnType<Payment>> {
+  if (!await verifyPermission({
+    userId,
+    permissions: {
+      dashboard: { canRead: true },
+    }
+  })) {
+    await createLog({
+      userId: userId,
+      createdById: userId,
+      reason: "Payment Processing Failed - Unauthorized",
+      systemText: `User attempted to process payment for order ${orderId} but was not authorized`,
+      userText: "You are not authorized to process payments."
+    });
+    return {
+      success: false,
+      message: "You are not authorized to process payments."
+    };
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        payments: true,
+        customer: true
+      }
+    });
+
+    if (!order) {
+      await createLog({
+        userId: userId,
+        createdById: userId,
+        reason: "Payment Processing Failed - Invalid Order",
+        systemText: `User attempted to process payment for non-existent order ${orderId}`,
+        userText: "Order not found."
+      });
+      return {
+        success: false,
+        message: "Order not found."
+      };
+    }
+
+    const totalPaid = order.payments.reduce((sum, payment) => sum + Number(payment.amount), 0) + amount;
+    if (totalPaid > Number(order.totalAmount)) {
+      await createLog({
+        userId: order.customerId,
+        createdById: userId,
+        reason: "Payment Processing Failed - Amount Exceeds Total",
+        systemText: `Payment amount ${amount} would exceed order total ${order.totalAmount} for order ${orderId}`,
+        userText: "Payment amount exceeds order total."
+      });
+      return {
+        success: false,
+        message: "Payment amount exceeds order total."
+      };
+    }
+
+    const payment = await prisma.payment.create({
+      data: {
+        orderId,
+        userId: order.customerId,
+        processedById: userId,
+        amount: new Prisma.Decimal(amount),
+        paymentMethod,
+        paymentSite,
+        paymentStatus,
+        referenceNo: referenceNo || "",
+        memo,
+        transactionId,
+        paymentProvider
+      },
+      include: {
+        order: true,
+        user: true
+      }
+    });
+
+    // Determine if order is fully paid
+    const isFullyPaid = totalPaid === Number(order.totalAmount);
+
+    // Update order payment status and order status if fully paid
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { 
+        paymentStatus: isFullyPaid ? OrderPaymentStatus.PAID : OrderPaymentStatus.DOWNPAYMENT,
+        // Change order status to PROCESSING only if fully paid and current status is PENDING
+        ...(isFullyPaid && order.status === 'PENDING' ? { status: 'PROCESSING' } : {})
+      }
+    });
+
+    // Create success log
+    await createLog({
+      userId: order.customerId,
+      createdById: userId,
+      reason: "Payment Processed Successfully",
+      systemText: `Payment of ₱${amount} processed for order ${orderId} via ${paymentMethod}. Status: ${paymentStatus}. ${isFullyPaid ? 'Order is now fully paid.' : ''}`,
+      userText: `Payment of ₱${amount} has been processed successfully${isFullyPaid ? '. Your order is now fully paid.' : '.'}`
+    });
+
+    // Invalidate caches
+    await Promise.all([
+      setCached(`payments:order:${orderId}`, null),
+      setCached(`order:${orderId}`, null)
+    ]);
+
+    return {
+      success: true,
+      data: JSON.parse(JSON.stringify(removeFields(payment, limitFields)))
+    };
+  } catch (error) {
+    await createLog({
+      userId: userId,
+      createdById: userId,
+      reason: "Payment Processing Error",
+      systemText: `Error processing payment for order ${orderId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      userText: "An error occurred while processing the payment."
+    });
+    
+    return {
+      success: false,
+      message: "Error processing payment.",
+      errors: { error }
+    };
+  }
+}
+
+/**
+ * Refunds a payment and updates the corresponding order's payment status.
+ *
+ * This asynchronous function processes a payment refund by first verifying the user's permissions. It retrieves
+ * the payment record from the database and ensures that the refund amount does not exceed the original payment amount.
+ * If the conditions are met, a refund record is created with a negative amount to signify the refund. The function also
+ * aggregates the remaining payments for the order to determine and update the order's payment status (e.g., marking the order
+ * as fully refunded if no payment remains, or as a downpayment otherwise). Throughout the process, the function logs
+ * relevant events (such as unauthorized access, non-existent payments, and errors) and invalidates caches to ensure data integrity.
+ *
+ * @param userId - The ID of the user initiating the refund.
+ * @param paymentId - The unique identifier of the payment to refund.
+ * @param amount - The refund amount, which must not exceed the original payment amount.
+ * @param reason - The reason provided for initiating the refund.
+ *
+ * @returns A Promise that resolves to an object indicating the result of the refund operation. On success, the object contains
+ * a `data` property with the newly created refund payment record. On failure, it includes a `message` explaining the error and
+ * may also include an `errors` object with additional error details.
+ */
+export async function refundPayment(
+  userId: string,
+  paymentId: string,
+  amount: number,
+  reason: string
+): Promise<ActionsReturnType<Payment>> {
+  if (!await verifyPermission({
+    userId,
+    permissions: {
+      dashboard: { canRead: true },
+    }
+  })) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Payment Refund Failed - Unauthorized",
+      systemText: `Unauthorized attempt to refund payment ${paymentId}`,
+      userText: "You are not authorized to process refunds."
+    });
+    return {
+      success: false,
+      message: "You are not authorized to process refunds."
+    };
+  }
+
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        order: true,
+        user: true
+      }
+    });
+
+    if (!payment) {
+      await createLog({
+        userId,
+        createdById: userId,
+        reason: "Payment Refund Failed - Not Found",
+        systemText: `Attempted to refund non-existent payment ${paymentId}`,
+        userText: "Payment not found."
+      });
+      return {
+        success: false,
+        message: "Payment not found"
+      };
+    }
+
+    // Check if amount to refund is valid
+    if (amount > Number(payment.amount)) {
+      await createLog({
+        userId: payment.userId,
+        createdById: userId,
+        reason: "Payment Refund Failed - Invalid Amount",
+        systemText: `Attempted to refund ${amount} which exceeds original payment amount ${payment.amount} for payment ${paymentId}`,
+        userText: "Refund amount cannot exceed the original payment amount."
+      });
+      return {
+        success: false,
+        message: "Refund amount cannot exceed the original payment amount"
+      };
+    }
+
+    // Create a refund record
+    const refund = await prisma.payment.create({
+      data: {
+        orderId: payment.orderId,
+        userId: payment.userId,
+        processedById: userId,
+        amount: new Prisma.Decimal(-amount), // Negative amount to indicate refund
+        paymentMethod: payment.paymentMethod,
+        paymentSite: payment.paymentSite,
+        paymentStatus: PaymentStatus.REFUNDED,
+        referenceNo: payment.referenceNo,
+        memo: `Refund for payment ${payment.id}. Reason: ${reason}`,
+        transactionId: payment.transactionId,
+        paymentProvider: payment.paymentProvider
+      },
+      include: {
+        order: true,
+        user: true
+      }
+    });
+
+    // Update order payment status if full refund
+    const totalPaidAfterRefund = await prisma.payment.aggregate({
+      where: { orderId: payment.orderId },
+      _sum: { amount: true }
+    });
+
+    const newOrderPaymentStatus = Number(totalPaidAfterRefund._sum.amount) <= 0 
+      ? OrderPaymentStatus.REFUNDED 
+      : OrderPaymentStatus.DOWNPAYMENT;
+
+    await prisma.order.update({
+      where: { id: payment.orderId },
+      data: { 
+        paymentStatus: newOrderPaymentStatus
+      }
+    });
+
+    // Create success log
+    await createLog({
+      userId: payment.userId,
+      createdById: userId,
+      reason: "Payment Refunded Successfully",
+      systemText: `Refunded ₱${amount} from payment ${paymentId} for order ${payment.orderId}. Reason: ${reason}`,
+      userText: `Refund of ₱${amount} has been processed successfully. Reason: ${reason}`
+    });
+
+    // Invalidate caches
+    await Promise.all([
+      setCached(`payments:order:${payment.orderId}`, null),
+      setCached(`order:${payment.orderId}`, null)
+    ]);
+
+    return {
+      success: true,
+      data: JSON.parse(JSON.stringify(refund))
+    };
+  } catch (error) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Payment Refund Error",
+      systemText: `Error refunding payment ${paymentId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      userText: "An error occurred while processing the refund."
+    });
+    
+    return {
+      success: false,
+      message: "Error processing refund.",
+      errors: { error }
+    };
+  }
+}
+
+/**
+ * Validates a payment for an order by verifying permissions, checking for duplicate transactions, creating a payment record, and updating the order status accordingly.
+ *
+ * This function performs the following steps:
+ * - Verifies that the user has the necessary dashboard read permissions.
+ * - Retrieves the order by its identifier and ensures it exists.
+ * - Checks for an existing verified payment with the same transaction ID to avoid duplicate processing.
+ * - Creates a validated payment record in the database.
+ * - Updates the order's payment status to either PAID (if fully paid) or DOWNPAYMENT based on the total amount paid.
+ * - Logs the outcome for auditing and invalidates related cache entries.
+ *
+ * @param userId - The ID of the user performing the payment validation.
+ * @param orderId - The identifier of the order for which the payment is being validated.
+ * @param amount - The payment amount to be validated.
+ * @param transactionDetails - An object containing payment transaction details:
+ *   - transactionId: The unique transaction identifier.
+ *   - referenceNo: The payment reference number.
+ *   - paymentMethod: The method used for the payment.
+ *   - paymentSite: The site where the payment was made.
+ *
+ * @returns A promise that resolves to an ActionsReturnType object. On success, it contains a flag indicating true; on failure, it includes a relevant error message.
+ */
+export async function validatePayment(
+  userId: string,
+  orderId: string,
+  amount: number,
+  transactionDetails: {
+    transactionId: string;
+    referenceNo: string;
+    paymentMethod: PaymentMethod;
+    paymentSite: PaymentSite;
+  }
+): Promise<ActionsReturnType<void>> {
+  if (!await verifyPermission({
+    userId,
+    permissions: {
+      dashboard: { canRead: true },
+    }
+  })) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Payment Validation Failed - Unauthorized",
+      systemText: `Unauthorized attempt to validate payment for order ${orderId}`,
+      userText: "You are not authorized to validate payments."
+    });
+    return {
+      success: false,
+      message: "You are not authorized to validate payments."
+    };
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        payments: true,
+        customer: true
+      }
+    });
+
+    if (!order) {
+      await createLog({
+        userId,
+        createdById: userId,
+        reason: "Payment Validation Failed - Order Not Found",
+        systemText: `Attempted to validate payment for non-existent order ${orderId}`,
+        userText: "Order not found."
+      });
+      return {
+        success: false,
+        message: "Order not found."
+      };
+    }
+
+    // Check for duplicate transaction ID
+    const existingPayment = await prisma.payment.findFirst({
+      where: {
+        transactionId: transactionDetails.transactionId,
+        paymentStatus: PaymentStatus.VERIFIED
+      }
+    });
+
+    if (existingPayment) {
+      await createLog({
+        userId: order.customerId,
+        createdById: userId,
+        reason: "Payment Validation Failed - Duplicate Transaction",
+        systemText: `Duplicate transaction ID ${transactionDetails.transactionId} detected for order ${orderId}`,
+        userText: "This transaction has already been processed."
+      });
+      return {
+        success: false,
+        message: "This transaction has already been processed."
+      };
+    }
+
+    // Create validated payment record
+    await prisma.payment.create({
+      data: {
+        orderId,
+        userId: order.customerId,
+        processedById: userId,
+        amount: new Prisma.Decimal(amount),
+        paymentMethod: transactionDetails.paymentMethod,
+        paymentSite: transactionDetails.paymentSite,
+        paymentStatus: PaymentStatus.VERIFIED,
+        transactionId: transactionDetails.transactionId,
+        referenceNo: transactionDetails.referenceNo,
+        memo: `Payment validated by ${userId}`
+      }
+    });
+
+    // Update order status if needed
+    const totalPaid = order.payments.reduce((sum, payment) => sum + Number(payment.amount), 0) + amount;
+    if (totalPaid >= Number(order.totalAmount)) {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: OrderPaymentStatus.PAID,
+          status: order.status === OrderStatus.PENDING ? OrderStatus.PROCESSING : order.status
+        }
+      });
+    } else {
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          paymentStatus: OrderPaymentStatus.DOWNPAYMENT
+        }
+      });
+    }
+
+    // Create success log
+    await createLog({
+      userId: order.customerId,
+      createdById: userId,
+      reason: "Payment Validated Successfully",
+      systemText: `Validated payment of ₱${amount} for order ${orderId}. Transaction ID: ${transactionDetails.transactionId}`,
+      userText: "Payment has been validated successfully."
+    });
+
+    // Invalidate caches
+    await Promise.all([
+      setCached(`payments:order:${orderId}`, null),
+      setCached(`order:${orderId}`, null)
+    ]);
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Payment Validation Error",
+      systemText: `Error validating payment for order ${orderId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      userText: "An error occurred while validating the payment."
+    });
+
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to validate payment"
+    };
+  }
+}
+
+/**
+ * Rejects a payment for a specified order by updating the payment's status to "DECLINED" and logging the rejection.
+ *
+ * This function first verifies that the user has the necessary permissions to reject payments. It then attempts
+ * to find the associated order. If the order exists, it updates an existing payment record or creates a new one
+ * with a "DECLINED" status and a memo containing the rejection reason. The function logs the rejection action,
+ * invalidates cache entries related to the order and its payments, and returns a success status. In case of a 
+ * permission failure, an order not found, or any other error, it logs the error and returns a failure status with
+ * an appropriate message.
+ *
+ * @param userId - ID of the user initiating the rejection.
+ * @param orderId - ID of the order associated with the payment.
+ * @param paymentId - ID of the payment to be rejected.
+ * @param rejectionReason - Explanation for why the payment is being rejected.
+ *
+ * @returns A promise resolving to an object indicating the success status and an optional error message.
+ *
+ * @example
+ * const result = await rejectPayment("user123", "order456", "payment789", "Payment method declined by bank");
+ * if (!result.success) {
+ *   console.error(result.message);
+ * }
+ */
+export async function rejectPayment(
+  userId: string,
+  orderId: string,
+  paymentId: string,
+  rejectionReason: string
+): Promise<ActionsReturnType<void>> {
+  if (!await verifyPermission({
+    userId,
+    permissions: {
+      dashboard: { canRead: true },
+    }
+  })) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Payment Rejection Failed - Unauthorized",
+      systemText: `Unauthorized attempt to reject payment for order ${orderId}`,
+      userText: "You are not authorized to reject payments."
+    });
+    return {
+      success: false,
+      message: "You are not authorized to reject payments."
+    };
+  }
+
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        customer: true
+      }
+    });
+
+    if (!order) {
+      await createLog({
+        userId,
+        createdById: userId,
+        reason: "Payment Rejection Failed - Order Not Found",
+        systemText: `Attempted to reject payment for non-existent order ${orderId}`,
+        userText: "Order not found."
+      });
+      return {
+        success: false,
+        message: "Order not found."
+      };
+    }
+
+    // Update or create payment record with rejected status
+    await prisma.payment.upsert({
+      where: {
+        id: paymentId
+      },
+      update: {
+        paymentStatus: PaymentStatus.DECLINED,
+        memo: `Payment rejected: ${rejectionReason}`
+      },
+      create: {
+        orderId,
+        userId: order.customerId,
+        processedById: userId,
+        amount: new Prisma.Decimal(0),
+        paymentMethod: PaymentMethod.OTHERS,
+        paymentSite: PaymentSite.OFFSITE,
+        paymentStatus: PaymentStatus.DECLINED,
+        memo: `Payment rejected: ${rejectionReason}`
+      }
+    });
+
+    // Create rejection log
+    await createLog({
+      userId: order.customerId,
+      createdById: userId,
+      reason: "Payment Rejected",
+      systemText: `Rejected payment for order ${orderId}. Payment ID: ${paymentId}. Reason: ${rejectionReason}`,
+      userText: `Payment has been rejected. Reason: ${rejectionReason}`
+    });
+
+    // Invalidate caches
+    await Promise.all([
+      setCached(`payments:order:${orderId}`, null),
+      setCached(`order:${orderId}`, null)
+    ]);
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Payment Rejection Error",
+      systemText: `Error rejecting payment for order ${orderId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      userText: "An error occurred while rejecting the payment."
+    });
+
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to reject payment"
+    };
+  }
 }
