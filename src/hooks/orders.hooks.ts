@@ -36,22 +36,20 @@ export function useOrdersQuery(params:QueryParams = {}) {
 }
 
 /**
- * Fetches a specific order for the current user.
+ * Fetches the details of a specific order for the current user.
  *
- * This hook retrieves the details of an order identified by the provided `orderId` using react-query's data
- * fetching mechanism. It calls the `getOrderById` function with the current user's ID, the order ID, and an optional
- * list of fields to limit the response. The query is enabled only when a valid `orderId` is provided.
+ * This hook uses react-query to retrieve an order's details by invoking the `getOrderById` API. It accepts a unique order identifier and
+ * an optional array of fields to limit the data returned in the response. The query is executed only when a valid `orderId` is provided.
  *
- * @param orderId - The unique identifier of the order.
- * @param limitFields - An optional array of field names to restrict the returned data. Defaults to an empty array.
- * @returns A react-query result object containing the order data on success, or null if the API call fails.
+ * @param orderId - The unique identifier of the order to fetch.
+ * @param limitFields - An optional array specifying the fields to include in the returned order data.
+ * @returns A react-query result object containing the order data on success or null if the API call fails.
  */
 export function useOrderQuery(orderId: string, limitFields: string[] = []) {
   return useResourceByIdQuery({
     resource: "orders",
-    fetcher: (userId: string, id: string) => 
-      getOrderById({ userId, orderId: id, limitFields }),
-    identifier: orderId as string,
-
+    fetcher: (userId: string, id: string, params: QueryParams) => getOrderById({ userId, orderId: id, limitFields: params.limitFields }),
+    identifier: orderId,
+    params: { limitFields }
   });
 }

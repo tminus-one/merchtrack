@@ -55,11 +55,8 @@ export async function createLog({
       }
     });
     
-    // Invalidate logs cache
-    await Promise.all([
-      setCached('logs:total', null),
-      setCached('logs:*', null) // Clear all paginated logs cache
-    ]);
+    // Invalidate all logs cache since we use dynamic cache keys
+    await setCached('logs:*', null);
 
     return {
       success: true,
@@ -77,33 +74,35 @@ export async function createLog({
 /**
  * Retrieves paginated log entries for a user after verifying read permissions.
  *
- * This asynchronous function first checks if the requesting user has the required permission to view logs.
- * If the user is unauthorized, it returns a failure response with an appropriate message.
- * If authorized, the function attempts to retrieve log data and the total count from a Redis cache using the provided paging parameters.
- * If the data is not cached, it performs a database transaction with Prisma to fetch the logs and count them.
- * After fetching, the logs and total count are cached for future requests.
- * The fetched logs are then processed to remove any fields specified in the `params.limitFields` array.
- * The function returns a paginated response that includes the log data and metadata such as total count, current page,
- * last page, and indicators for the presence of adjacent pages.
+ * This asynchronous function first checks if the user has the necessary permissions to read logs.
+ * If the user is unauthorized, it returns a failure response with an appropriate error message.
+ * If authorized, the function attempts to retrieve the logs and their total count from a Redis cache using
+ * a cache key derived from the query parameters. If the data is not found in the cache, it fetches the logs and count
+ * from the database using a Prisma transaction and then caches the results.
  *
- * @param userId - The unique identifier of the user making the request.
- * @param params - Optional query parameters for log retrieval, including:
- *   - page: The current page number.
- *   - take: The number of logs to return per page.
+ * The function applies pagination based on the provided parameters, ensuring that the number of logs returned per page
+ * is at least 1 and at most 100 (defaulting to 10 if not specified). The current page is computed from the `skip` value,
+ * and the last page is derived from the total count of logs. Additionally, any fields specified in the `params.limitFields`
+ * array are removed from each log entry before returning the response.
+ *
+ * @param userId - The unique identifier of the requesting user.
+ * @param params - Optional parameters for filtering, sorting, and paginating the logs, including:
  *   - where: Filtering criteria for querying logs.
- *   - orderBy: Sorting options for the logs.
- *   - skip: The number of records to skip.
+ *   - orderBy: Sorting options for the log entries.
+ *   - take: Number of logs to return per page (default is 10; maximum is 100).
+ *   - skip: Number of records to skip (default is 0).
  *   - limitFields: An array of field names to remove from each log entry.
- * @returns A promise that resolves to an object indicating success and containing:
+ * @returns A promise that resolves to an object containing:
+ *   - success: A boolean indicating whether the operation was successful.
  *   - data: When successful, an object with:
  *       - data: An array of processed log entries.
  *       - metadata: Pagination details including:
  *           - total: Total number of log entries.
  *           - page: The current page number.
- *           - lastPage: The last available page number.
+ *           - lastPage: The total number of pages.
  *           - hasNextPage: A boolean indicating if there is a subsequent page.
  *           - hasPrevPage: A boolean indicating if there is a preceding page.
- *   - message: An error message if the operation fails.
+ *   - message: An error message in case of failure.
  */
 export async function getLogs({userId, params = {} }: GetLogsParams): Promise<ActionsReturnType<PaginatedResponse<ExtendedLogs[]>>> {
   const isAuthorized = await verifyPermission({
@@ -121,11 +120,16 @@ export async function getLogs({userId, params = {} }: GetLogsParams): Promise<Ac
   }
 
   try {
-    let logs: ExtendedLogs[] | null = await getCached(`logs:${params.page}:${params.take}`);
-    let total: number | null = await getCached('logs:total');
+    const take = Math.max(1, Math.min(params.take ?? 10, 100)); // Limit max items
+    const skip = Math.max(0, params.skip ?? 0);
+    const page = Math.floor(skip / take) + 1;
+    
+    const cacheKey = `logs:${JSON.stringify(params)}`;
+    let logs: ExtendedLogs[] | null = await getCached(cacheKey);
+    let total: number | null = await getCached(`${cacheKey}:total`);
   
     if (!logs) {
-      [logs, total] = await prisma.$transaction([
+      const [rawLogs, count] = await prisma.$transaction([
         prisma.log.findMany({
           where: params.where,
           include: {
@@ -147,21 +151,26 @@ export async function getLogs({userId, params = {} }: GetLogsParams): Promise<Ac
             },
           },
           orderBy: params.orderBy,
-          skip: params.skip,
-          take: params.take,
+          skip,
+          take,
         }),
-        prisma.log.count( { where: params.where } ),
+        prisma.log.count({ where: params.where }),
       ]);
 
-      Promise.all([
-        await setCached(`logs:${params.page}:${params.take}`, logs),
-        await setCached('logs:total', total),
+      logs = rawLogs as ExtendedLogs[];
+      total = count;
+
+      await Promise.all([
+        setCached(cacheKey, logs),
+        setCached(`${cacheKey}:total`, total),
       ]);
     }
 
-    const lastPage = Math.ceil(total as number / (params.take ?? 1));
-    const processedLogs = logs.map(log => {
-      return removeFields(log, params.limitFields);
+    const lastPage = Math.ceil((total as number) / take);
+    const processedLogs = logs?.map(log => {
+      if (!params.limitFields) return log;
+      const plainLog = { ...log } as Record<string, unknown>;
+      return { ...removeFields(plainLog, params.limitFields) } as ExtendedLogs;
     });
     
     return {
@@ -170,10 +179,10 @@ export async function getLogs({userId, params = {} }: GetLogsParams): Promise<Ac
         data: JSON.parse(JSON.stringify(processedLogs)),
         metadata: {
           total: total as number,
-          page: params.page!,
-          lastPage: lastPage,
-          hasNextPage: params.page! < lastPage,
-          hasPrevPage: params.page! > 1
+          page,
+          lastPage,
+          hasNextPage: page < lastPage,
+          hasPrevPage: page > 1
         }
       }
     };
