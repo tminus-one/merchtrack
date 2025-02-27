@@ -257,7 +257,11 @@ export async function getProductBySlug({ limitFields, slug }: GetObjectByTParams
         include: {
           category: true,
           postedBy: true,
-          reviews: true,
+          reviews: {
+            include: {
+              user: true,
+            }
+          },
           variants: true
         }
       });
