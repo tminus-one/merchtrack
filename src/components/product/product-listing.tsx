@@ -3,7 +3,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { Button } from "@/components/ui/button";
 import SizeSelector from "@/components/ui/size-selector";
 import QuantitySelector from "@/components/ui/quantity-selector";
-import { getProductBySlug } from "@/actions/products.actions";
+import { getProductBySlug, getProductReviewsBySlug } from "@/actions/products.actions";
 import "./embla.css";
 import EmblaCarousel from '@/components/ui/EmblaCarousel';
 import { FaCartPlus } from "react-icons/fa";
@@ -19,6 +19,16 @@ const ProductListing: React.FC<ProductListingProps> = async ({ slug }) => {
     slug: slug,
   });
 
+  const { data: reviewsData } = await getProductReviewsBySlug({
+    userId: '',
+    slug: slug,
+  });
+
+  
+  console.log(data);
+  console.log(reviewsData);
+
+
   return (
     <>
       <div className="mx-auto my-10 mt-20 flex max-w-5xl flex-1 flex-col items-stretch gap-16 rounded-lg bg-white p-6 md:flex-row">
@@ -30,7 +40,7 @@ const ProductListing: React.FC<ProductListingProps> = async ({ slug }) => {
         {/* Right Column - Text & Button */}
         <div className="flex flex-1 flex-col gap-4 text-left md:px-6">
           <h1 className="text-4xl font-bold text-gray-900">{data?.title}</h1>
-          <h1 className="text-4xl text-gray-900">₱ 450.00</h1>
+          <h1 className="text-4xl text-gray-900">₱ {data?.variants[0].price.toString() || "No Listed Price"}</h1>
           {(data?.description) && <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(data?.description) }}></p>}
           <h3 className="mt-[20px] font-bold">Options</h3>
           <SizeSelector variants={data?.variants || []} />
@@ -41,7 +51,7 @@ const ProductListing: React.FC<ProductListingProps> = async ({ slug }) => {
           </div>
         </div>
       </div>
-      <ProductReviewsRecommendations reviews={data?.reviews} />
+      <ProductReviewsRecommendations slug={slug} reviews={data?.reviews} />
     </>
   );
 };
