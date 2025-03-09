@@ -38,11 +38,15 @@ const isPublicRoute = createRouteMatcher([
   '/terms-of-service',
   '/privacy-policy',
   '/survey(.*)',
-  '/test',
+  '/products(.*)',
 ]);
 
 const isOnboardingRoute = createRouteMatcher([
   '/onboarding(.*)',
+]);
+
+const isAdminRoute = createRouteMatcher([
+  '/admin(.*)',
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
@@ -62,6 +66,16 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // Catch users who do not have `onboardingComplete: true` in their publicMetadata
   if (userId && !sessionClaims?.metadata?.isOnboardingCompleted && !isOnboardingRoute(req)) {
     return NextResponse.redirect(new URL('/onboarding', req.url));
+  }
+
+
+
+  // If the user is admin and the route is protected, let them view.
+  const isAdmin = sessionClaims?.metadata.data.isAdmin || sessionClaims?.metadata.data.isStaff;
+  if (isAdmin && isAdminRoute(req)) return NextResponse.next();
+
+  if (!isAdmin && isAdminRoute(req)) {
+    return NextResponse.redirect(new URL('/404', req.url));
   }
 
   // If the user is logged in and the route is protected, let them view.

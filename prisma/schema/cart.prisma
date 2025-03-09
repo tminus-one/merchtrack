@@ -15,8 +15,9 @@ model CartItem {
   id            String          @id @default(ulid())
   cartId        String
   variantId     String?
-  quantity      Int             @default(0) 
-
+  quantity      Int             @default(0)
+  selected      Boolean         @default(true)
+  note          String?         @db.Text
 
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
