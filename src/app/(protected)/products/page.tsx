@@ -25,11 +25,12 @@ interface SearchParams {
 }
 
 export default async function ProductsPage({
-  searchParams
+  searchParams: searchParamsPromise,
 }: Readonly<{
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }>) {
   const { userId } = await auth();
+  const searchParams = await searchParamsPromise;
   
   if (!userId) {
     return (

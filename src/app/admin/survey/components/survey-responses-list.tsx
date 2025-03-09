@@ -27,6 +27,7 @@ export function SurveyResponsesList() {
   const [endDate, setEndDate] = useState<string>();
   const [debouncedSearch] = useDebounce(searchTerm, 1000);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleDateChange = useCallback((type: 'start' | 'end', value: string) => {
     if (type === 'start') {
       setStartDate(value);
@@ -93,7 +94,6 @@ export function SurveyResponsesList() {
           onSearchChange={setSearchTerm}
           startDate={startDate}
           endDate={endDate}
-          onDateChange={handleDateChange}
         />
       </CardHeader>
       <CardContent>

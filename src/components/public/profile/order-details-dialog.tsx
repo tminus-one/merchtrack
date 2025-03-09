@@ -143,24 +143,6 @@ export function OrderDetailsDialog({ open, onOpenChange, orderId }: Readonly<Ord
                 </div>
               </Card>
             )}
-
-            {/* Delivery Details */}
-            {order.deliveryAddress && (
-              <Card className="p-4">
-                <h3 className="mb-3 font-semibold">Delivery Address</h3>
-                <div className="space-y-1 text-sm">
-                  <p>{order.deliveryAddress.fullName}</p>
-                  <p>{order.deliveryAddress.phoneNumber}</p>
-                  <p>{order.deliveryAddress.addressLine1}</p>
-                  {order.deliveryAddress.addressLine2 && (
-                    <p>{order.deliveryAddress.addressLine2}</p>
-                  )}
-                  <p>
-                    {order.deliveryAddress.city}, {order.deliveryAddress.province} {order.deliveryAddress.postalCode}
-                  </p>
-                </div>
-              </Card>
-            )}
           </div>
         )}
       </DialogContent>

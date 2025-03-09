@@ -49,7 +49,14 @@ export function PaginationNav({
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <Pagination className={className}>
+      <Pagination
+        page={currentPage}
+        total={totalPages}
+        onChange={onPageChange}
+        hasNextPage={currentPage < totalPages}
+        hasPrevPage={currentPage > 1}
+        className={className}
+      >
         <PaginationContent>
           <PaginationItem>
             <PaginationPrevious

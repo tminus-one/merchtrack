@@ -6,20 +6,23 @@ import { ExtendedReview } from "@/types/extended";
 import { prettyFormatDate } from "@/utils/format";
 import { getProductReviewsBySlug } from "@/actions/products.actions";
 import ProductReviewsSkeleton from "@/components/product/product-reviews-skeleton";
+import { useUserStore } from "@/stores/user.store";
 
 interface ProductReviewsProps {
   slug: string;
 }
 
-export default function ProductReviews({ slug }: ProductReviewsProps) {
+export default function ProductReviews({ slug }: Readonly<ProductReviewsProps>) {
   const [reviews, setReviews] = useState<ExtendedReview[]>([]);
   const [loading, setLoading] = useState(true);
+  const { userId } = useUserStore();
 
   useEffect(() => {
     async function fetchReviews() {
       try {
         const response = await getProductReviewsBySlug({
-          slug: slug
+          slug: slug,
+          userId: userId as string,
         });
 
         if (response.success && response.data) {

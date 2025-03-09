@@ -87,7 +87,6 @@ export function NewOrderForm() {
       variantId: item.variantId,
       quantity: item.quantity,
       customerNote: item.customerNote,
-      size: item.size,
       price: Number(item.price),
       originalPrice: Number(item.price),
       appliedRole: item.appliedRole

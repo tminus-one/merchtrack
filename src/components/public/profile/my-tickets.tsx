@@ -108,7 +108,8 @@ export default function MyTickets() {
   let updates: TicketUpdate[] = [];
   if (selectedTicketData?.updates) {
     try {
-      updates = JSON.parse(selectedTicketData.updates as string);
+      // // @ts-expect-error - TS doesn't recognize the data transformation
+      updates = JSON.parse(selectedTicketData.updates as unknown as string);
     } catch (e) {
       console.error('Error parsing ticket updates:', e);
     }
@@ -255,7 +256,7 @@ export default function MyTickets() {
               </div>
               
               {/* Pagination */}
-              {pagination && pagination.totalPages > 1 && (
+              {pagination && pagination.total > 1 && (
                 <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 sm:px-6">
                   <div className="hidden sm:block">
                     <p className="text-sm text-gray-700">

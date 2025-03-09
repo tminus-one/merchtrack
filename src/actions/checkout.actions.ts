@@ -98,9 +98,25 @@ export async function processCheckout(input: CheckoutInput): Promise<ActionsRetu
     );
 
     const cartItems = itemsWithPricing.map(item => ({
-      ...item,
-      variant: item.variant,
-      selected: true
+      variantId: item.variantId,
+      selected: true,
+      variant: {
+        ...item.variant,
+        product: {
+          ...item.variant.product,
+          inventoryType: item.variant.product.inventoryType,
+          postedBy: item.variant.product.postedBy,
+        },
+        rolePricing: typeof item.variant.rolePricing === 'object' ? 
+          { 
+            price: item.price, 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            roleId: (item.variant.rolePricing as any)?.roleId || item.appliedRole || 'default'
+          } : 
+          null
+      },
+      quantity: item.quantity,
+      note: item.note
     }));
 
     const validation = validateCartItems(cartItems);
