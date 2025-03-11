@@ -29,10 +29,13 @@ const SizeSelector: React.FC<SizeSelectorProps> = ({
       setSelectedSize(firstVariant.id);
       if (onVariantChange) {
         const pricing = useRolePricing({
-          variant: firstVariant,
-          customerRole,
-          customerCollege,
-          productPostedByCollege
+          variant: {
+            ...firstVariant,
+            price: Number(firstVariant.price)
+          },
+          customerRole: customerRole!,
+          customerCollege: customerCollege!,
+          productPostedByCollege: productPostedByCollege!
         });
         onVariantChange(firstVariant, pricing.price, pricing.appliedRole);
       }
@@ -43,10 +46,13 @@ const SizeSelector: React.FC<SizeSelectorProps> = ({
     setSelectedSize(variant.id);
     if (onVariantChange) {
       const pricing = useRolePricing({
-        variant,
-        customerRole,
-        customerCollege,
-        productPostedByCollege
+        variant: {
+          ...variant,
+          price: Number(variant.price)
+        },
+        customerRole: customerRole!,
+        customerCollege: customerCollege!,
+        productPostedByCollege: productPostedByCollege!
       });
       onVariantChange(variant, pricing.price, pricing.appliedRole);
     }
@@ -56,10 +62,13 @@ const SizeSelector: React.FC<SizeSelectorProps> = ({
     <div className="flex gap-2">
       {variants.map((variant) => {
         const pricing = useRolePricing({
-          variant,
-          customerRole,
-          customerCollege,
-          productPostedByCollege
+          variant: {
+            ...variant,
+            price: Number(variant.price)
+          },
+          customerRole: customerRole!,
+          customerCollege: customerCollege!,
+          productPostedByCollege: productPostedByCollege! 
         });
 
         return (
