@@ -1,8 +1,8 @@
 'use server';
 
 import { Category } from "@prisma/client";
-import cloneDeep from "lodash.clonedeep";
 import prisma from "@/lib/db";
+import { processActionReturnData } from "@/utils";
 
 
 /**
@@ -20,7 +20,7 @@ export async function getCategories(): Promise<ActionsReturnType<Category[]>> {
     const categories = await prisma.category.findMany();
     return {
       success: true,
-      data: cloneDeep(categories),
+      data: processActionReturnData(categories) as Category[],
     };
   } catch (error) {
     return {

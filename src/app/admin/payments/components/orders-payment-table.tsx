@@ -1,6 +1,6 @@
 import * as React from "react";
 import { OrderPaymentStatus } from "@prisma/client";
-import { FaListAlt, FaRegClock, FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { FaListAlt, FaRegClock } from "react-icons/fa";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { motion } from "framer-motion";
 import { OrderPaymentModal } from "@/app/admin/payments/components/order-payment-modal";
@@ -17,6 +17,7 @@ import { manilaTime } from "@/utils/formatTime";
 import { ExtendedOrder } from "@/types/orders";
 import { Button } from "@/components/ui/button";
 import { fadeInUp } from "@/constants/animations";
+import { PaginationFooter } from "@/app/admin/survey/components/pagination-footer";
 
 interface OrdersPaymentTableProps {
   orders?: ExtendedOrder[];
@@ -27,6 +28,7 @@ interface OrdersPaymentTableProps {
   selectedOrderId: string | null;
   onOrderSelect: (orderId: string) => void;
   onModalClose: () => void;
+  totalItems: number;
 }
 
 export function OrdersPaymentTable({ 
@@ -37,16 +39,16 @@ export function OrdersPaymentTable({
   onPageChange,
   selectedOrderId,
   onOrderSelect,
-  onModalClose
-}: OrdersPaymentTableProps) {
+  onModalClose,
+  totalItems
+}: Readonly<OrdersPaymentTableProps>) {
   const [parent] = useAutoAnimate();
-
   const selectedOrder = selectedOrderId ? orders?.find(o => o.id === selectedOrderId) || null : null;
-
+  
   const handleOrderClick = (order: ExtendedOrder) => {
     onOrderSelect(order.id);
   };
-
+  
   if (isLoading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
@@ -55,7 +57,7 @@ export function OrdersPaymentTable({
       </div>
     );
   }
-
+  
   if (!orders?.length) {
     return (
       <motion.div {...fadeInUp} className="flex min-h-[400px] flex-col items-center justify-center text-gray-500">
@@ -64,7 +66,7 @@ export function OrdersPaymentTable({
       </motion.div>
     );
   }
-
+  
   return (
     <>
       <Table>
@@ -107,32 +109,15 @@ export function OrdersPaymentTable({
           ))}
         </TableBody>
       </Table>
-
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between border-t px-4 py-3">
-        <div className="text-sm text-gray-500">
-          Page {currentPage} of {totalPages}
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            <FaChevronLeft className="size-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            <FaChevronRight className="size-4" />
-          </Button>
-        </div>
-      </div>
-
+      
+      <PaginationFooter 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        totalItems={totalItems}
+        itemsPerPage={10}
+      />
+      
       <OrderPaymentModal
         order={selectedOrder}
         open={!!selectedOrderId}

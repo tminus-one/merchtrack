@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
-import { Search, ShoppingCart, Menu, X, Bell } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X } from 'lucide-react';
 import { FaUserShield } from "react-icons/fa";
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ export default function ProtectedHeader() {
     { name: 'Home', href: '/dashboard' },
     { name: 'Merch', href: '/products' },
     { name: 'My Orders', href: '/my-account/orders' },
+    { name: 'Support', href: '/my-account/tickets' },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -103,13 +104,6 @@ export default function ProtectedHeader() {
               <span className="sr-only">Search</span>
             </Button>
           </form>
-          
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="size-5" />
-            <Badge className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full p-0">
-              2
-            </Badge>
-          </Button>
           
           <Button variant="ghost" size="icon" className="relative" onClick={() => setCartOpen(true)}>
             <ShoppingCart className="size-5" />

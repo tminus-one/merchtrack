@@ -101,7 +101,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                     Special pricing for {pricingDetails.appliedRole.toLowerCase().replace('_', ' ')}
                   </p>
                 )}
-                {pricingDetails.price && (
+                {!!pricingDetails.price && (
                   <p className="text-sm text-gray-500 line-through">
                     Original price: {pricingDetails.originalPrice}
                   </p>
@@ -114,8 +114,8 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
             <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}></p>
           )}
           
-          <h3 className="mt-[20px] font-bold">Options</h3>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <h3 className="mt-[20px] text-lg font-bold">Select Option</h3>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:flex md:flex-wrap">
             {product?.variants.map((variant) => {
               const variantPricing = useRolePricing({
                 // @ts-expect-error - We're passing the variant object as the rolePricing object
@@ -125,44 +125,109 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                 productPostedByCollege: product?.postedBy?.college ?? null
               });
 
-              const isOutOfStock = variant.inventory === 0 && product.inventoryType === 'STOCK';
+              // Check if inventory exists and is zero or if inventory field doesn't exist at all
+              const isOutOfStock = (!variant.inventory || variant.inventory === 0) && product.inventoryType === 'STOCK';
+              const isSelected = selectedVariant?.id === variant.id;
+              
               return (
-                <Button
-                  key={variant.id}
-                  variant={selectedVariant?.id === variant.id ? "default" : "outline"}
-                  onClick={() => setSelectedVariant(variant)}
-                  disabled={isOutOfStock}
-                  className="relative"
+                <div 
+                  key={variant.id} 
+                  className={`group relative overflow-hidden rounded-lg transition-all duration-300 ${isOutOfStock ? 'opacity-70' : ''}`}
                 >
-                  <span className="flex flex-col">
-                    <span>{variant.variantName}</span>
-                    <span className="text-sm">{variantPricing.formattedPrice}</span>
-                  </span>
+                  <Button
+                    variant={isSelected ? "default" : "outline"}
+                    onClick={() => !isOutOfStock && setSelectedVariant(variant)}
+                    disabled={isOutOfStock}
+                    className={`
+                      h-auto w-full min-w-[120px] border-2 px-4 py-3 
+                      ${isSelected ? 'shadow-md ring-2 ring-primary ring-offset-1' : 'hover:border-primary/60 hover:shadow-sm'} 
+                      ${isOutOfStock ? 'cursor-not-allowed' : 'cursor-pointer'}
+                      transition-all duration-300 ease-in-out
+                    `}
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <span className="font-medium">{variant.variantName}</span>
+                      <span className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-primary'}`}>
+                        {variantPricing.formattedPrice}
+                      </span>
+                      
+                      {variant.inventory && variant.inventory > 0 && variant.inventory <= 5 && product.inventoryType === 'STOCK' && (
+                        <span className="mt-1 text-xs font-medium text-amber-500">
+                          Only {variant.inventory} left
+                        </span>
+                      )}
+                    </div>
+                  </Button>
+                  
                   {isOutOfStock && (
-                    <span className="absolute bottom-1 right-1 text-xs text-red-500">
-                      Out of Stock
-                    </span>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/10 backdrop-blur-[1px]">
+                      <span className="rounded-md bg-red-100 px-2 py-1 text-xs font-semibold text-red-700">
+                        Out of Stock
+                      </span>
+                    </div>
                   )}
-                </Button>
+                  
+                  {isSelected && (
+                    <>
+                      <div className="absolute right-0 top-0 size-0 border-r-[24px] 
+                        border-t-[24px] border-r-transparent 
+                        border-t-primary shadow-lg">
+                      </div>
+                      <div className="absolute right-1 top-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="size-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    </>
+                  )}
+                </div>
               );
             })}
           </div>
 
-          <h3 className="mt-[20px] font-bold">Quantity</h3>
-          <QuantitySelector 
-            value={quantity}
-            onChange={setQuantity}
-            min={1}
-            max={selectedVariant ? Math.min(10, selectedVariant.inventory) : 10}
-          />
+          <h3 className="mt-6 text-lg font-bold">Quantity</h3>
+          <div className="mt-2">
+            <div className="flex items-center gap-4">
+              <QuantitySelector 
+                value={quantity}
+                onChange={setQuantity}
+                min={1}
+                max={selectedVariant && selectedVariant.inventory 
+                  ? Math.min(10, selectedVariant.inventory)
+                  : (product.inventoryType === 'STOCK' ? 10 : 20)}
+              />
+              {selectedVariant && selectedVariant.inventory && selectedVariant.inventory > 10 && (
+                <span className="text-sm text-gray-500">
+                  (Max: 10 per order)
+                </span>
+              )}
+              {selectedVariant && product.inventoryType === 'STOCK' && (
+                <span className="text-sm text-gray-500">
+                  {selectedVariant.inventory > 10 
+                    ? `${selectedVariant.inventory} in stock`
+                    : selectedVariant.inventory > 1 
+                      ? `Only ${selectedVariant.inventory} in stock` 
+                      : `Last one in stock!`}
+                </span>
+              )}
+            </div>
+          </div>
           
-          <div className="flex">
+          <div className="mt-6 flex">
             <Button 
-              className="w-full bg-primary text-white hover:bg-primary/90"
+              className={`
+                group relative w-full overflow-hidden rounded-lg bg-primary py-3 text-white 
+                transition-all duration-300 hover:bg-primary/90 hover:shadow-md
+                ${!selectedVariant ? 'cursor-not-allowed opacity-70' : ''}
+              `}
               onClick={handleAddToCart}
-              disabled={!selectedVariant}
+              disabled={!selectedVariant || ((!selectedVariant.inventory ||  selectedVariant.inventory === 0) && product.inventoryType === 'STOCK')}
             >
-              <FaCartPlus className="mr-2" /> Add to Cart
+              <span className="relative z-10 flex items-center justify-center">
+                <FaCartPlus className="mr-2 size-5" />
+                <span className="text-base font-medium">Add to Cart</span>
+              </span>
+              <span className="from-primary-dark absolute inset-0 -translate-x-full bg-gradient-to-r to-primary opacity-70 transition-transform duration-500 ease-out group-hover:translate-x-0"></span>
             </Button>
           </div>
         </div>

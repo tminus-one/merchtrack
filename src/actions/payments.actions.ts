@@ -43,17 +43,12 @@ export async function getPayments(
   userId: string,
   params: QueryParams = {}
 ): Promise<ActionsReturnType<PaginatedResponse<Payment[]>>> {
-  if (!await verifyPermission({
+  const isAuthorized = await verifyPermission({
     userId: userId,
     permissions: {
       dashboard: { canRead: true },
     }
-  })) {
-    return {
-      success: false,
-      message: "You are not authorized to view payments."
-    };
-  }
+  });
 
   const { skip, take, page } = calculatePagination(params);
 
@@ -64,7 +59,7 @@ export async function getPayments(
     if (!payments || !total) {
       [payments, total] = await prisma.$transaction([
         prisma.payment.findMany({
-          where: { ...params.where },
+          where: isAuthorized ? { ...params.where } : { userId },
           include: {
             order: true,
             user: true,
@@ -387,24 +382,6 @@ export async function processPayment({
   paymentProvider?: string;
   limitFields?: string[];
 }): Promise<ActionsReturnType<Payment>> {
-  if (!await verifyPermission({
-    userId,
-    permissions: {
-      dashboard: { canRead: true },
-    }
-  })) {
-    await createLog({
-      userId: userId,
-      createdById: userId,
-      reason: "Payment Processing Failed - Unauthorized",
-      systemText: `User attempted to process payment for order ${orderId} but was not authorized`,
-      userText: "You are not authorized to process payments."
-    });
-    return {
-      success: false,
-      message: "You are not authorized to process payments."
-    };
-  }
   try {
     const order = await prisma.order.findUnique({
       where: { id: orderId },

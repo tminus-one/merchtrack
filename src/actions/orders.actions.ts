@@ -48,16 +48,10 @@ export async function getOrders(
   const isAuthorized = await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      orders: { canRead: true },
     }
   });
 
-  if (!isAuthorized) {
-    return {
-      success: false,
-      message: "You are not authorized to view orders."
-    };
-  }
 
   const { skip, take, page } = calculatePagination(params);
 
@@ -70,7 +64,7 @@ export async function getOrders(
     // @ts-expect-error - Prisma types are incorrect
     [orders, total] = await prisma.$transaction([
       prisma.order.findMany({
-        where: params.where,
+        where: isAuthorized ? params.where : { customerId: userId },
         include: {
           ...params.include,
           customer: true,
@@ -162,24 +156,17 @@ export async function getOrders(
 
 export async function getOrderById({ userId, orderId, limitFields }: GetObjectByTParams<"orderId">): Promise<ActionsReturnType<ExtendedOrder | null>> {
   try {
-    const hasPermission = await verifyPermission({
+    const isAuthorized = await verifyPermission({
       userId,
       permissions: {
         orders: { canRead: true }
       }
     });
 
-    if (!hasPermission) {
-      return {
-        success: false,
-        message: "You do not have permission to view orders."
-      };
-    }
-
     let order = await getCached(`order:${orderId}`);
     if (!order) {
       order = await prisma.order.findUnique({
-        where: { id: orderId },
+        where: isAuthorized ? { id: orderId } : { id: orderId, customerId: userId },
         include: {
           customer: true,
           customerSatisfactionSurvey: true,
@@ -260,7 +247,7 @@ export async function createOrder(userId: string, data: CreateOrderType): Promis
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true }
+      orders: { canCreate: true }
     }
   })) {
     return {

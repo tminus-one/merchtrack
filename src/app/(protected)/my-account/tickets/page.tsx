@@ -1,7 +1,14 @@
 import React from 'react';
+import { Mail } from 'lucide-react';
 import PageAnimation from '@/components/public/page-animation';
 import MyTickets from '@/components/public/profile/my-tickets';
 import MyProfileSideBar from '@/components/public/profile/my-profile-sidebar';
+import { Card } from '@/components/ui/card';
+
+export const metadata = {
+  title: 'Support Tickets | MerchTrack',
+  description: 'Manage and handle customer support tickets',
+};
 
 export default function PaymentHistoryPage() {
   return (
@@ -14,6 +21,22 @@ export default function PaymentHistoryPage() {
           </div>
           {/* Main Content */}
           <div className="flex-1">
+            <Card className="mb-4 border-blue-200 bg-blue-50 p-4">
+              <div className="mb-2 flex items-center gap-3">
+                <h2 className="text-lg font-semibold text-primary">Customer Support Center</h2>
+              </div>
+              <p className="text-sm text-gray-700">
+                      This is the main support page for handling all customer concerns regarding orders, payments, products, and general inquiries. 
+                      All support tickets should be processed through this system for proper tracking and resolution.
+              </p>
+              <div className="mt-3 flex items-center text-sm text-gray-700">
+                <Mail className="mr-2 size-4 text-blue-600" />
+                <span>Email support is also available at: </span>
+                <a href="mailto:support@merchtrack.tech" className="ml-1 font-medium text-blue-600 hover:underline">
+                        support@merchtrack.tech
+                </a>
+              </div>
+            </Card>
             <MyTickets />
           </div>
         </div>

@@ -1,6 +1,7 @@
 'use server';
 
 import { CustomerSatisfactionSurvey, SurveyCategory } from "@prisma/client";
+import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/db";
 import { verifyPermission } from "@/utils/permissions";
 import { QueryParams, PaginatedResponse } from "@/types/common";
@@ -67,7 +68,7 @@ export async function createSurveyCategory(params: {
   const isAuthorized = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canRead: true },
+      dashboard: { canCreate: true },
     }
   });
 
@@ -116,7 +117,7 @@ export async function updateSurveyCategory(params: {
   const isAuthorized = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canRead: true },
+      dashboard: { canUpdate: true },
     }
   });
 
@@ -160,7 +161,7 @@ export async function deleteSurveyCategory(params: {
   const isAuthorized = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canRead: true },
+      dashboard: { canDelete: true },
     }
   });
 
@@ -257,6 +258,21 @@ type GenerateSurveyParams = {
 
 // Generate survey link
 export async function generateSurvey({ orderId, categoryId }: GenerateSurveyParams): Promise<ActionsReturnType<ExtendedCustomerSurvey>> {
+  const { sessionClaims } = await auth();
+  const isAuthorized = await verifyPermission({
+    userId: sessionClaims?.metadata.data.id as string,
+    permissions: {
+      messages: { canRead: true, canUpdate: true },
+    }
+  });
+
+  if (!isAuthorized) {
+    return {
+      success: false,
+      message: "You are not authorized to generate surveys."
+    };
+  }
+  
   try {
     const category = await prisma.surveyCategory.findUnique({
       where: { 

@@ -27,6 +27,7 @@ export async function processCheckout(input: CheckoutInput): Promise<ActionsRetu
   try {
     // Validate input
     const validatedInput = checkoutSchema.parse(input);
+    console.log('Validated input:', validatedInput);
 
     // Get user details for role-based pricing
     const user = await prisma.user.findUnique({
@@ -207,7 +208,7 @@ export async function processCheckout(input: CheckoutInput): Promise<ActionsRetu
       userText: "Order created successfully",
     });
 
-    revalidatePath('/orders');
+    revalidatePath('/my-account/orders');
     revalidatePath('/checkout');
 
     return {

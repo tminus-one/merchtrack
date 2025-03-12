@@ -21,6 +21,7 @@ interface TicketDialogProps {
   refetch: () => void;
 }
 
+
 const getStatusBadgeClasses = (status: string) => {
   switch (status) {
   case 'CLOSED':
@@ -40,6 +41,7 @@ export function TicketDialog({ ticket, onClose, refetch }: Readonly<TicketDialog
   const [updateMessage, setUpdateMessage] = useState("");
   const [newStatus, setNewStatus] = useState<TicketStatus>("OPEN");
   const [newPriority, setNewPriority] = useState<TicketPriority>("MEDIUM");
+  const [localTicketUpdates, setLocalTicketUpdates] = useState<TicketUpdate[]>([]);
   const { userId, user } = useUserStore();
   const queryClient = useQueryClient();
 
@@ -47,6 +49,19 @@ export function TicketDialog({ ticket, onClose, refetch }: Readonly<TicketDialog
     if (ticket) {
       setNewStatus(ticket.status);
       setNewPriority(ticket.priority);
+      
+      // Parse existing ticket updates
+      let updates: TicketUpdate[] = [];
+      if (Array.isArray(ticket.updates)) {
+        updates = ticket.updates;
+      } else if (ticket.updates) {
+        try {
+          updates = JSON.parse(ticket.updates as string);
+        } catch {
+          updates = [];
+        }
+      }
+      setLocalTicketUpdates(updates);
     }
   }, [ticket]);
 
@@ -60,8 +75,18 @@ export function TicketDialog({ ticket, onClose, refetch }: Readonly<TicketDialog
         assignedToId: userId as string,
         createdBy: user ? `${user.firstName} ${user.lastName}` : userId as string,
       }),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['tickets:all'] });
+      
+      // Optimistically add new update to local state
+      const newUpdate: TicketUpdate = {
+        status: variables.status as 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED',
+        message: variables.message,
+        createdBy: user ? `${user.firstName} ${user.lastName}` : userId as string,
+        createdAt: new Date().toISOString(),
+      };
+      setLocalTicketUpdates(prev => [...prev, newUpdate ]);
+      
       setUpdateMessage("");
       toast.success("Ticket updated successfully");
       refetch();
@@ -108,17 +133,6 @@ export function TicketDialog({ ticket, onClose, refetch }: Readonly<TicketDialog
   };
 
   if (!ticket) return null;
-
-  let ticketUpdates: TicketUpdate[] = [];
-  if (Array.isArray(ticket.updates)) {
-    ticketUpdates = ticket.updates;
-  } else if (ticket.updates) {
-    try {
-      ticketUpdates = JSON.parse(ticket.updates as string);
-    } catch {
-      ticketUpdates = [];
-    }
-  }
 
   return (
     <Dialog open={!!ticket} onOpenChange={() => onClose()}>
@@ -196,9 +210,9 @@ export function TicketDialog({ ticket, onClose, refetch }: Readonly<TicketDialog
             {/* Scrollable Updates List */}
             <div className="flex-1 overflow-y-auto">
               <div className="space-y-4 pr-2">
-                {ticketUpdates.map((update: TicketUpdate) => (
+                {localTicketUpdates.map((update: TicketUpdate, index) => (
                   <div 
-                    key={`${update.createdAt}-${update.status}`} 
+                    key={`${update.createdAt}-${update.status}-${index}`} 
                     className="rounded-lg border border-gray-200 bg-white p-4 shadow-none transition-all hover:shadow-sm"
                   >
                     <div className="mb-3 flex items-center justify-between">
@@ -212,7 +226,7 @@ export function TicketDialog({ ticket, onClose, refetch }: Readonly<TicketDialog
                         <span className="rounded-md bg-gray-100 px-3 py-1 text-xs text-gray-700">{update.createdBy}</span>
                       </div>
                       <span className="text-sm text-gray-500">
-                        {prettyFormatDate(update.createdAt!)}
+                        {update.createdAt ? prettyFormatDate(update.createdAt) : "Just now"}
                       </span>
                     </div>
                     <p className="text-base text-gray-700">{update.message}</p>

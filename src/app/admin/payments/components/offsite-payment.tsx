@@ -9,6 +9,7 @@ import { z } from "zod";
 import { Payment } from "@prisma/client";
 import { format } from "date-fns";
 import { FaMoneyBillWave, FaCheck, FaTimes } from "react-icons/fa";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -32,12 +33,37 @@ type NotesFormValues = z.infer<typeof notesSchema>;
 export function OffsitePayment({ payments, isLoading, onVerify, onReject }: Readonly<OffsitePaymentProps>) {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [dialogType, setDialogType] = useState<"verify" | "reject" | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { invalidateQueries } = useQueryClient();
 
   const form = useForm<NotesFormValues>({
     resolver: zodResolver(notesSchema),
     defaultValues: {
       notes: "",
+    },
+  });
+
+  const { mutate: verifyPayment, isPending: isVerifying } = useMutation({
+    mutationKey: ['payments:all', 'orders:all'],  
+    mutationFn: async ({ paymentId, notes }: { paymentId: string; notes: string }) => {
+      return onVerify(paymentId, notes);
+    },
+    onSuccess: () => {
+      handleCloseDialog();
+      invalidateQueries({queryKey: ['payments:all', 'orders:all']});
+    },
+    onError: () => {
+      invalidateQueries({queryKey: ['payments:all', 'orders:all']});
+    }
+  });
+
+  const { mutate: rejectPayment, isPending: isRejecting } = useMutation({
+    mutationKey: ['payments:all'],  
+    mutationFn: async ({ paymentId, notes }: { paymentId: string; notes: string }) => {
+      return onReject(paymentId, notes);
+    },
+    onSuccess: () => {
+      handleCloseDialog();
+      invalidateQueries({ queryKey: ['payments:all', 'orders:all'] });
     },
   });
 
@@ -65,18 +91,10 @@ export function OffsitePayment({ payments, isLoading, onVerify, onReject }: Read
   const onSubmit = async (data: NotesFormValues) => {
     if (!selectedPayment || !dialogType) return;
 
-    setIsSubmitting(true);
-    try {
-      if (dialogType === "verify") {
-        await onVerify(selectedPayment.id, data.notes ?? "");
-      } else {
-        await onReject(selectedPayment.id, data.notes ?? "");
-      }
-      handleCloseDialog();
-    } catch (error) {
-      console.error("Error processing payment:", error);
-    } finally {
-      setIsSubmitting(false);
+    if (dialogType === "verify") {
+      verifyPayment({ paymentId: selectedPayment.id, notes: data.notes ?? "" });
+    } else {
+      rejectPayment({ paymentId: selectedPayment.id, notes: data.notes ?? "" });
     }
   };
 
@@ -96,7 +114,7 @@ export function OffsitePayment({ payments, isLoading, onVerify, onReject }: Read
   );
 
   const getButtonLabel = () => {
-    if (isSubmitting) return "Processing...";
+    if (isVerifying || isRejecting) return "Processing...";
     return dialogType === "verify" ? "Verify Payment" : "Reject Payment";
   };
 
@@ -234,13 +252,13 @@ export function OffsitePayment({ payments, isLoading, onVerify, onReject }: Read
                   type="button"
                   variant="outline"
                   onClick={handleCloseDialog}
-                  disabled={isSubmitting}
+                  disabled={isVerifying || isRejecting}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isVerifying || isRejecting}
                   className={
                     dialogType === "verify"
                       ? "bg-green-600 hover:bg-green-700"

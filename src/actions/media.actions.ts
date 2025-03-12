@@ -8,7 +8,7 @@ export async function deleteProductImages(userId: string, imageUrls: string[]): 
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canUpdate: true },
     }
   })) {
     return {
@@ -49,7 +49,7 @@ export async function uploadProductImages(userId: string, files: File[]): Promis
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canCreate: true, canUpdate: true },
     }
   })) {
     return {

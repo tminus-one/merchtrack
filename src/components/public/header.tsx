@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
-import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 const HeaderLP = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
+  const { isSignedIn } = useUser();
   
   const headerBackground = useTransform(
     scrollY,
@@ -72,7 +73,7 @@ const HeaderLP = () => {
             className="flex items-center gap-4"
           >
             <div className="mr-4 hidden items-center gap-6 sm:flex">
-              {["Products", "Categories", "About", "Contact"].map((item) => (
+              {["About", "Contact"].map((item) => (
                 <motion.div
                   key={item}
                   whileHover={{ y: -2 }}
@@ -89,16 +90,27 @@ const HeaderLP = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <SignInButton mode="modal">
-                <Button variant="outline" size="sm" className="font-semibold">
-                  Sign In
+              {!isSignedIn && (
+                <>
+                  <SignInButton mode="modal" fallbackRedirectUrl='/dashboard'>
+                    <Button variant="outline" size="sm" className="font-semibold">
+                      Sign In
+                    </Button>
+                  </SignInButton>
+                  <SignUpButton mode="modal" fallbackRedirectUrl='/dashboard'>
+                    <Button size="sm" className="font-semibold text-neutral-2">
+                      Sign Up
+                    </Button>
+                  </SignUpButton>
+                </>
+              )}
+              {isSignedIn && (
+                <Button size="sm" className="font-semibold" asChild>
+                  <Link href="/dashboard">
+                    Go to Dashboard
+                  </Link>
                 </Button>
-              </SignInButton>
-              <SignUpButton mode="modal">
-                <Button size="sm" className="font-semibold text-neutral-2">
-                  Sign Up
-                </Button>
-              </SignUpButton>
+              )}
             </div>
           </motion.div>
         </nav>

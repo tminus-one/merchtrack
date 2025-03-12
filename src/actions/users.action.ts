@@ -98,7 +98,7 @@ export async function getUsers({userId, params}: GetUsersParams): Promise<Action
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      users: { canRead: true },
     }
   })) {
     return {
@@ -191,7 +191,7 @@ export async function getUser({userId, limitFields, userLookupId}: GetObjectByTP
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      users: { canRead: true },
     }
   })) {
     return {
@@ -270,7 +270,7 @@ export async function updateUserRole({ userId, currentUserId, role }: UpdateUser
   if (!await verifyPermission({
     userId: currentUserId,
     permissions: {
-      'users': { canUpdate: true }
+      users: { canUpdate: true }
     }
   })) {
     return {

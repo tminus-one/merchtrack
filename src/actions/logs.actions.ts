@@ -108,7 +108,7 @@ export async function getLogs({userId, params = {} }: GetLogsParams): Promise<Ac
   const isAuthorized = await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      logs: { canRead: true },
     },
   });
 

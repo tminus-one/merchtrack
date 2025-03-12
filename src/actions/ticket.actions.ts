@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/db";
 import { invalidateCache } from "@/lib/redis";
 import { ExtendedTicket } from "@/types/tickets";
@@ -106,6 +107,22 @@ export async function createTicket(data: CreateTicketInput): Promise<ActionsRetu
  */
 export async function updateTicket(data: UpdateTicketInput): Promise<ActionsReturnType<ExtendedTicket>> {
   try {
+    const { sessionClaims } = await auth();
+    const isAuthorized = await verifyPermission({
+      userId: sessionClaims?.metadata.data.id as string,
+      permissions: {
+        messages: { canRead: true, canUpdate: true },
+      }
+    });
+
+    if (!isAuthorized) {
+      return {
+        success: false,
+        message: "Unauthorized",
+        errors: { general: "You are not authorized to update this ticket" },
+      };
+    }
+
     const { ticketId, ...updateData } = data;
     
     // Ensure we have a valid ticket ID
@@ -154,6 +171,22 @@ export async function updateTicket(data: UpdateTicketInput): Promise<ActionsRetu
  */
 export async function addTicketUpdate(data: AddTicketUpdateInput): Promise<ActionsReturnType<ExtendedTicket>> {
   try {
+    const { sessionClaims } = await auth();
+    const isAuthorized = await verifyPermission({
+      userId: sessionClaims?.metadata.data.id as string,
+      permissions: {
+        messages: { canRead: true, canUpdate: true },
+      }
+    });
+
+    if (!isAuthorized) {
+      return {
+        success: false,
+        message: "Unauthorized",
+        errors: { general: "You are not authorized to update this ticket" },
+      };
+    }
+
     const validationResult = ticketUpdateSchema.safeParse(data);
     
     if (!validationResult.success) {
@@ -245,7 +278,7 @@ export async function getTickets({userId, params = {}}: GetTicketsParams): Promi
   const isAuthorized = await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      messages: { canRead: true },
     }
   });
 
@@ -310,7 +343,7 @@ export async function getTicketById({ userId, ticketId, limitFields }: GetObject
   const isAuthorized = await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      messages: { canRead: true },
     }
   });
   

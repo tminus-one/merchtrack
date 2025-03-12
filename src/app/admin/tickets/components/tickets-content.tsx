@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useDebounce } from "use-debounce";
+import { Mail } from "lucide-react";
 import { TicketList } from "./ticket-list";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,24 @@ export default function TicketsContent() {
 
   return (
     <div className="space-y-4">
+      {/* Support Info Card */}
+      <Card className="border-blue-200 bg-blue-50 p-4">
+        <div className="mb-2 flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-primary">Customer Support Center</h2>
+        </div>
+        <p className="text-sm text-gray-700">
+          This is the main support page for handling all customer concerns regarding orders, payments, products, and general inquiries. 
+          All support tickets should be processed through this system for proper tracking and resolution.
+        </p>
+        <div className="mt-3 flex items-center text-sm text-gray-700">
+          <Mail className="mr-2 size-4 text-blue-600" />
+          <span>Email support is also available at: </span>
+          <a href="mailto:support@merchtrack.tech" className="ml-1 font-medium text-blue-600 hover:underline">
+            support@merchtrack.tech
+          </a>
+        </div>
+      </Card>
+
       <Card className="p-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
           <div className="flex-1">

@@ -2,6 +2,11 @@
 import { CheckoutForm } from './checkout-form';
 import { OrderSummary } from './order-summary';
 
+export const metadata = {
+  title: 'Checkout | MerchTrack',
+  description: 'Complete your order and checkout securely',
+};
+
 export default async function CheckoutPage() {
 
   return (

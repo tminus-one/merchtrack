@@ -35,7 +35,8 @@ export function PaymentHistory() {
     },
     orderBy: {
       createdAt: 'desc'
-    }
+    },
+    limitFields: ['order', 'user', 'processedById']
   });
 
   const payments = paymentsResponse?.data || [];

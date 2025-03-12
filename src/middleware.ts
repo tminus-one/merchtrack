@@ -38,7 +38,6 @@ const isPublicRoute = createRouteMatcher([
   '/terms-of-service',
   '/privacy-policy',
   '/survey(.*)',
-  '/products(.*)',
 ]);
 
 const isOnboardingRoute = createRouteMatcher([
@@ -50,8 +49,7 @@ const isAdminRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
-  // If visiting a public route, let the user view
-  if (isPublicRoute(req)) return NextResponse.next();
+
 
   const { userId, sessionClaims, redirectToSignIn } = await auth();
 
@@ -68,8 +66,6 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
     return NextResponse.redirect(new URL('/onboarding', req.url));
   }
 
-
-
   // If the user is admin and the route is protected, let them view.
   const isAdmin = sessionClaims?.metadata.data.isAdmin || sessionClaims?.metadata.data.isStaff;
   if (isAdmin && isAdminRoute(req)) return NextResponse.next();
@@ -80,4 +76,7 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
 
   // If the user is logged in and the route is protected, let them view.
   if (userId && !isPublicRoute(req)) return NextResponse.next();
+
+  // If visiting a public route, let the user view
+  if (isPublicRoute(req)) return NextResponse.next();
 });

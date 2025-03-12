@@ -5,7 +5,10 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { $Enums } from "@prisma/client";
-import { MdPayments } from "react-icons/md";
+import { MdPayments, MdOutlineMoneyOff, MdReceipt } from "react-icons/md";
+import { FiChevronDown, FiChevronUp, FiPackage, FiDollarSign } from "react-icons/fi";
+import { LuPhilippinePeso } from "react-icons/lu";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -17,6 +20,8 @@ import { processPayment } from "@/actions/payments.actions";
 import { useUserStore } from "@/stores/user.store";
 import { ExtendedOrder } from "@/types/orders";
 import { cn } from "@/lib/utils";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { useOrderQuery } from "@/hooks/orders.hooks";
 
 const paymentFormSchema = (maxAmount: number, order: ExtendedOrder) => z.object({
   amount: z.number()
@@ -51,12 +56,14 @@ interface OrderPaymentModalProps {
 export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderPaymentModalProps>) {
   const { userId } = useUserStore();
   const queryClient = useQueryClient();
+  const [isOrderItemsOpen, setIsOrderItemsOpen] = React.useState(false);
   
   const remaining = order ? Number(order.totalAmount) - (order.payments?.filter(payment => payment.paymentStatus === 'VERIFIED').reduce((acc, payment) => acc + Number(payment.amount), 0) ?? 0) : 0;
   const minPayment = order?.paymentPreference === 'DOWNPAYMENT' ? remaining * 0.5 : 0;
   
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema(remaining, order!)),
+    mode: 'onBlur',
     defaultValues: {
       amount: minPayment,
       paymentMethod: 'CASH',
@@ -70,7 +77,7 @@ export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderP
   });
 
   const { mutate: submitPayment, isPending } = useMutation({
-    mutationKey: ['payments:all', 'orders:all'],
+    mutationKey: ['payment:process'],
     mutationFn: async (data: PaymentFormValues) => {
       if (!order?.id || !userId) return;
       return processPayment({
@@ -88,8 +95,18 @@ export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderP
       }
 
       toast.success('Payment processed successfully');
+      
+      // Fix invalidation by using correct query keys
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['payments'] });
       queryClient.invalidateQueries({ queryKey: ['orders:all'] });
       queryClient.invalidateQueries({ queryKey: ['payments:all'] });
+      
+      // Specifically invalidate the single order
+      if (order?.id) {
+        queryClient.invalidateQueries({ queryKey: ['orders', order.id] });
+      }
+      
       onOpenChange(false);
     },
     onError: (error) => {
@@ -101,46 +118,110 @@ export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderP
 
   if (!order) return null;
 
+  const totalItems = order.orderItems?.reduce((acc, item) => acc + item.quantity, 0) || 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
+      <DialogContent className="max-h-[80vh] max-w-xl overflow-y-auto bg-neutral-1">
+        <DialogHeader className="rounded-t-lg bg-primary p-4 text-white">
           <DialogTitle className="flex items-center gap-2">
             <MdPayments className="size-5" />
-            Process Payment
+            Process Payment for Order #{order.id}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-4 space-y-6">
-          <div className="rounded-lg border">
-            <div className="border-b p-4">
-              <h3 className="text-sm font-medium">Order Details</h3>
-              <p className="text-muted-foreground mt-1 text-sm">Order #{order.id}</p>
+        <div className="mt-4 space-y-6 px-1">
+          <div className="rounded-lg border border-primary/20 bg-primary/5 shadow-sm">
+            <div className="border-b border-primary/20 bg-primary/10 p-4">
+              <h3 className="flex items-center gap-2 text-sm font-medium text-primary">
+                <MdReceipt className="size-4" />
+                Order Summary
+              </h3>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Customer: {order.customer?.firstName} {order.customer?.lastName}
+              </p>
             </div>
 
             <div className="p-4">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Total Amount</span>
+                  <span className="text-muted-foreground flex items-center gap-1 text-sm">
+                    <LuPhilippinePeso className="size-3.5" />Total Amount
+                  </span>
                   <span className="font-medium">₱{Number(order.totalAmount).toFixed(2)}</span>
                 </div>
+                
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Amount Paid</span>
-                  <span className="font-medium">
+                  <span className="text-muted-foreground flex items-center gap-1 text-sm">
+                    <FiDollarSign className="size-3.5" />Amount Paid
+                  </span>
+                  <span className="font-medium text-green-600">
                     ₱{(Number(order.totalAmount) - remaining).toFixed(2)}
                   </span>
                 </div>
+                
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground text-sm">Remaining</span>
-                  <span className="font-medium">₱{remaining.toFixed(2)}</span>
+                  <span className="text-muted-foreground flex items-center gap-1 text-sm">
+                    <MdOutlineMoneyOff className="size-3.5" />Remaining
+                  </span>
+                  <span className="font-medium text-primary">₱{remaining.toFixed(2)}</span>
                 </div>
+                
                 {order.paymentPreference === 'DOWNPAYMENT' && (
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground text-sm">Minimum Payment Required</span>
-                    <Badge>₱{minPayment.toFixed(2)}</Badge>
+                    <span className="text-muted-foreground flex items-center gap-1 text-sm">Minimum Payment Required</span>
+                    <Badge className="bg-primary/80 hover:bg-primary">₱{minPayment.toFixed(2)}</Badge>
                   </div>
                 )}
               </div>
+              
+              <Collapsible
+                open={isOrderItemsOpen}
+                onOpenChange={setIsOrderItemsOpen}
+                className="mt-4 space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="flex items-center gap-2 text-sm font-medium text-primary">
+                    <FiPackage className="size-4" />
+                    Order Items ({totalItems} items)
+                  </h4>
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="size-8 p-0 hover:bg-primary/10 hover:text-primary"
+                    >
+                      {isOrderItemsOpen ? (
+                        <FiChevronUp className="size-4" />
+                      ) : (
+                        <FiChevronDown className="size-4" />
+                      )}
+                      <span className="sr-only">Toggle items</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                <CollapsibleContent className="space-y-2">
+                  <div className="border-border max-h-40 space-y-2 overflow-y-auto rounded-md border p-2">
+                    {order.orderItems?.map((item, index) => (
+                      <div 
+                        key={item.id || index} 
+                        className="border-b pb-2 text-sm last:border-0 last:pb-0"
+                      >
+                        <div className="flex justify-between">
+                          <span className="font-medium">
+                            {item.variant?.product?.title || 'Unknown Product'}
+                          </span>
+                          <span>₱{Number(item.price).toFixed(2)}</span>
+                        </div>
+                        <div className="text-muted-foreground flex justify-between text-xs">
+                          <span>{item.variant?.variantName || 'Unknown Variant'} × {item.quantity}</span>
+                          <span>₱{(Number(item.price) * item.quantity).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </div>
 
@@ -156,7 +237,8 @@ export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderP
                   
                   return (
                     <FormItem>
-                      <FormLabel>
+                      <FormLabel className="flex items-center gap-1">
+                        <LuPhilippinePeso className="size-3.5" />
                         Payment Amount<span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
@@ -185,65 +267,76 @@ export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderP
                 }}
               />
 
-              <FormField
-                control={form.control}
-                name="paymentMethod"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Method<span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select payment method" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {['CASH', 'BANK_TRANSFER', 'GCASH', 'MAYA', 'OTHERS'].map((method) => (
-                          <SelectItem key={method} value={method}>
-                            {method}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs text-red-500" />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="paymentMethod"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <MdPayments className="size-3.5" />
+                        Payment Method<span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue placeholder="Select payment method" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {['CASH', 'BANK_TRANSFER', 'GCASH', 'MAYA', 'OTHERS'].map((method) => (
+                            <SelectItem key={method} value={method}>
+                              {method}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="paymentSite"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Site<span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select payment site" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {['ONSITE', 'OFFSITE'].map((site) => (
-                          <SelectItem key={site} value={site}>
-                            {site}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs text-red-500" />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="paymentSite"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <FiPackage className="size-3.5" />
+                        Payment Site<span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="bg-white">
+                            <SelectValue placeholder="Select payment site" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {['ONSITE', 'OFFSITE'].map((site) => (
+                            <SelectItem key={site} value={site}>
+                              {site}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs text-red-500" />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
               <FormField
                 control={form.control}
                 name="paymentStatus"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Payment Status<span className="text-red-500">*</span></FormLabel>
+                    <FormLabel className="flex items-center gap-1">
+                      <MdReceipt className="size-3.5" />
+                      Payment Status<span className="text-red-500">*</span>
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-white">
                           <SelectValue placeholder="Select payment status" />
                         </SelectTrigger>
                       </FormControl>
@@ -322,7 +415,7 @@ export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderP
                 )}
               />
 
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 pt-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -331,7 +424,7 @@ export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderP
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isPending}>
+                <Button type="submit" disabled={isPending} className="bg-primary hover:bg-primary/90">
                   {isPending ? "Processing..." : "Process Payment"}
                 </Button>
               </div>
@@ -340,5 +433,43 @@ export function OrderPaymentModal({ open, onOpenChange, order }: Readonly<OrderP
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/**
+ * Component that handles the automatic opening of payment modal based on URL parameters
+ */
+export function OrderPaymentModalWithQueryParams() {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const orderId = searchParams.get('orderId');
+  
+  const { data: order, isLoading } = useOrderQuery(orderId || '');
+  
+  // Open modal automatically if orderId is present in URL
+  React.useEffect(() => {
+    if (orderId && order) {
+      setIsOpen(true);
+    }
+  }, [orderId, order]);
+  
+  // Close modal and clean up URL parameters
+  const handleCloseModal = () => {
+    setIsOpen(false);
+    const basePath = window.location.pathname;
+    router.replace(basePath);
+  };
+  
+  return (
+    <>
+      {!isLoading && orderId && (
+        <OrderPaymentModal
+          open={isOpen}
+          onOpenChange={handleCloseModal}
+          order={order!}
+        />
+      )}
+    </>
   );
 }

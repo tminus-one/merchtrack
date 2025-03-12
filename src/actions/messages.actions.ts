@@ -13,7 +13,7 @@ export const getMessage = async (params: GetObjectByTParams<"messageId">): Promi
   const isAuthorized = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canRead: true },
+      messages: { canRead: true },
     }
   });
   if (!isAuthorized) {
@@ -73,7 +73,7 @@ export const getMessages = async (
   const isAuthorized = await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      messages: { canRead: true },
     }
   });
 

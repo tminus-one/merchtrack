@@ -16,7 +16,6 @@ import {
 import SupportModal from './support-modal';
 import { useTicketsQuery } from '@/hooks/tickets.hooks';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -298,92 +297,96 @@ export default function MyTickets() {
       
       {/* Ticket Detail Drawer */}
       <Drawer open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DrawerContent className="mx-auto max-h-[90vh] max-w-5xl antialiased">
-          <DrawerHeader>
-            <DrawerTitle>
-              {selectedTicketData ? 'Ticket Details' : 'Create Support Ticket'}
-            </DrawerTitle>
-            <DrawerDescription>
-              {selectedTicketData 
-                ? 'View the details and updates for your support ticket' 
-                : 'Create a new support ticket by contacting our team'}
-            </DrawerDescription>
-          </DrawerHeader>
-          
-          {selectedTicketData ? (
-            <div className="px-4 py-2">
-              <div className="mb-4">
-                <h3 className="text-xl font-semibold">{selectedTicketData.title}</h3>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {getStatusBadge(selectedTicketData.status)}
-                  {getPriorityBadge(selectedTicketData.priority)}
-                  <span className="self-end text-xs text-gray-500">
-                    Created on {format(new Date(selectedTicketData.createdAt), 'MMMM d, yyyy')}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="mb-6 rounded-md bg-gray-50 p-3">
-                <h4 className="mb-1 font-medium text-gray-700">Description</h4>
-                <p className="whitespace-pre-wrap text-sm text-gray-600">{selectedTicketData.description}</p>
-              </div>
-              
-              {updates.length > 0 ? (
-                <div className="mb-4">
-                  <h4 className="mb-2 font-medium text-gray-700">Updates</h4>
-                  <ScrollArea className="h-[300px] rounded-md border p-2">
-                    <div className="space-y-3">
-                      {updates.map((update, index) => (
-                        <div key={index} className="rounded-md bg-white p-3 shadow-sm">
-                          <div className="mb-1 flex items-center justify-between">
-                            <div className='space-x-2'>
-                              <span className="text-sm font-medium">{getStatusBadge(update.status)}</span>
-                              <span className="rounded-md bg-gray-100 px-3 py-1 text-xs text-black">{update.createdBy}</span>
-                            </div>
-                            <span className="text-xs text-gray-500">
-                              {update.createdAt ? format(new Date(update.createdAt), 'MMM d, yyyy h:mm a') : 'N/A'}
-                            </span>
-                          </div>
-                          <p className="whitespace-pre-wrap text-sm text-gray-600">{update.message}</p>
-                        </div>
-                      ))}
+        <DrawerContent className="mx-auto h-[90vh] max-w-5xl">
+          <div className="flex h-full flex-col overflow-hidden">
+            <DrawerHeader className="flex-none">
+              <DrawerTitle>
+                {selectedTicketData ? 'Ticket Details' : 'Create Support Ticket'}
+              </DrawerTitle>
+              <DrawerDescription>
+                {selectedTicketData 
+                  ? 'View the details and updates for your support ticket' 
+                  : 'Create a new support ticket by contacting our team'}
+              </DrawerDescription>
+            </DrawerHeader>
+            
+            <div className="flex-1 overflow-y-auto px-4">
+              {selectedTicketData ? (
+                <div className="py-2">
+                  <div className="mb-4">
+                    <h3 className="text-xl font-semibold">{selectedTicketData.title}</h3>
+                    <div className="mt-1 flex flex-wrap gap-2">
+                      {getStatusBadge(selectedTicketData.status)}
+                      {getPriorityBadge(selectedTicketData.priority)}
+                      <span className="self-end text-xs text-gray-500">
+                        Created on {format(new Date(selectedTicketData.createdAt), 'MMMM d, yyyy')}
+                      </span>
                     </div>
-                  </ScrollArea>
+                  </div>
+                  
+                  <div className="mb-6 rounded-md bg-gray-50 p-3">
+                    <h4 className="mb-1 font-medium text-gray-700">Description</h4>
+                    <p className="whitespace-pre-wrap text-sm text-gray-600">{selectedTicketData.description}</p>
+                  </div>
+                  
+                  {updates.length > 0 ? (
+                    <div className="mb-4">
+                      <h4 className="mb-2 font-medium text-gray-700">Updates</h4>
+                      <div className="rounded-md border p-2">
+                        <div className="space-y-3">
+                          {updates.map((update, index) => (
+                            <div key={index} className="rounded-md bg-white p-3 shadow-sm">
+                              <div className="mb-1 flex items-center justify-between">
+                                <div className='space-x-2'>
+                                  <span className="text-sm font-medium">{getStatusBadge(update.status)}</span>
+                                  <span className="rounded-md bg-gray-100 px-3 py-1 text-xs text-black">{update.createdBy}</span>
+                                </div>
+                                <span className="text-xs text-gray-500">
+                                  {update.createdAt ? format(new Date(update.createdAt), 'MMM d, yyyy h:mm a') : 'N/A'}
+                                </span>
+                              </div>
+                              <p className="whitespace-pre-wrap text-sm text-gray-600">{update.message}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Alert className="mb-4 bg-blue-50">
+                      <Info className="size-4 text-blue-600" />
+                      <AlertDescription className="text-sm text-blue-700">
+                        No updates have been added to this ticket yet.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               ) : (
-                <Alert className="mb-4 bg-blue-50">
-                  <Info className="size-4 text-blue-600" />
-                  <AlertDescription className="text-sm text-blue-700">
-                    No updates have been added to this ticket yet.
-                  </AlertDescription>
-                </Alert>
+                <div className="px-4 py-2">
+                  <Alert className="mb-6 border-amber-200 bg-amber-50">
+                    <Info className="size-4 text-amber-600" />
+                    <AlertDescription className="text-sm text-amber-700">
+                      To create a new support ticket, please use the contact form below. Our team will respond as soon as possible.
+                    </AlertDescription>
+                  </Alert>
+                  
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={handleSupportModalOpen}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Open Contact Form
+                    </Button>
+                  </div>
+                </div>
               )}
             </div>
-          ) : (
-            <div className="px-4 py-2">
-              <Alert className="mb-6 border-amber-200 bg-amber-50">
-                <Info className="size-4 text-amber-600" />
-                <AlertDescription className="text-sm text-amber-700">
-                  To create a new support ticket, please use the contact form below. Our team will respond as soon as possible.
-                </AlertDescription>
-              </Alert>
-              
-              <div className="flex justify-center">
-                <Button
-                  onClick={handleSupportModalOpen}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  Open Contact Form
-                </Button>
-              </div>
-            </div>
-          )}
-          
-          <DrawerFooter>
-            <DrawerClose asChild>
-              <Button variant="outline">Close</Button>
-            </DrawerClose>
-          </DrawerFooter>
+            
+            <DrawerFooter className="flex-none">
+              <DrawerClose asChild>
+                <Button variant="outline">Close</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </div>
         </DrawerContent>
       </Drawer>
       

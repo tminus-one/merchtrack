@@ -1,4 +1,4 @@
-import Footer from "@/components/public/footer";
+import Footer from "@/components/protected/footer";
 import HeaderLP from "@/components/public/header";
 
 

@@ -52,17 +52,6 @@ export async function getProducts(
   userId: string,
   params: QueryParams = {}
 ): Promise<ActionsReturnType<PaginatedResponse<ExtendedProduct[]>>> {
-  // if (!await verifyPermission({
-  //   userId: userId,
-  //   permissions: {
-  //     dashboard: { canRead: true },
-  //   }
-  // })) {
-  //   return {
-  //     success: false,
-  //     message: "You are not authorized to view products."
-  //   };
-  // }
 
   const { skip, take, page } = calculatePagination(params);
   const cacheKey = `products:${page}:${take}:${JSON.stringify(params.where)}:${JSON.stringify(params.orderBy)}`;
@@ -172,7 +161,7 @@ export async function getProductById({ userId, limitFields, productId }: GetObje
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canRead: true },
     }
   })) {
     return {
@@ -255,15 +244,45 @@ export async function getProductBySlug({ limitFields, slug }: GetObjectByTParams
       product = await prisma.product.findUnique({
         where: { slug },
         include: {
-          category: true,
-          postedBy: true,
-          // reviews: {
-          //   include: {
-          //     user: true,
-          //   }
-          // },
-          variants: true
-        }
+          category: {
+            select: { name: true }
+          },
+          postedBy: {
+            select: {
+              firstName: true,
+              lastName: true,
+              clerkId: true,
+              email: true,
+              college: true,  // Add college field
+              role: true     // Add role field
+            }
+          },
+          reviews: {
+            select: {
+              rating: true,
+              createdAt: true,
+              comment: true,
+              user: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  clerkId: true,
+                  email: true
+                }
+              }
+            }
+          },
+          variants: {
+            select: {
+              id: true,
+              variantName: true,
+              price: true,
+              rolePricing: true,
+              createdAt: true,
+              updatedAt: true
+            }
+          }
+        },
       });
       await setCached(`product:${slug}`, product);
     }
@@ -299,7 +318,18 @@ export async function getProductReviewsBySlug({ limitFields, slug }: GetObjectBy
         select: {
           reviews: {
             include: {
-              user: true
+              user: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  clerkId: true,
+                  college: true,
+                  role: true
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc'
             }
           }
         }
