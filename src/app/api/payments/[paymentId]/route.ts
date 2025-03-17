@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { processActionReturnData } from "@/utils";
 
-export async function POST (req: NextRequest, params: Promise<{ params: { paymentId: string } }>) {
-  const { params: { paymentId } } = await params;
+export async function POST(req: NextRequest, { params }: { params: { paymentId: string } }) {
+  const { paymentId } = params;
   const { include, limitFields } = await req.json();
 
   try {
