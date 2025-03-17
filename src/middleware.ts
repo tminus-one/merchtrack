@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
+import * as jose from 'jose';
 
 /**
  * Configuration object used to define routing and matching rules.
@@ -48,8 +49,65 @@ const isAdminRoute = createRouteMatcher([
   '/admin(.*)',
 ]);
 
+const isApiRoute = createRouteMatcher([
+  '/api(.*)',
+]);
+
+/**
+ * Verifies JWT token from API requests
+ * 
+ * @param req - The incoming API request
+ * @returns NextResponse object or null if verification succeeds
+ */
+async function verifyApiJwt(req: NextRequest): Promise<NextResponse | null> {
+  const authorization = req.headers.get("Authorization");
+  if (!authorization) {
+    return NextResponse.json({
+      status: 401,
+      message: "Unauthorized",
+    });
+  }
+  
+  try {
+    const token = authorization.split(" ")[1];
+    const jwtKey = process.env.JWT_KEY ?? '';
+    if (!jwtKey) {
+      return NextResponse.json({
+        status: 500,
+        message: "Server configuration error",
+      }, { status: 500 });
+    }
+    
+    const secret = new TextEncoder().encode(jwtKey);
+    const verifyResult = await jose.jwtVerify(token, secret);
+    
+    // Add the verified payload to request headers for downstream handlers
+    const requestHeaders = new Headers(req.headers);
+    requestHeaders.set('x-auth-user', JSON.stringify(verifyResult.payload));
+    
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  } catch {
+    return NextResponse.json({
+      status: 401,
+      message: "Invalid token",
+    }, { status: 401 });
+  }
+}
+
 export default clerkMiddleware(async (auth, req: NextRequest) => {
 
+  if (isApiRoute(req)) {
+    // Call the extracted verification function
+    const verificationResult = await verifyApiJwt(req);
+    if (verificationResult) {
+      return verificationResult;
+    }
+    // If verificationResult is null, continue with middleware execution
+  }
 
   const { userId, sessionClaims, redirectToSignIn } = await auth();
 
@@ -80,3 +138,5 @@ export default clerkMiddleware(async (auth, req: NextRequest) => {
   // If visiting a public route, let the user view
   if (isPublicRoute(req)) return NextResponse.next();
 });
+
+

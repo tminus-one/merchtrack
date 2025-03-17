@@ -24,3 +24,17 @@ export type PaginatedResponse<T> = {
     hasPrevPage: boolean;
   };
 };
+
+export type ApiResponse<T> = {
+  success: boolean;
+  message?: string;
+  errors?: string[];
+  data?: T;
+  metadata?: {
+    total: number;
+    page: number;
+    lastPage: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
+};
