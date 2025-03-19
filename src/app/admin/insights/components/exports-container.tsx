@@ -74,7 +74,11 @@ export default function ExportsContainer() {
   const { data: products } = useQuery({
     queryKey: ['products-for-export'],
     queryFn: async () => {
-      const response = await fetch('/api/products/list');
+      const response = await fetch('/api/products/list', {
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
+        }
+      });
       if (!response.ok) throw new Error('Failed to fetch products');
       return response.json();
     },
