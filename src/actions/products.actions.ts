@@ -279,7 +279,8 @@ export async function getProductBySlug({ limitFields, slug }: GetObjectByTParams
               price: true,
               rolePricing: true,
               createdAt: true,
-              updatedAt: true
+              updatedAt: true,
+              inventory: true,
             }
           }
         },

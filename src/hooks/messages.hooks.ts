@@ -82,7 +82,12 @@ export function useUserImageQuery(clerkId: string | undefined) {
     enabled: clerkId !== undefined,
     queryKey: [`users:${clerkId}`],
     queryFn: async () => {
-      const response = await fetch(`/api/users/image/${clerkId}`);
+      const response = await fetch(`/api/users/image/${clerkId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_API_KEY}`,
+        },
+      });
       if (!response.ok) {
         throw new Error('Error fetching user image');
       }

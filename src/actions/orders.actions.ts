@@ -413,3 +413,119 @@ export async function updateOrder(params: {
     };
   }
 }
+
+type PendingOrdersResponse = PaginatedResponse<ExtendedOrder[]>;
+
+/**
+ * Retrieves orders with pending or downpayment status for payment reminders.
+ * 
+ * @param userId - The ID of the user requesting the orders
+ * @param params - Query parameters for pagination
+ * @returns Promise with paginated orders that need payment reminders
+ */
+export async function getPendingPaymentOrders(
+  userId: string,
+  params: QueryParams = {}
+): Promise<ActionsReturnType<PendingOrdersResponse>> {
+  const isAuthorized = await verifyPermission({
+    userId,
+    permissions: {
+      dashboard: { canRead: true },
+    }
+  });
+
+  if (!isAuthorized) {
+    return {
+      success: false,
+      message: "You are not authorized to view orders."
+    };
+  }
+
+  const { skip, take, page } = calculatePagination(params);
+  const cacheKey = `pending-payment-orders:${page}:${take}`;
+
+  try {
+    let orders = await getCached(cacheKey);
+    let total = await getCached('pending-payment-orders:total');
+
+    if (!orders || !total) {
+      [orders, total] = await prisma.$transaction([
+        prisma.order.findMany({
+          where: {
+            paymentStatus: {
+              in: ['PENDING', 'DOWNPAYMENT']
+            },
+            status: {
+              not: 'CANCELLED'
+            }
+          },
+          include: {
+            customer: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true
+              }
+            },
+            orderItems: {
+              include: {
+                variant: {
+                  include: {
+                    product: {
+                      select: {
+                        title: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          skip,
+          take
+        }),
+        prisma.order.count({
+          where: {
+            paymentStatus: {
+              in: ['PENDING', 'DOWNPAYMENT']
+            },
+            status: {
+              not: 'CANCELLED'
+            }
+          }
+        })
+      ]);
+
+      await Promise.all([
+        setCached(cacheKey, orders),
+        setCached('pending-payment-orders:total', total)
+      ]);
+    }
+
+    const lastPage = Math.ceil(total as number / take);
+
+    return {
+      success: true,
+      data: {
+        data: processActionReturnData(orders, params.limitFields) as ExtendedOrder[],
+        metadata: {
+          total: total as number,
+          page,
+          lastPage,
+          hasNextPage: page < lastPage,
+          hasPrevPage: page > 1
+        }
+      }
+    };
+
+  } catch (error) {
+    return {
+      success: false,
+      message: "Error fetching pending payment orders.",
+      errors: { error }
+    };
+  }
+}
