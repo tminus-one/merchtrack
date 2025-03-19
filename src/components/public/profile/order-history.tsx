@@ -1,24 +1,31 @@
 'use client';
 
-import { Package, ClipboardList, Search } from 'lucide-react';
+import { toast } from 'sonner';
+import { FaStar } from "react-icons/fa";
+import { Package, ClipboardList, Search, CircleAlert } from 'lucide-react';
 import { OrderStatus } from '@prisma/client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState } from 'react';
+
 import MyProfileSideBar from './my-profile-sidebar';
 import { OrderDetailsDialog } from './order-details-dialog';
 import { PaymentDialog } from './payment-dialog';
-
 import { useOrdersQuery } from '@/hooks/orders.hooks';
 import { useUserStore } from '@/stores/user.store';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/format';
+import { cn } from '@/lib/utils';
+
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { markOrderAsReceived } from "@/app/user/orders/_actions";
 
 const getOrderStatusStyle = (status: OrderStatus) => {
   switch (status) {
@@ -53,6 +60,9 @@ export function OrderHistory() {
     },
     orderBy: {
       createdAt: 'desc'
+    },
+    include: {
+      CustomerSatisfactionSurvey: true,
     }
   });
 
@@ -72,6 +82,28 @@ export function OrderHistory() {
     setIsPaymentModalOpen(false);
     setSelectedOrderId(null);
     refetch();
+  };
+
+  const handleMarkAsReceived = async (orderId: string) => {
+    try {
+      const result = await markOrderAsReceived(orderId, userId!);
+      if (result.success) {
+        toast.success('Order marked as received! A survey has been generated for your feedback.');
+        refetch();
+      } else {
+        toast.error(result.message || 'Failed to mark order as received');
+      }
+    } catch {
+      toast.error('An error occurred while marking the order as received');
+    }
+  };
+
+  const handleTakeSurvey = (surveyId: string) => {
+    window.location.href = `/survey?id=${surveyId}`;
+  };
+
+  const handleReviewProduct = (productId: string) => {
+    window.location.href = `/products/${productId}#reviews`;
   };
 
   return (
@@ -171,21 +203,75 @@ export function OrderHistory() {
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                           {(order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') ? (
                             <Button 
-                              variant="secondary"
-                              className="bg-orange-50 text-orange-600 hover:bg-orange-100 hover:text-orange-700"
+                              variant="outline"
+                              className="border-red-500 bg-red-50 text-red-600 hover:bg-red-100 hover:text-orange-700"
                               onClick={() => handlePaymentModalOpen(order.id)}
                             >
+                              <CircleAlert className="mr-2 size-4" />
                               Complete Payment
                             </Button>
                           ) : (
-                            <Button 
-                              variant="outline" 
-                              className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-                            >
-                              <Link href={`/track-order?id=${order.id}`}>
-                                Track Order
-                              </Link>
-                            </Button>
+                            <>
+                              {order.status === 'READY' && (
+                                <Button
+                                  onClick={() => handleMarkAsReceived(order.id)}
+                                  variant="outline"
+                                  className="border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+                                >
+                                  Mark as Received
+                                </Button>
+                              )}
+                              
+                              {order.status === 'DELIVERED' && (
+                                <>
+                                  {!order.CustomerSatisfactionSurvey?.[0]?.metadata && (<Button
+                                    onClick={() => handleTakeSurvey(order.CustomerSatisfactionSurvey?.[0]?.id ?? '')}
+                                    variant="outline"
+                                    className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                                  >
+                                    Take Survey
+                                  </Button>)}
+                                  
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className="border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-800"
+                                      >
+                                        <FaStar className="mr-2" /> Review Items
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="bg-white">
+                                      {order.orderItems.map((item) => (
+                                        <DropdownMenuItem
+                                          key={item.id}
+                                          onClick={() => item.variant?.product?.slug && handleReviewProduct(item.variant.product.slug)}
+                                          className="transition-color flex cursor-pointer items-center hover:bg-primary-200"
+                                        >
+                                          <Image
+                                            src={item.variant?.product?.imageUrl?.[0] || '/img/profile-placeholder-img.png'}
+                                            alt={item.variant?.product?.title || 'Product'}
+                                            width={32}
+                                            height={32}
+                                            className="mr-2 size-8 rounded object-cover"
+                                          />
+                                          <span>{item.variant?.product?.title || 'Product'}</span>
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </>
+                              )}
+
+                              {order.status === OrderStatus.PROCESSING && (<Button 
+                                variant="outline" 
+                                className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
+                              >
+                                <Link href={`/track-order?id=${order.id}`}>
+                                  Track Order
+                                </Link>
+                              </Button>)}
+                            </>
                           )}
                         </div>
                       </div>

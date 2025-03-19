@@ -80,9 +80,9 @@ export function SurveyForm({ category, form, onSubmit, isPending = false, varian
                           variant="ghost"
                           size="lg"
                           className={cn(
-                            "relative size-10 text-primary rounded-full transition-all",
+                            "relative size-10 text-yellow-500 rounded-full transition-all",
                             form.watch(`answers.${question.id}`) === score && 
-                            "bg-primary text-neutral-2"
+                            "bg-yellow-500 text-neutral-2"
                           )}
                           onClick={() => handleStarClick(question.id, score)}
                         >

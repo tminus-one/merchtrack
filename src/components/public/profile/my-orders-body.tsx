@@ -1,10 +1,11 @@
 'use client';
+
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { OrderStatus, OrderPaymentStatus } from '@prisma/client';
-import { FaBoxes, FaShoppingBag, FaCheckCircle, FaClock, FaTimesCircle, FaSearch } from 'react-icons/fa';
+import { FaBoxes, FaShoppingBag, FaCheckCircle, FaClock, FaTimesCircle, FaSearch, FaStar } from 'react-icons/fa';
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,8 @@ import { formatCurrency, formatDistanceToNow } from "@/utils/format";
 import { PaymentDialog } from '@/components/public/profile/payment-dialog';
 import { cn } from '@/lib/utils';
 import { ExtendedOrder } from '@/types/orders';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { markOrderAsReceived } from "@/components/public/profile/_actions";
 
 // Helper data
 const STATUS_TABS = [
@@ -147,6 +150,30 @@ function MyOrdersBody() {
   
   const tabCounts = getTabCounts();
 
+  const handleMarkAsReceived = async (orderId: string) => {
+    if (!userId) return;
+    
+    try {
+      const result = await markOrderAsReceived(orderId, userId);
+      if (result.success) {
+        toast.success('Order marked as received! A survey has been generated for your feedback.');
+        refetch();
+      } else {
+        toast.error(result.message || 'Failed to mark order as received');
+      }
+    } catch {
+      toast.error('An error occurred while marking the order as received');
+    }
+  };
+
+  const handleTakeSurvey = (orderId: string) => {
+    window.location.href = `/survey?orderId=${orderId}`;
+  };
+
+  const handleReviewProduct = (productId: string) => {
+    window.location.href = `/shop/product/${productId}#reviews`;
+  };
+
   return (
     <div className="container mx-auto my-4 px-4 pb-16 sm:my-8 sm:px-6 lg:pb-8 xl:px-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
@@ -270,7 +297,58 @@ function MyOrdersBody() {
                                   </div>
                                 </div>
                                 
-                                <div className="mt-2 flex md:mt-0">
+                                <div className="mt-2 flex gap-2 md:mt-0">
+                                  {order.status === 'READY' && (
+                                    <Button
+                                      onClick={() => handleMarkAsReceived(order.id)}
+                                      variant="outline"
+                                      className="w-full border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 md:w-auto"
+                                    >
+                                      Mark as Received
+                                    </Button>
+                                  )}
+                                  
+                                  {order.status === 'DELIVERED' && (
+                                    <>
+                                      <Button
+                                        onClick={() => handleTakeSurvey(order.id)}
+                                        variant="outline"
+                                        className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 md:w-auto"
+                                      >
+                                        Take Survey
+                                      </Button>
+                                      
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            className="w-full border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-800 md:w-auto"
+                                          >
+                                            <FaStar className="mr-2" /> Review Items
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          {order.orderItems.map((item) => (
+                                            <DropdownMenuItem
+                                              key={item.id}
+                                              onClick={() => item.variant?.product?.id && handleReviewProduct(item.variant.product.id)}
+                                              className="flex items-center"
+                                            >
+                                              <Image
+                                                src={item.variant?.product?.imageUrl?.[0] || '/img/profile-placeholder-img.png'}
+                                                alt={item.variant?.product?.title || 'Product'}
+                                                width={32}
+                                                height={32}
+                                                className="mr-2 size-8 rounded object-cover"
+                                              />
+                                              <span>{item.variant?.product?.title || 'Product'}</span>
+                                            </DropdownMenuItem>
+                                          ))}
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </>
+                                  )}
+
                                   <Button 
                                     onClick={() => {
                                       if (order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') {

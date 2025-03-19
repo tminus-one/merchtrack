@@ -34,6 +34,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Role } from '@/types/Misc';
 
 interface PaymentDialogProps {
   open: boolean;
@@ -100,7 +101,7 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
     } else {
       // For downpayment, use the custom amount or default to 0
       const customAmount = form.getValues('customAmount');
-      setPaymentAmount(customAmount || 0);
+      setPaymentAmount(customAmount ?? 0);
     }
   }, [paymentType, remainingAmount, form]);
 
@@ -313,14 +314,14 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
                                   Full Payment ({formatCurrency(remainingAmount)})
                                 </FormLabel>
                               </FormItem>
-                              <FormItem className="flex items-center space-x-3 space-y-0">
+                              {order.customer.role === Role.PLAYER && (<FormItem className="flex items-center space-x-3 space-y-0">
                                 <FormControl>
                                   <RadioGroupItem value="DOWNPAYMENT" />
                                 </FormControl>
                                 <FormLabel className="font-normal">
                                   Downpayment (Enter amount)
                                 </FormLabel>
-                              </FormItem>
+                              </FormItem>)}
                             </RadioGroup>
                           </FormControl>
                           <FormMessage />
