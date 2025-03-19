@@ -22,7 +22,8 @@ interface OrderStatusEmailProps {
   newStatus: OrderStatus;
   surveyLink?: string;
   order: ExtendedOrder;
-};
+  reason?: string;
+}
 
 export const OrderStatusEmail = ({
   orderNumber,
@@ -30,6 +31,7 @@ export const OrderStatusEmail = ({
   newStatus,
   surveyLink,
   order,
+  reason
 }: OrderStatusEmailProps) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -40,12 +42,16 @@ export const OrderStatusEmail = ({
 
   const getStatusMessage = () => {
     switch (newStatus) {
+    case OrderStatus.PENDING:
+      return "Your order is being processed. We'll notify you once it's ready.";
     case OrderStatus.PROCESSING:
       return "We're now processing your order and preparing your items.";
     case OrderStatus.READY:
       return "Your order is now ready for pickup/delivery!";
     case OrderStatus.DELIVERED:
       return "Your order has been completed! We'd love to hear your feedback.";
+    case OrderStatus.CANCELLED:
+      return "Your order has been cancelled. If you have any questions, please contact us.";
     default:
       return "";
     }
@@ -96,6 +102,13 @@ export const OrderStatusEmail = ({
               </Text>
               <Text style={statusMessage}>{getStatusMessage()}</Text>
             </Section>
+
+            {reason && (
+              <Section style={reasonSection}>
+                <Text style={reasonTitle}>Additional Information:</Text>
+                <Text style={reasonText}>{reason}</Text>
+              </Section>
+            )}
 
             <Section style={orderInfo}>
               <Row style={infoRow}>
@@ -256,7 +269,7 @@ const container = {
 };
 
 const header = {
-  backgroundColor: "#5046e4",
+  backgroundColor: "#2C59DB",
   padding: "24px",
   textAlign: "center" as const,
 };
@@ -299,7 +312,7 @@ const statusSection = {
 const statusBadge = {
   display: "inline-block",
   padding: "6px 12px",
-  backgroundColor: "#5046e4",
+  backgroundColor: "#2C59DB",
   color: "#ffffff",
   borderRadius: "16px",
   fontSize: "14px",
@@ -329,7 +342,7 @@ const surveyText = {
 };
 
 const button = {
-  backgroundColor: "#5046e4",
+  backgroundColor: "#2C59DB",
   borderRadius: "6px",
   color: "#fff",
   fontSize: "16px",
@@ -345,7 +358,7 @@ const button = {
 
 const callToAction = {
   fontSize: "16px",
-  color: "#5046e4",
+  color: "#2C59DB",
   margin: "32px 0",
   textAlign: "center" as const,
   fontWeight: "500",
@@ -493,7 +506,7 @@ const totalLabel = {
 const totalAmount = {
   fontSize: "18px",
   fontWeight: "600",
-  color: "#5046e4",
+  color: "#2C59DB",
   margin: "0",
   textAlign: "right" as const,
 };
@@ -530,7 +543,7 @@ const buttonContainer = {
 };
 
 const link = {
-  color: "#5046e4",
+  color: "#2C59DB",
   textDecoration: "none",
   fontWeight: "500",
 };
@@ -561,6 +574,28 @@ const footerCopyright = {
   color: "#9ca3af",
   margin: "16px 0 0",
   textAlign: "center" as const,
+};
+
+const reasonSection = {
+  margin: '24px 0',
+  padding: '16px',
+  backgroundColor: '#f8fafc',
+  borderRadius: '8px',
+  border: '1px solid #e2e8f0',
+};
+
+const reasonTitle = {
+  fontSize: '16px',
+  color: '#1a1a1a',
+  fontWeight: '600',
+  margin: '0 0 8px',
+};
+
+const reasonText = {
+  fontSize: '14px',
+  color: '#4a5568',
+  margin: '0',
+  whiteSpace: 'pre-wrap' as const,
 };
 
 export default OrderStatusEmail;

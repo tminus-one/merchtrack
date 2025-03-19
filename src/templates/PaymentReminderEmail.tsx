@@ -9,29 +9,25 @@ import {
   Text,
   Hr,
   Img,
+  Button,
 } from "@react-email/components";
+import { OrderPaymentStatus } from "@prisma/client";
 
-interface PaymentStatusEmailProps {
+interface PaymentReminderEmailProps {
   orderNumber: string;
   customerName: string;
   amount: number;
-  status: 'verified' | 'refunded' | 'declined';
-  refundReason?: string;
-  refundDetails?: {
-    remainingBalance?: number;
-    refundMethod?: string;
-    estimatedProcessingTime?: string;
-  };
+  paymentStatus: OrderPaymentStatus;
+  dueDate?: Date;
 }
 
-export const PaymentStatusEmail = ({
+export const PaymentReminderEmail = ({
   orderNumber,
   customerName,
   amount,
-  status,
-  refundReason,
-  refundDetails
-}: PaymentStatusEmailProps) => {
+  paymentStatus,
+  dueDate,
+}: PaymentReminderEmailProps) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -40,35 +36,20 @@ export const PaymentStatusEmail = ({
   };
 
   const getStatusMessage = () => {
-    switch (status) {
-    case 'verified':
-      return `Your payment of ${formatPrice(amount)} for order #${orderNumber} has been verified successfully.`;
-    case 'refunded':
-      return `A refund of ${formatPrice(amount)} for order #${orderNumber} has been processed.`;
-    case 'declined':
-      return `Your payment of ${formatPrice(amount)} for order #${orderNumber} has been declined.`;
+    switch (paymentStatus) {
+    case 'PENDING':
+      return `We haven't received your payment of ${formatPrice(amount)} for order #${orderNumber} yet.`;
+    case 'DOWNPAYMENT':
+      return `We've received your downpayment, but the remaining balance of ${formatPrice(amount)} for order #${orderNumber} is still pending.`;
     default:
       return "";
-    }
-  };
-
-  const getHeaderMessage = () => {
-    switch (status) {
-    case 'verified':
-      return '✅ Payment Verified';
-    case 'refunded':
-      return '💰 Payment Refunded';
-    case 'declined':
-      return '❌ Payment Declined';
-    default:
-      return '';
     }
   };
 
   return (
     <Html>
       <Head />
-      <Preview>Payment {status === 'verified' ? 'Verification' : status === 'refunded' ? 'Refund' : 'Declined'} - Order #{orderNumber}</Preview>
+      <Preview>Payment Reminder - Order #{orderNumber}</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={header}>
@@ -86,98 +67,63 @@ export const PaymentStatusEmail = ({
 
           <Section style={contentContainer}>
             <Heading style={h1}>
-              {getHeaderMessage()} - Order #{orderNumber}
+              ⚠️ Payment Reminder - Order #{orderNumber}
             </Heading>
             
             <Text style={greeting}>Hi {customerName},</Text>
             
             <Section style={statusSection}>
               <Text style={statusMessage}>{getStatusMessage()}</Text>
-              
-              {status === 'refunded' && refundReason && (
+              {dueDate && (
                 <Text style={text}>
-                  <strong>Reason for refund:</strong> {refundReason}
+                  <strong>Due Date:</strong> {dueDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
                 </Text>
               )}
             </Section>
 
-            {status === 'verified' && (
-              <Section style={infoSection}>
+            <Section style={infoSection}>
+              <Text style={text}>
+                Please complete your payment to avoid any delays in processing your order. You can make your payment through any of our available payment methods.
+              </Text>
+              {paymentStatus === 'DOWNPAYMENT' && (
                 <Text style={text}>
-                  We&apos;ll start processing your order right away. You&apos;ll receive another email when your order status changes.
+                  <strong>Note:</strong> Your order is currently on hold until we receive the full payment.
                 </Text>
-              </Section>
-            )}
+              )}
+            </Section>
 
-            {status === 'refunded' && (
-              <Section style={infoSection}>
-                <Text style={text}>
-                  The refund has been initiated and should be reflected in your account within 3-5 business days, depending on your payment method.
-                </Text>
-              </Section>
-            )}
-
-            {status === 'refunded' && (
-              <Section style={refundSection}>
-                <Text style={refundTitle}>Refund Details</Text>
-                <Text style={text}>
-                  <strong>Amount Refunded:</strong> {formatPrice(amount)}
-                </Text>
-                {refundReason && (
-                  <Text style={text}>
-                    <strong>Reason for Refund:</strong> {refundReason}
-                  </Text>
-                )}
-                {refundDetails && (
-                  <>
-                    {refundDetails.remainingBalance !== undefined && (
-                      <Text style={text}>
-                        <strong>Remaining Balance:</strong> {formatPrice(refundDetails.remainingBalance)}
-                      </Text>
-                    )}
-                    {refundDetails.refundMethod && (
-                      <Text style={text}>
-                        <strong>Refund Method:</strong> {refundDetails.refundMethod}
-                      </Text>
-                    )}
-                    {refundDetails.estimatedProcessingTime && (
-                      <Text style={text}>
-                        <strong>Estimated Processing Time:</strong> {refundDetails.estimatedProcessingTime}
-                      </Text>
-                    )}
-                  </>
-                )}
-                <Text style={refundNote}>
-                  Note: Refund processing times may vary depending on your payment method and financial institution.
-                </Text>
-              </Section>
-            )}
+            <Section style={buttonContainer}>
+              <Text style={callToAction}>
+                Visit our website to complete your payment or check your order status
+              </Text>
+              <Button
+                href="https://merchtrack.tech/my-account/orders"
+                style={button}
+              >
+                Complete Payment
+              </Button>
+            </Section>
 
             <Hr style={divider} />
 
             <Section style={faqSection}>
-              <Heading style={h2}>Frequently Asked Questions</Heading>
-              <div style={faqItem}>
-                <Text style={faqQuestion}>How long does payment verification take?</Text>
-                <Text style={faqAnswer}>Payment verification usually takes 1-2 business days depending on your payment method.</Text>
-              </div>
+              <Heading style={h2}>Payment Information</Heading>
               <div style={faqItem}>
                 <Text style={faqQuestion}>What payment methods do you accept?</Text>
                 <Text style={faqAnswer}>We accept major credit/debit cards, GCash, Maya, and bank transfers.</Text>
               </div>
               <div style={faqItem}>
-                <Text style={faqQuestion}>How can I track my order?</Text>
-                <Text style={faqAnswer}>You can track your order by logging into your MerchTrack account and visiting the Orders section.</Text>
+                <Text style={faqQuestion}>How long will my payment be processed?</Text>
+                <Text style={faqAnswer}>Payment verification usually takes 1-2 business days depending on your payment method.</Text>
               </div>
-            </Section>
-
-            <Section style={buttonContainer}>
-              <Text style={callToAction}>
-                Visit our website to explore more products or check your order status
-              </Text>
-              <a href="https://merchtrack.tech" style={button}>
-                Visit MerchTrack
-              </a>
+              <div style={faqItem}>
+                <Text style={faqQuestion}>What happens if I don&apos;t pay on time?</Text>
+                <Text style={faqAnswer}>Orders with pending payments may be cancelled after a certain period. Please contact us if you need an extension.</Text>
+              </div>
             </Section>
 
             <Hr style={divider} />
@@ -282,20 +228,25 @@ const text = {
 const statusSection = {
   margin: "32px 0",
   padding: "24px",
-  backgroundColor: "#f8fafc",
+  backgroundColor: "#fff5f5",
   borderRadius: "8px",
-  border: "1px solid #e2e8f0",
+  border: "1px solid #feb2b2",
 };
 
 const statusMessage = {
   fontSize: "16px",
-  color: "#1a1a1a",
+  color: "#e53e3e",
   margin: "0",
   fontWeight: "500",
 };
 
 const infoSection = {
   margin: "24px 0",
+};
+
+const buttonContainer = {
+  margin: "32px 0",
+  textAlign: "center" as const,
 };
 
 const callToAction = {
@@ -306,16 +257,23 @@ const callToAction = {
   fontWeight: "500",
 };
 
+const button = {
+  backgroundColor: "#2C59DB",
+  borderRadius: "6px",
+  color: "#fff",
+  fontSize: "16px",
+  fontWeight: "600",
+  padding: "12px 24px",
+  textDecoration: "none",
+  display: "inline-block",
+  margin: "16px 0",
+  border: "none",
+  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+};
+
 const divider = {
   borderTop: "1px solid #e2e8f0",
   margin: "32px 0",
-};
-
-const footer = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "24px 0",
-  textAlign: "center" as const,
 };
 
 const h2 = {
@@ -351,30 +309,16 @@ const faqAnswer = {
   lineHeight: "1.6",
 };
 
-const buttonContainer = {
-  margin: "32px 0",
+const footer = {
+  fontSize: "14px",
+  color: "#6b7280",
+  margin: "24px 0",
   textAlign: "center" as const,
-};
-
-const button = {
-  backgroundColor: "#2C59DB",
-  borderRadius: "6px",
-  color: "#fff",
-  fontSize: "16px",
-  fontWeight: "600",
-  padding: "12px 24px",
-  textDecoration: "none",
-  display: "inline-block",
-  margin: "16px 0",
-  border: "none",
-  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-  transition: "background-color 0.2s ease",
 };
 
 const link = {
   color: "#2C59DB",
   textDecoration: "none",
-  fontWeight: "500",
 };
 
 const footerText = {
@@ -405,26 +349,4 @@ const footerCopyright = {
   textAlign: "center" as const,
 };
 
-const refundSection = {
-  margin: '32px 0',
-  padding: '24px',
-  backgroundColor: '#fff5f5',
-  borderRadius: '8px',
-  border: '1px solid #feb2b2',
-};
-
-const refundTitle = {
-  fontSize: '18px',
-  fontWeight: '600',
-  color: '#e53e3e',
-  marginBottom: '16px',
-};
-
-const refundNote = {
-  fontSize: '14px',
-  color: '#718096',
-  fontStyle: 'italic',
-  marginTop: '16px',
-};
-
-export default PaymentStatusEmail;
+export default PaymentReminderEmail;

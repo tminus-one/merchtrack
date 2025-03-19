@@ -3,6 +3,7 @@ import type { CustomerSatisfactionSurvey, Product, ProductVariant, User } from "
 
 export type ExtendedOrder = Order & {
   customerSatisfactionSurvey: CustomerSatisfactionSurvey;
+  CustomerSatisfactionSurvey?: CustomerSatisfactionSurvey[];
   customer: User;
   payments: Payment[];
   orderItems: (OrderItem & {

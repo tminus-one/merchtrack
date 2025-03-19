@@ -247,7 +247,7 @@ const container = {
 };
 
 const header = {
-  backgroundColor: "#5046e4",
+  backgroundColor: "#2C59DB",
   padding: "24px",
   textAlign: "center" as const,
 };
@@ -427,7 +427,7 @@ const totalLabel = {
 const totalAmount = {
   fontSize: "18px",
   fontWeight: "600",
-  color: "#5046e4",
+  color: "#2C59DB",
   margin: "0",
   textAlign: "right" as const,
   paddingRight: "16px",
@@ -443,7 +443,7 @@ const nextSteps = {
 
 const callToAction = {
   fontSize: "16px",
-  color: "#5046e4",
+  color: "#2C59DB",
   margin: "32px 0",
   textAlign: "center" as const,
   fontWeight: "500",
@@ -469,7 +469,7 @@ const infoRow = {
 };
 
 const link = {
-  color: "#5046e4",
+  color: "#2C59DB",
   textDecoration: "none",
 };
 
@@ -505,7 +505,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: "#5046e4",
+  backgroundColor: "#2C59DB",
   borderRadius: "6px",
   color: "#fff",
   fontSize: "16px",

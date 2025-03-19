@@ -1,9 +1,10 @@
 import { render } from "@react-email/components";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, OrderPaymentStatus } from "@prisma/client";
 import { sendEmail } from "./mailgun";
 import { OrderConfirmationEmail } from "@/templates/OrderConfirmationEmail";
 import { OrderStatusEmail } from "@/templates/OrderStatusEmail";
 import { PaymentStatusEmail } from "@/templates/PaymentStatusEmail";
+import { PaymentReminderEmail } from "@/templates/PaymentReminderEmail";
 import { ExtendedOrder } from "@/types/orders";
 
 interface OrderConfirmationEmailParams {
@@ -19,6 +20,7 @@ interface OrderStatusEmailParams {
   newStatus: OrderStatus;
   surveyLink?: string;
   order: ExtendedOrder;
+  reason?: string;
 }
 
 interface PaymentStatusEmailParams {
@@ -28,6 +30,20 @@ interface PaymentStatusEmailParams {
   amount: number;
   status: 'verified' | 'refunded' | 'declined';
   refundReason?: string;
+  refundDetails?: {
+    remainingBalance?: number;
+    refundMethod?: string;
+    estimatedProcessingTime?: string;
+  };
+}
+
+interface PaymentReminderEmailParams {
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  amount: number;
+  paymentStatus: OrderPaymentStatus;
+  dueDate?: Date;
 }
 
 export const sendOrderConfirmationEmail = async (params: OrderConfirmationEmailParams) => {
@@ -50,7 +66,8 @@ export const sendOrderStatusEmail = async (params: OrderStatusEmailParams) => {
       customerName: params.customerName,
       newStatus: params.newStatus,
       surveyLink: params.surveyLink ?? '',
-      order: params.order
+      order: params.order,
+      reason: params.reason
     })),
     from: 'MerchTrack Orders'
   });
@@ -77,7 +94,23 @@ export const sendPaymentStatusEmail = async (params: PaymentStatusEmailParams) =
       customerName: params.customerName,
       amount: params.amount,
       status: params.status,
-      refundReason: params.refundReason
+      refundReason: params.refundReason,
+      refundDetails: params.refundDetails
+    })),
+    from: 'MerchTrack Payments'
+  });
+};
+
+export const sendPaymentReminderEmail = async (params: PaymentReminderEmailParams) => {
+  await sendEmail({
+    to: params.customerEmail,
+    subject: `Payment Reminder - Order #${params.orderNumber}`,
+    html: await render(PaymentReminderEmail({ 
+      orderNumber: params.orderNumber,
+      customerName: params.customerName,
+      amount: params.amount,
+      paymentStatus: params.paymentStatus,
+      dueDate: params.dueDate
     })),
     from: 'MerchTrack Payments'
   });

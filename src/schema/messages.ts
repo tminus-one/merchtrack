@@ -11,8 +11,10 @@ export const replyMessageSchema = z.object({
 export type ReplyMessageType = z.infer<typeof replyMessageSchema>;
 
 export const createMessageSchema = z.object({
-  email: z.string().email({
-    message: 'Invalid email address'
+  emails: z.array(z.string().email({
+    message: 'Please enter a valid email address'
+  })).min(1, {
+    message: 'At least one email recipient is required'
   }),
   subject: z.string().min(1, {
     message: 'Subject must be at least 1 character long'
