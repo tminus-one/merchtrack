@@ -1,30 +1,29 @@
-import { MdInbox, MdOutbox } from "react-icons/md";
 import { cn } from "@/lib/utils";
 import { ExtendedMessage } from "@/types/messages";
 
 interface MessageTabsProps {
-  activeTab: "inbox" | "sent";
-  onTabChange: (tab: "inbox" | "sent") => void;
+  activeTab: "inbox" | "sent" | "reminders";
+  onTabChange: (tab: "inbox" | "sent" | "reminders") => void;
   inboxCount?: number;
   sentCount?: number;
   handleMessageSelect: (message: ExtendedMessage | null) => void;
 }
 
 const tabs = [
-  { id: "inbox", label: "Inbox", icon: MdInbox },
-  { id: "sent", label: "Sent", icon: MdOutbox },
+  { id: "inbox", label: "Inbox" },
+  { id: "sent", label: "Sent" },
+  { id: "reminders", label: "Payment Reminders" },
 ] as const;
 
 export default function MessageTabs({ activeTab, onTabChange, inboxCount, sentCount, handleMessageSelect }: Readonly<MessageTabsProps>) {
-  const handleTabChange = (tab: "inbox" | "sent") => {
+  const handleTabChange = (tab: "inbox" | "sent" | "reminders") => {
     onTabChange(tab);
     handleMessageSelect(null);
   };
   return (
     <div className="mb-4 flex space-x-4 border-b">
       {tabs.map((tab) => {
-        const count = tab.id === "inbox" ? inboxCount : sentCount;
-        const Icon = tab.icon;
+        const count = tab.id === "inbox" ? inboxCount : tab.id === "sent" ? sentCount : undefined;
         
         return (
           <button
@@ -37,7 +36,6 @@ export default function MessageTabs({ activeTab, onTabChange, inboxCount, sentCo
                 : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
             )}
           >
-            <Icon className="size-5" />
             <span>{tab.label}</span>
             {count !== undefined && (
               <span className="ml-2 rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">

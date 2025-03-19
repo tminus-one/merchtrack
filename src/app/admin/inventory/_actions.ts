@@ -118,7 +118,15 @@ export async function updateProduct(
   }
 
   try {
-    // Start a transaction to handle variant updates safely
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: productId },
+      include: {
+        category: true,
+        postedBy: true,
+        variants: true,
+        reviews: true
+      }
+    });
     const product = await prisma.$transaction(async (tx) => {
       // Update the main product first
       await tx.product.update({
@@ -209,6 +217,147 @@ export async function updateProduct(
     return {
       success: false,
       message: error instanceof Error ? error.message : "An error occurred while updating the product"
+    };
+  }
+}
+
+/**
+ * Adjusts the inventory quantity of a product variant.
+ * 
+ * This function allows incrementing or decrementing the inventory count of a specific variant
+ * and records the change as a log entry.
+ * 
+ * @param userId - The ID of the user making the adjustment
+ * @param productId - The ID of the product that contains the variant
+ * @param variantId - The ID of the variant to be adjusted
+ * @param adjustment - The amount to adjust the inventory by (positive for increment, negative for decrement)
+ * @param reason - Optional reason for the inventory adjustment
+ */
+export async function adjustVariantInventory(
+  userId: string,
+  productId: string,
+  variantId: string,
+  adjustment: number,
+  reason?: string
+): Promise<ActionsReturnType<{ newInventory: number }>> {
+  if (!userId) {
+    return {
+      success: false,
+      message: "User ID is required"
+    };
+  }
+
+  if (!productId) {
+    return {
+      success: false,
+      message: "Product ID is required"
+    };
+  }
+
+  if (!variantId) {
+    return {
+      success: false,
+      message: "Variant ID is required"
+    };
+  }
+
+  if (!await verifyPermission({
+    userId: userId,
+    permissions: {
+      dashboard: { canRead: true },
+    }
+  })) {
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Inventory Adjustment Failed - Unauthorized",
+      systemText: `Unauthorized attempt to adjust inventory for product ${productId}, variant ${variantId}`,
+      userText: "You are not authorized to adjust inventory."
+    });
+    return {
+      success: false,
+      message: "You are not authorized to adjust inventory."
+    };
+  }
+
+  try {
+    // First get the current variant to check if it exists and get current inventory
+    const variant = await prisma.productVariant.findUnique({
+      where: { id: variantId },
+      include: {
+        product: true
+      }
+    });
+
+    if (!variant) {
+      await createLog({
+        userId,
+        createdById: userId,
+        reason: "Inventory Adjustment Failed - Variant Not Found",
+        systemText: `Attempted to adjust inventory for non-existent variant ${variantId}`,
+        userText: "Variant not found"
+      });
+      return {
+        success: false,
+        message: "Variant not found"
+      };
+    }
+
+    // Check if the variant belongs to the specified product
+    if (variant.productId !== productId) {
+      await createLog({
+        userId,
+        createdById: userId,
+        reason: "Inventory Adjustment Failed - Variant Mismatch",
+        systemText: `Attempted to adjust inventory for variant ${variantId} that doesn't belong to product ${productId}`,
+        userText: "Variant doesn't belong to the specified product"
+      });
+      return {
+        success: false,
+        message: "Variant doesn't belong to the specified product"
+      };
+    }
+
+    // Calculate new inventory value (prevent negative inventory)
+    const newInventory = Math.max(0, variant.inventory + adjustment);
+
+    // Update the variant with the new inventory
+    await prisma.productVariant.update({
+      where: { id: variantId },
+      data: { inventory: newInventory }
+    });
+
+    // Invalidate cache for this product
+    await invalidateCache([
+      `products:all`,
+      `product:${productId}`,
+      `product:${variant.product.slug}`
+    ]);
+
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Inventory Adjusted Successfully",
+      systemText: `Adjusted inventory for variant ${variantId} (${variant.variantName}) of product ${productId} (${variant.product.title}) by ${adjustment}. New inventory: ${newInventory}. Reason: ${reason || 'Not provided'}`,
+      userText: `Inventory for "${variant.variantName}" has been ${adjustment > 0 ? 'increased' : 'decreased'} by ${Math.abs(adjustment)}. New inventory: ${newInventory}.`
+    });
+
+    return {
+      success: true,
+      data: { newInventory }
+    };
+  } catch (error) {
+    console.error("Error adjusting inventory:", error);
+    await createLog({
+      userId,
+      createdById: userId,
+      reason: "Inventory Adjustment Error",
+      systemText: `Error adjusting inventory for variant ${variantId} of product ${productId}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      userText: "An error occurred while adjusting the inventory."
+    });
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to adjust inventory'
     };
   }
 }

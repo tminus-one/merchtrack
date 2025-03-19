@@ -1,15 +1,17 @@
-import { BiPackage, BiCheckCircle, BiMoney } from "react-icons/bi";
-import { FC } from "react";
+import { BiPackage, BiCheckCircle, BiMoney, BiTrash } from "react-icons/bi";
+import { FC, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { OrderStatus, OrderPaymentStatus } from "@/types/orders";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface OrderActionButtonsProps {
   status: OrderStatus;
   paymentStatus: OrderPaymentStatus;
   isUpdatingStatus: boolean;
-  onUpdateStatus: (status: OrderStatus) => void;
+  onUpdateStatus: (status: OrderStatus, reason?: string) => void;
   orderId: string;
 }
 
@@ -20,6 +22,8 @@ export const OrderActionButtons: FC<OrderActionButtonsProps> = ({
   onUpdateStatus,
   orderId
 }) => {
+  const [cancelReason, setCancelReason] = useState("");
+
   const renderProcessingButton = () => (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -84,20 +88,70 @@ export const OrderActionButtons: FC<OrderActionButtonsProps> = ({
 
   const renderPendingPaymentButton = () => (
     <Link href={`/admin/payments?orderId=${orderId}`} passHref>
-      <Button
-        variant='outline' >
+      <Button variant='outline'>
         <BiMoney className="mr-2 size-4" />
         Make Payment for Order
       </Button>
     </Link>
-
   );
+
+  const renderCancelButton = () => {
+    if (status === OrderStatus.CANCELLED || status === OrderStatus.DELIVERED) return null;
+
+    return (
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button 
+            variant="destructive"
+            disabled={isUpdatingStatus}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <BiTrash className="mr-2 size-4" />
+            {isUpdatingStatus ? "Cancelling..." : "Cancel Order"}
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will cancel the entire order and cannot be undone. Please provide a reason for cancellation:
+            </AlertDialogDescription>
+            <Textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Enter reason for cancellation..."
+              className="mt-2"
+              required
+            />
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCancelReason("")}>No, go back</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (cancelReason.trim()) {
+                  onUpdateStatus(OrderStatus.CANCELLED, cancelReason);
+                  setCancelReason("");
+                } else {
+                  toast.error("Please provide a reason for cancellation");
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={!cancelReason.trim() || isUpdatingStatus}
+            >
+              Yes, cancel order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  };
 
   return (
     <div className="flex items-center gap-4">
       {status === OrderStatus.PROCESSING && renderProcessingButton()}
       {status === OrderStatus.READY && renderReadyButton()}
       {(paymentStatus === OrderPaymentStatus.PENDING || paymentStatus === OrderPaymentStatus.DOWNPAYMENT) && renderPendingPaymentButton()}
+      {renderCancelButton()}
     </div>
   );
 };

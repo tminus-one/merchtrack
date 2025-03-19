@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { OrderStatus, OrderPaymentStatus, ExtendedOrder } from "@/types/orders";
 import prisma from "@/lib/db";
 import { verifyPermission } from "@/utils/permissions";
-import { sendOrderStatusEmail } from "@/lib/email-service";
+import { sendOrderStatusEmail, sendPaymentStatusEmail } from "@/lib/email-service";
 import { generateSurvey } from "@/actions/survey.actions";
+import { formatCurrency } from "@/utils";
 
 /**
  * Updates the status of an order and notifies the customer of the change.
@@ -27,19 +28,15 @@ import { generateSurvey } from "@/actions/survey.actions";
 export async function updateOrderStatus(
   orderId: string, 
   newStatus: OrderStatus,
-  userId: string
+  userId: string,
+  reason?: string
 ): Promise<ActionsReturnType<{ success: boolean }>> {
-  if (!await verifyPermission({
+  const isAuthorized = await verifyPermission({
     userId,
     permissions: {
       orders: { canUpdate: true }
     }
-  })) {
-    return {
-      success: false,
-      message: "You don't have permission to update orders"
-    };
-  }
+  });
 
   try {
     // Validate order exists before proceeding
@@ -68,6 +65,13 @@ export async function updateOrderStatus(
       };
     }
 
+    if (!isAuthorized && existingOrder.customerId !== userId) {
+      return {
+        success: false,
+        message: "You don't have permission to update this order"
+      };
+    }
+
     await prisma.$transaction(async (tx) => {
       // Update the order first
       const updatedOrder = await tx.order.update({
@@ -75,6 +79,7 @@ export async function updateOrderStatus(
         data: {
           status: newStatus,
           processedById: userId,
+          customerNotes: `${existingOrder.customerNotes ?? ''}${existingOrder.customerNotes ? '\n' : ''}Status changed to ${newStatus}: ${reason}`,
         },
         include: {
           customer: {
@@ -138,15 +143,17 @@ export async function updateOrderStatus(
         }
       }
 
-      // Send email notification
-      await sendOrderStatusEmail({
+      // Send email notification with reason if provided
+      const email = await sendOrderStatusEmail({
         orderNumber: updatedOrder.id,
         customerName: `${updatedOrder.customer.firstName} ${updatedOrder.customer.lastName}`,
         customerEmail: updatedOrder.customer.email,
         newStatus,
         surveyLink,
-        order: updatedOrder as ExtendedOrder
+        order: updatedOrder as ExtendedOrder,
+        reason: reason
       });
+      console.log('Order status email sent:', email); 
     });
 
     revalidatePath(`/admin/orders/${orderId}`);
@@ -242,12 +249,15 @@ export async function updateOrderPaymentStatus(
  */
 export async function refundPayment(
   orderId: string,
-  paymentId: string,
-  userId: string
+  amount: number,
+  reason: string,
+  userId: string,
+  paymentId?: string
 ): Promise<ActionsReturnType<{ success: boolean }>> {
   if (!await verifyPermission({
     userId,
     permissions: {
+      payments: { canUpdate: true },
       orders: { canUpdate: true }
     }
   })) {
@@ -259,27 +269,175 @@ export async function refundPayment(
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Update payment status to refunded
-      await tx.payment.update({
-        where: { id: paymentId },
-        data: { 
-          paymentStatus: 'REFUNDED',
-          processedById: userId
-        }
-      });
-
-      // Get remaining valid payments
-      const remainingPayments = await tx.payment.findMany({
+      // Get verified payments for the order
+      const verifiedPayments = await tx.payment.findMany({
         where: { 
           orderId,
-          paymentStatus: 'VERIFIED' // Only count verified payments
+          paymentStatus: 'VERIFIED'
+        },
+        orderBy: {
+          createdAt: 'asc'
         }
       });
 
-      // Determine appropriate payment status based on remaining payments
+      if (verifiedPayments.length === 0) {
+        throw new Error("No verified payments found to refund");
+      }
+
+      let remainingRefundAmount = amount;
+      
+      // If specific payment ID is provided, refund that first
+      if (paymentId) {
+        const targetPayment = verifiedPayments.find(p => p.id === paymentId);
+        if (!targetPayment) {
+          throw new Error("Specified payment not found or not in VERIFIED status");
+        }
+        
+        const paymentAmount = Number(targetPayment.amount);
+        
+        if (paymentAmount >= remainingRefundAmount) {
+          // Payment covers full refund
+          if (paymentAmount === remainingRefundAmount) {
+            // Fully refund this payment
+            await tx.payment.update({
+              where: { id: paymentId },
+              data: {
+                paymentStatus: 'REFUNDED',
+                memo: reason,
+                processedById: userId
+              }
+            });
+            remainingRefundAmount = 0;
+          } else {
+            // Partially refund this payment
+            await tx.payment.update({
+              where: { id: paymentId },
+              data: {
+                amount: paymentAmount - remainingRefundAmount
+              }
+            });
+            
+            // Create record of the refund
+            await tx.payment.create({
+              data: {
+                amount: remainingRefundAmount,
+                paymentStatus: 'REFUNDED',
+                paymentMethod: 'OTHERS',
+                processedById: userId,
+                memo: reason,
+                orderId,
+                userId
+              }
+            });
+            
+            remainingRefundAmount = 0;
+          }
+        } else {
+          // Payment doesn't cover full refund
+          await tx.payment.update({
+            where: { id: paymentId },
+            data: {
+              paymentStatus: 'REFUNDED',
+              memo: reason,
+              processedById: userId
+            }
+          });
+          
+          remainingRefundAmount -= paymentAmount;
+        }
+      }
+      
+      // Process remaining refund amount using other payments if needed
+      if (remainingRefundAmount > 0) {
+        const otherPayments = paymentId 
+          ? verifiedPayments.filter(p => p.id !== paymentId) 
+          : verifiedPayments;
+        
+        for (const payment of otherPayments) {
+          const paymentAmount = Number(payment.amount);
+          
+          if (paymentAmount <= remainingRefundAmount) {
+            // Fully refund this payment
+            await tx.payment.update({
+              where: { id: payment.id },
+              data: {
+                paymentStatus: 'REFUNDED',
+                memo: reason,
+                processedById: userId,
+
+              }
+            });
+            
+            remainingRefundAmount -= paymentAmount;
+            
+            if (remainingRefundAmount === 0) break;
+          } else {
+            // Partially refund this payment
+            await tx.payment.update({
+              where: { id: payment.id },
+              data: {
+                amount: paymentAmount - remainingRefundAmount
+              }
+            });
+            
+            // Create record of the refund
+            await tx.payment.create({
+              data: {
+                amount: remainingRefundAmount,
+                paymentStatus: 'REFUNDED',
+                paymentMethod: 'OTHERS',
+                processedById: userId,
+                memo: reason,
+                orderId,
+                userId
+              }
+            });
+            
+            remainingRefundAmount = 0;
+            break;
+          }
+        }
+      }
+      
+      if (remainingRefundAmount > 0) {
+        throw new Error(`Insufficient payment amount to refund. Still need to refund ${formatCurrency(remainingRefundAmount)}`);
+      }
+
+      // Get order details for email notification
+      const order = await tx.order.findUnique({
+        where: { id: orderId },
+        include: {
+          customer: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          }
+        }
+      });
+
+      if (!order) {
+        throw new Error("Order not found");
+      }
+      
+      // Recalculate remaining verified payments
+      const updatedPayments = await tx.payment.findMany({
+        where: { 
+          orderId,
+          paymentStatus: 'VERIFIED'
+        }
+      });
+      
+      // Calculate total remaining paid amount
+      const totalPaidAmount = updatedPayments.reduce(
+        (sum, payment) => sum + Number(payment.amount),
+        0
+      );
+
+      // Determine appropriate payment status based on remaining amount
       let newPaymentStatus = OrderPaymentStatus.PENDING;
-      if (remainingPayments.length > 0) {
-        // If there are still some payments, mark as downpayment
+      if (totalPaidAmount > 0) {
         newPaymentStatus = OrderPaymentStatus.DOWNPAYMENT;
       }
 
@@ -288,8 +446,24 @@ export async function refundPayment(
         where: { id: orderId },
         data: { 
           paymentStatus: newPaymentStatus,
-          status: OrderStatus.PROCESSING, // Revert back to processing
-          processedById: userId
+          status: OrderStatus.PROCESSING,
+          processedById: userId,
+          customerNotes: `${order.customerNotes ? order.customerNotes + '\n' : ''}Refund processed: ${formatCurrency(amount)} (${reason})`
+        }
+      });
+
+      // Send email notification with estimated processing time
+      await sendPaymentStatusEmail({
+        orderNumber: orderId,
+        customerName: `${order.customer.firstName} ${order.customer.lastName}`,
+        customerEmail: order.customer.email,
+        amount: amount,
+        status: 'refunded',
+        refundReason: reason,
+        refundDetails: {
+          remainingBalance: totalPaidAmount,
+          refundMethod: 'Original payment method',
+          estimatedProcessingTime: '3-5 business days'
         }
       });
     });
@@ -302,9 +476,151 @@ export async function refundPayment(
       data: { success: true }
     };
   } catch (error) {
+    console.error('Failed to process refund:', error);
     return {
       success: false,
-      message: (error as Error).message
+      message: error instanceof Error ? error.message : 'Failed to process refund'
+    };
+  }
+}
+
+/**
+ * Removes an item from an order and updates inventory accordingly.
+ */
+export async function removeOrderItem(
+  orderId: string,
+  itemId: string,
+  reason: string,
+  userId: string
+): Promise<ActionsReturnType<{ success: boolean }>> {
+  if (!await verifyPermission({
+    userId,
+    permissions: {
+      orders: { canUpdate: true }
+    }
+  })) {
+    return {
+      success: false,
+      message: "You don't have permission to modify orders"
+    };
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Get the order item details with full product information
+      const item = await tx.orderItem.findUnique({
+        where: { id: itemId },
+        include: {
+          variant: {
+            include: {
+              product: true
+            }
+          },
+          order: {
+            include: {
+              customer: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  email: true
+                }
+              },
+              orderItems: {
+                include: {
+                  variant: {
+                    include: {
+                      product: true
+                    }
+                  }
+                }
+              },
+              payments: true,
+              customerSatisfactionSurvey: true
+            }
+          }
+        }
+      });
+
+      if (!item) {
+        throw new Error("Order item not found");
+      }
+
+      // Restore inventory
+      if (item.variant) {
+        await tx.productVariant.update({
+          where: { id: item.variantId },
+          data: {
+            inventory: {
+              increment: item.quantity
+            }
+          }
+        });
+      }
+
+      // Remove the item
+      await tx.orderItem.delete({
+        where: { id: itemId }
+      });
+
+      // Recalculate order total
+      const remainingItems = await tx.orderItem.findMany({
+        where: { orderId }
+      });
+
+      const newTotal = remainingItems.reduce(
+        (sum, item) => sum + (Number(item.price) * item.quantity),
+        0
+      );
+
+      // Update order total and notes
+      const newOrder = await tx.order.update({
+        where: { id: orderId },
+        data: {
+          totalAmount: newTotal,
+          customerNotes: `${item.order.customerNotes ?? ''}\nItem removed: ${item.variant.product.title} - ${item.variant.variantName} (${reason})`
+        },
+        include: {
+          customer: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true
+            }
+          },
+          orderItems: {
+            include: {
+              variant: {
+                include: {
+                  product: true
+                }
+              }
+            }
+          },
+          CustomerSatisfactionSurvey: true,
+          payments: true
+        }
+      });
+
+      // Send detailed email notification
+      await sendOrderStatusEmail({
+        orderNumber: orderId,
+        customerName: `${item.order.customer.firstName} ${item.order.customer.lastName}`,
+        customerEmail: item.order.customer.email,
+        newStatus: item.order.status,
+        order: newOrder as ExtendedOrder,
+        reason: `Item removed: ${item.variant.product.title} - ${item.variant.variantName}\nReason: ${reason}`
+      });
+    });
+
+    revalidatePath(`/admin/orders/${orderId}`);
+    return {
+      success: true,
+      data: { success: true }
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to remove item'
     };
   }
 }

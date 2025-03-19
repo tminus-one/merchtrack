@@ -10,6 +10,7 @@ import MessageSkeleton from "./msg-skeleton";
 import ComposeEmail from "./compose-email";
 import MessageTabs from "./msg-tabs";
 import SentMessageList from "./sent-msg-list";
+import PaymentReminders from "./payment-reminders";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -22,11 +23,13 @@ import { Pagination } from "@/components/ui/pagination";
 
 const ITEMS_PER_PAGE = 20;
 
+
+
 export default function MessagesContainer() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 500);
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-  const [activeTab, setActiveTab] = useState<"inbox" | "sent">("inbox");
+  const [activeTab, setActiveTab] = useState<"inbox" | "sent" | "reminders">("inbox");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMessage, setSelectedMessage] = useState<ExtendedMessage | null>(null);
 
@@ -92,7 +95,7 @@ export default function MessagesContainer() {
     setCurrentPage(1);
   };
 
-  const handleTabChange = (tab: "inbox" | "sent") => {
+  const handleTabChange = (tab: "inbox" | "sent" | "reminders") => {
     setActiveTab(tab);
     setCurrentPage(1);
   };
@@ -113,41 +116,47 @@ export default function MessagesContainer() {
             sentCount={counts.sent}
             handleMessageSelect={setSelectedMessage}
           />
-          <div className="mb-4 flex items-center justify-between space-x-2">
-            <div className="flex items-center space-x-2">
-              <Switch 
-                className="border ring-neutral-7" 
-                id="unread-filter" 
-                checked={showUnreadOnly} 
-                onCheckedChange={handleUnreadChange} 
-              />
-              <Label htmlFor="unread-filter">Show unread only</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <ComposeEmail />
-              <Button 
-                disabled={isRefetching} 
-                className={cn(isRefetching && "bg-neutral-6", 'active:bg-slate-500')} 
-                onClick={handleRefresh} 
-                variant='outline'
-              >
-                <IoMdRefresh className={cn("mr-2", isRefetching && "animate-spin")} />
-                Refresh
-              </Button>
-            </div>
-          </div>
-          <div className="mb-4 flex items-center space-x-2">
-            <SearchIcon className="" />
-            <Input
-              type="text"
-              placeholder="Search messages..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </div>
+          {activeTab !== "reminders" && (
+            <>
+              <div className="mb-4 flex items-center justify-between space-x-2">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    className="border ring-neutral-7" 
+                    id="unread-filter" 
+                    checked={showUnreadOnly} 
+                    onCheckedChange={handleUnreadChange} 
+                  />
+                  <Label htmlFor="unread-filter">Show unread only</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <ComposeEmail />
+                  <Button 
+                    disabled={isRefetching} 
+                    className={cn(isRefetching && "bg-neutral-6", 'active:bg-slate-500')} 
+                    onClick={handleRefresh} 
+                    variant='outline'
+                  >
+                    <IoMdRefresh className={cn("mr-2", isRefetching && "animate-spin")} />
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+              <div className="mb-4 flex items-center space-x-2">
+                <SearchIcon className="" />
+                <Input
+                  type="text"
+                  placeholder="Search messages..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                />
+              </div>
+            </>
+          )}
         </div>
         
-        {isPending ? (
+        {activeTab === "reminders" ? (
+          <PaymentReminders />
+        ) : isPending ? (
           <MessageSkeleton />
         ) : (
           <>
@@ -167,7 +176,7 @@ export default function MessagesContainer() {
           </>
         )}
 
-        {!isPending && total > 0 && (
+        {!isPending && total > 0 && activeTab !== "reminders" && (
           <div className="mt-4 flex items-center justify-between px-2">
             <div className="text-muted-foreground text-sm">
               Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
@@ -185,16 +194,14 @@ export default function MessagesContainer() {
       </div>
 
       <div className="overflow-y-auto">
-        {selectedMessage ? (
+        {activeTab !== "reminders" && selectedMessage ? (
           <MessageDetail 
             message={selectedMessage} 
             replyMessage={selectedMessageReply} 
             onReply={handleReply}
             mode={activeTab}
           />
-        ) : (
-          <div className="mt-8 text-center text-gray-500">Select a message to view details</div>
-        )}
+        ) : null}
       </div>
     </div>
   );

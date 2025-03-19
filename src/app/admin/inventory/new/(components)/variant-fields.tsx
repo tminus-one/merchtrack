@@ -88,6 +88,7 @@ export default function VariantFields() {
                   min: 0
                 })}
                 placeholder="Stock quantity"
+                disabled
               />
               {errors.variants?.[index]?.inventory && (
                 <FormError>

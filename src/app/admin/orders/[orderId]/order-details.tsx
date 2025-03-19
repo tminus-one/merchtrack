@@ -2,7 +2,6 @@
 
 import { FC } from "react";
 import { BiUser } from "react-icons/bi";
-import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { FaBoxes } from "react-icons/fa";
@@ -29,9 +28,10 @@ interface OrderDetailsProps {
 
 export const OrderDetails: FC<OrderDetailsProps> = ({ orderId, userId }) => {
   const { data: order, isLoading, refetch } = useOrderQuery(orderId);
+  const toast = useToast;
 
   const { mutate: updateStatus, isPending: isUpdatingStatus } = useMutation({
-    mutationFn: async (newStatus: OrderStatus) => {
+    mutationFn: async ({ newStatus, reason }: { newStatus: OrderStatus; reason?: string }) => {
       if (!order) {
         throw new Error("Order not found");
       }
@@ -42,18 +42,28 @@ export const OrderDetails: FC<OrderDetailsProps> = ({ orderId, userId }) => {
           throw new Error("Order payment status must be 'PAID' before marking as delivered");
         }
       }
-      const result = await updateOrderStatus(orderId, newStatus, userId);
+      
+      // If cancelling an order without a reason, require one
+      if (newStatus === OrderStatus.CANCELLED && !reason) {
+        throw new Error("A reason is required when cancelling an order");
+      }
+      
+      const result = await updateOrderStatus(orderId, newStatus, userId, reason);
       if (!result.success) {
         throw new Error(result.message);
       }
       return result.data;
     },
     onSuccess: () => {
-      toast.success("Order status updated successfully");
+      toast({
+        type: "success",
+        message: "Order status updated successfully",
+        title: "Order status updated"
+      });
       refetch();
     },
     onError: (error) => {
-      useToast({
+      toast({
         type: "error",
         message: error.message || "Failed to update order status",
         title: "Unable to update order status"
@@ -95,7 +105,7 @@ export const OrderDetails: FC<OrderDetailsProps> = ({ orderId, userId }) => {
             status={order.status as OrderStatus}
             paymentStatus={order.paymentStatus as OrderPaymentStatus}
             isUpdatingStatus={isUpdatingStatus}
-            onUpdateStatus={updateStatus}
+            onUpdateStatus={(status, reason) => updateStatus({ newStatus: status, reason })}
             orderId={orderId}
           />
         </div>
@@ -162,7 +172,13 @@ export const OrderDetails: FC<OrderDetailsProps> = ({ orderId, userId }) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <OrderItemsTable items={order.orderItems} />
+          <OrderItemsTable 
+            items={order.orderItems} 
+            orderId={orderId} 
+            userId={userId}
+            onRemoveItem={refetch}
+            orderStatus={order.status}
+          />
         </CardContent>
       </Card>
 

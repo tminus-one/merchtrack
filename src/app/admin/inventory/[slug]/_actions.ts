@@ -48,6 +48,27 @@ export async function updateProduct(
   productId: string,
   data: UpdateProductType
 ): Promise<ActionsReturnType<ExtendedProduct>> {
+  if (!userId) {
+    return {
+      success: false,
+      message: "User ID is required"
+    };
+  }
+
+  if (!productId) {
+    return {
+      success: false,
+      message: "Product ID is required"
+    };
+  }
+
+  if (!data) {
+    return {
+      success: false,
+      message: "Update data is required"
+    };
+  }
+
   if (!await verifyPermission({
     userId: userId,
     permissions: {
@@ -87,22 +108,37 @@ export async function updateProduct(
       };
     }
 
-    // Keep existing imageUrl if not provided in update
-    // This prevents accidental image removal during regular updates
+    // Create a safe copy of the data with proper defaults for missing fields
+    const safeData = {
+      title: data.title || existingProduct.title,
+      description: data.description ?? existingProduct.description,
+      categoryId: data.categoryId || existingProduct.categoryId,
+      inventory: data.inventory ?? existingProduct.inventory,
+      inventoryType: data.inventoryType || existingProduct.inventoryType,
+      tags: Array.isArray(data.tags) ? data.tags : existingProduct.tags || [],
+      imageUrl: Array.isArray(data.imageUrl) ? data.imageUrl : existingProduct.imageUrl || [],
+    };
+
+    // Safe handling of variants
+    const variantsData = Array.isArray(data.variants) && data.variants.length > 0
+      ? {
+        deleteMany: {},
+        create: data.variants.map(variant => ({
+          variantName: variant.variantName || 'Default',
+          price: new Prisma.Decimal(variant.price?.toString() || '0'),
+          inventory: variant.inventory ?? 0,
+          rolePricing: variant.rolePricing || {}
+        }))
+      }
+      : undefined;
+
     const cleanData = {
-      ...data,
+      ...safeData,
       _tempFiles: undefined,
       postedBy: undefined,
       category: undefined,
       reviews: undefined,
-      variants: {
-        deleteMany: {},
-        create: data.variants.map(variant => ({
-          variantName: variant.variantName,
-          price: new Prisma.Decimal(variant.price.toString()),
-          rolePricing: variant.rolePricing
-        }))
-      }
+      ...(variantsData ? { variants: variantsData } : {})
     };
 
     const product = await prisma.product.update({
@@ -134,8 +170,7 @@ export async function updateProduct(
       userId,
       createdById: userId,
       reason: "Product Updated Successfully",
-      // @ts-expect-error - data is not defined in ExtendedProduct
-      systemText: `Updated product "${product.title}" (ID: ${product.id}). Changes: ${Object.keys(data).filter(key => data[key] !== existingProduct[key]).join(', ')}`,
+      systemText: `Updated product "${product.title}" (ID: ${product.id})`,
       userText: `Product "${product.title}" has been updated successfully.`
     });
 
@@ -144,6 +179,7 @@ export async function updateProduct(
       data: processActionReturnData(product) as ExtendedProduct
     };
   } catch (error) {
+    console.error("Error updating product:", error);
     await createLog({
       userId,
       createdById: userId,

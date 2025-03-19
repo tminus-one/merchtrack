@@ -7,8 +7,7 @@ import { verifyPermission } from "@/utils/permissions";
 import { invalidateCache } from "@/lib/redis";
 import { sendEmail } from "@/lib/mailgun";
 import ReplyEmailTemplate from "@/app/admin/messages/(components)/email-template";
-import { formContactSchema } from "@/schema/public-contact";
-import { CreateMessageType } from "@/schema/messages";
+import { CreateMessageType, createMessageSchema } from "@/schema/messages";
 import { processActionReturnData } from "@/utils";
 
 type ReplyToMessageParams = {
@@ -100,11 +99,11 @@ export const createMessage = async (params: CreateMessageParams): Promise<Action
   const authResult = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canRead: true },
+      messages: { canCreate: true },
     },
     logDetails: {
       actionDescription: "Create new message",
-      userText: `Attempted to create new message to: ${params.formData.email}`
+      userText: `Attempted to create new message to: ${params.formData.emails.join(', ')}`,
     }
   });
 
@@ -115,60 +114,71 @@ export const createMessage = async (params: CreateMessageParams): Promise<Action
     };
   }
 
-  const result = formContactSchema.safeParse(params.formData);
+  try {
+    // Use the correct schema for validation
+    const result = createMessageSchema.safeParse(params.formData);
 
-  if (!result.success) {
-    const errors = result.error.errors.reduce((acc: Record<string, string>, error) => {
-      acc[error.path[0]] = error.message;
-      return acc;
-    }, {});
+    if (!result.success) {
+      const errors = result.error.errors.reduce((acc: Record<string, string>, error) => {
+        acc[error.path[0]] = error.message;
+        return acc;
+      }, {});
+  
+      return {
+        success: false,
+        message: "There are errors in the form.",
+        errors, 
+      };
+    }
+    
+    // Create multiple message records at once using createMany
+    await prisma.message.createMany({
+      data: result.data.emails.map(email => ({
+        message: result.data.message,
+        subject: result.data.subject,
+        email: email,
+        isSentByAdmin: true,
+        sentBy: params.userId,
+        isRead: true
+      }))
+    });
+    
+    // Create log entries for all messages
+    await prisma.log.createMany({
+      data: result.data.emails.map(email => ({
+        reason: "New Message Created",
+        systemText: `Admin created new message to: ${email} \nwith subject: ${result.data.subject} \nand message: ${result.data.message}`,
+        userText: `Message sent to: ${email}`,
+        createdById: params.userId
+      }))
+    });
+    
+    // Send emails to all recipients
+    sendEmail({
+      to: result.data.emails,
+      subject: result.data.subject,
+      html: await render(ReplyEmailTemplate({
+        replyContent: result.data.message,
+        customerName: result.data.customerName,
+        subject: result.data.subject
+      })),
+      from: 'MerchTrack Support'
+    });
 
+
+    
+    // Invalidate cache
+    await invalidateCache(['messages:all']);
+    
+    return {
+      success: true,
+      message: `Message sent successfully to ${result.data.emails.length} recipients.`
+    };
+  } catch (error) {
+    console.error("Error sending messages:", error);
     return {
       success: false,
-      message: "There are errors in the form.",
-      errors, 
+      message: error instanceof Error ? error.message : "An unknown error occurred"
     };
   }
-
-  const createdMessage = await prisma.message.create({
-    data: {
-      ...result.data,
-      isSentByAdmin: true,
-      sentBy: params.userId,
-      isRead: true
-    },
-    include: {
-      user: true
-    }
-  });
-
-  // Log successful message creation
-  await prisma.log.create({
-    data: {
-      reason: "New Message Created",
-      systemText: `Admin created new message to: ${createdMessage.email} \nwith subject: ${createdMessage.subject} \nand message: ${createdMessage.message}`,
-      userText: `Message sent to: ${createdMessage.email}`,
-      createdBy: {
-        connect: { id: params.userId }
-      }
-    }
-  });
-
-  await invalidateCache(['messages:all']);
-  await sendEmail({
-    to: createdMessage.email,
-    subject: createdMessage.subject,
-    html: await render(ReplyEmailTemplate({
-      replyContent: createdMessage.message,
-      customerName: params.formData.customerName,
-      subject: createdMessage.subject
-    })),
-    from: 'MerchTrack Support'
-  });
-
-  return {
-    success: true,
-    data: processActionReturnData(createdMessage) as Message,
-    message: "Message sent successfully."
-  };
 };

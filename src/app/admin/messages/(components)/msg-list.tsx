@@ -15,6 +15,13 @@ interface MessageListProps {
 }
 
 export default function MessageList({ messages, onSelectMessage, selectedMessageId }: Readonly<MessageListProps>) {
+  const customerMessages = useMemo(() => messages?.filter(message => message.isSentByCustomer), [messages]);
+  const groupedMessages = useMemo(() => groupMessages(customerMessages!), [customerMessages]);
+  const [ parent ] = useAutoAnimate();
+  const handleSelectMessage = useCallback((message: ExtendedMessage) => {
+    onSelectMessage(message);
+  }, [onSelectMessage]);
+
   if (!messages) {
     return (
       <div className="flex h-[200px] flex-col items-center justify-center rounded-lg border border-dashed">
@@ -23,13 +30,8 @@ export default function MessageList({ messages, onSelectMessage, selectedMessage
       </div>
     );
   }
-  const customerMessages = useMemo(() => messages.filter(message => message.isSentByCustomer), [messages]);
-  const groupedMessages = useMemo(() => groupMessages(customerMessages), [customerMessages]);
-  const [ parent ] = useAutoAnimate();
 
-  const handleSelectMessage = useCallback((message: ExtendedMessage) => {
-    onSelectMessage(message);
-  }, [onSelectMessage]);
+
 
   return (
     <PageAnimation className="space-y-4">
@@ -51,7 +53,7 @@ export default function MessageList({ messages, onSelectMessage, selectedMessage
                     onClick={() => handleSelectMessage(message)}
                   >
                     <div className="w-full truncate py-2">
-                      <div className="flex items-center text-base font-semibold">
+                      <div className="flex items-center text-base font-semibold text-neutral-7">
                         {message.isRead ? (<MdOutlineMarkChatRead className="mr-4 size-2 text-green-500"/>) : (<IoMailUnreadOutline className="mr-4 size-2 text-red-500"/>)}
                         {message.subject}
                       </div>

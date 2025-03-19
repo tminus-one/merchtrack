@@ -4,6 +4,7 @@ import { useFormContext, Controller } from 'react-hook-form';
 import { FaFileAlt } from "react-icons/fa";
 import { X } from "lucide-react";
 import DOMPurify from 'isomorphic-dompurify';
+import { useEffect, useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FormSection } from "@/components/ui/form-section";
@@ -22,12 +23,14 @@ import {
 
 type Props = {
   description?: string;
+  categoryId?: string;
 }
 
-export function BasicInformationSection({ description }: Readonly<Props>) {
+export function BasicInformationSection({ description, categoryId }: Readonly<Props>) {
   const { register, control, formState: { errors }, watch, setValue } = useFormContext<CreateProductType>();
-  const { data: categories = [] } = useCategoriesQuery();
-  const tags = watch('tags') ?? []; // Ensure tags is initialized as an array
+  const { data: categories = [], isSuccess: isCategoriesLoaded } = useCategoriesQuery();
+  const tags = watch('tags') ?? []; 
+  const [currentDescription, setCurrentDescription] = useState<string | undefined>(description);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -45,6 +48,22 @@ export function BasicInformationSection({ description }: Readonly<Props>) {
   const removeTag = (tagToRemove: string) => {
     setValue('tags', tags.filter(tag => tag !== tagToRemove), { shouldDirty: true }); // Add shouldDirty option
   };
+
+  useEffect(() => {
+    if (description) {
+      setCurrentDescription(description);
+      setValue('description', description);
+    }
+  }, [description, setValue]);
+
+  useEffect(() => {
+    if (categoryId && isCategoriesLoaded) {
+      const categoryExists = categories.some(category => category.id === categoryId);
+      if (categoryExists) {
+        setValue('categoryId', categoryId, { shouldDirty: true });
+      }
+    }
+  }, [categoryId, categories, isCategoriesLoaded, setValue]);
 
   return (
     <FormSection title="Basic Information" icon={<FaFileAlt className='text-primary'/>}>
@@ -78,8 +97,11 @@ export function BasicInformationSection({ description }: Readonly<Props>) {
             control={control}
             render={({ field }) => (
               <RichTextEditor
-                value={field.value ?? description ?? ''}
-                onChange={field.onChange}
+                value={currentDescription ?? ''}
+                onChange={(value) => {
+                  field.onChange(value);
+                  setCurrentDescription(value);
+                }}
                 placeholder="Describe your product's features, materials, and any other important details..."
               />
             )}
@@ -135,7 +157,8 @@ export function BasicInformationSection({ description }: Readonly<Props>) {
             render={({ field }) => (
               <Select
                 value={field.value}
-                onValueChange={field.onChange}
+                onValueChange={(value) => field.onChange(value)}
+                name='categoryId'
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a category" />

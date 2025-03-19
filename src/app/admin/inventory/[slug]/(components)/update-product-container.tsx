@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { deleteProductImages, uploadProductImages } from '@/actions/media.actions';
 import { fadeInUp } from '@/constants/animations';
 import { cn } from '@/lib/utils';
+import { ExtendedProduct } from '@/types/extended';
 
 
 interface UpdateProductContainerProps {
@@ -38,6 +39,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
   const [isPendingImageOp, setIsPendingImageOp] = useState(false);
   const { userId } = useUserStore();
   const router = useRouter();
+  const toast = useToast;
   
   const { data: product, isLoading } = useProductSlugQuery(slug);
   
@@ -86,7 +88,10 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (formData: UpdateProductType) => {
-      const response = await updateProduct(userId as string, product?.id as string, formData);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { imageUrl, ...dataToUpdate } = formData;
+      const response = await updateProduct(userId as string, product?.id as string, dataToUpdate as UpdateProductType);
       if (!response.success) {
         throw new Error(response.message);
       }
@@ -95,7 +100,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
     mutationKey: ['products:all'],
     onSuccess: () => {
       router.refresh();
-      useToast({
+      toast({
         type: "success",
         message: "Product updated successfully",
         title: "Success"
@@ -103,7 +108,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
       router.push('/admin/inventory');
     },
     onError: (error: Error) => {
-      useToast({
+      toast({
         type: "error",
         message: error.message || "Failed to update product",
         title: "Error updating product"
@@ -115,7 +120,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
     mutationFn: async () => await deleteProductById(userId as string, product?.id as string),
     onSuccess: () => {
       router.push('/admin/inventory');
-      useToast({
+      toast({
         type: "success",
         message: "Product deleted successfully",
         title: "Success"
@@ -147,7 +152,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
         });
 
         if (!updateResult.success || !updateResult.data) {
-          throw new Error(updateResult.message || 'Failed to update product');
+          throw new Error(updateResult.message ?? 'Failed to update product');
         }
 
         methods.setValue('imageUrl', updateResult.data.imageUrl || []);
@@ -170,13 +175,13 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
         methods.setValue('imageUrl', urls);
       }
 
-      useToast({
+      toast({
         type: "success",
         message: "Images updated successfully",
         title: "Success"
       });
     } catch (error) {
-      useToast({
+      toast({
         type: "error",
         message: error instanceof Error ? error.message : "Failed to update images",
         title: "Error"
@@ -215,10 +220,10 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
     <motion.div {...fadeInUp}>
       <FormProvider {...methods}>
         <form onSubmit={methods.handleSubmit(handleSubmit)} className="mx-auto max-w-4xl space-y-6">
-          <BasicInformationSection description={product.description as string}/>
+          <BasicInformationSection description={product.description as string} categoryId={product.categoryId as string}/>
           <ImagesSection onChange={handleImageChange} isLoading={isPendingImageOp} />
           <InventorySection />
-          <VariantsSection />
+          <VariantsSection product={product as ExtendedProduct} />
           <div className="flex justify-end space-x-4">
             <Button 
               type="button" 

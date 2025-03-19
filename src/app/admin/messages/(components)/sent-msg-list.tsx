@@ -56,7 +56,7 @@ export default function SentMessageList({ messages, onSelectMessage, selectedMes
                   <span className="text-xs text-gray-500">{manilaTime.dateTime(message.createdAt)}</span>
                 </div>
                 
-                <h3 className="mb-1 text-base font-semibold tracking-tight">
+                <h3 className="mb-1 text-base font-semibold tracking-tight text-neutral-7">
                   {message.subject}
                 </h3>
                 
