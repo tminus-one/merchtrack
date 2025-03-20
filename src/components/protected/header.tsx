@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -22,6 +22,12 @@ export default function ProtectedHeader() {
   const { user } = useUserStore();
   const pathname = usePathname();
   const router = useRouter();
+
+  const [isAdminStaff, setIsAdminStaff] = useState(user?.isAdmin || user?.isStaff);
+
+  useEffect(() => {
+    setIsAdminStaff(user?.isAdmin || user?.isStaff);
+  }, [user]);
 
   const navItems = [
     { name: 'Home', href: '/dashboard' },
@@ -123,7 +129,7 @@ export default function ProtectedHeader() {
             }
           }} >
             <UserButton.MenuItems>
-              {(user?.isAdmin || user?.isStaff) && <UserButton.Action labelIcon={<FaUserShield className='size-4'/>} label="Switch To Admin View" onClick={() => router.push("/admin")} />}
+              {isAdminStaff && <UserButton.Action labelIcon={<FaUserShield className='size-4'/>} label="Switch To Admin View" onClick={() => router.push("/admin")} />}
             </UserButton.MenuItems>
           </UserButton>
         </div>
