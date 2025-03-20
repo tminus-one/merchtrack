@@ -1,8 +1,8 @@
 import { Menu } from "lucide-react";
 import { usePathname } from "next/navigation";
+import MyProfileSideBar from "./my-profile-sidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import MyProfileSideBar from "./my-profile-sidebar";
 
 export default function MobileNav() {
   const pathname = usePathname();
