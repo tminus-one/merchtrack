@@ -27,6 +27,6 @@ export const FOOTER_DETAILS = {
   email: 'support@merchtrack.tech',
   companyName: 'T Minus One',
   footerText: 'Our platform brings you the latest merchandise from the College of Computer Studies. Whether you\'re looking for shirts, hoodies, or accessories, easily browse, order, and rep your college spirit in style!',
-  phone: '0989-012-0123',
+  phone: '09936167562',
   address: 'Ateneo de Naga University, Bagumbayan Sur, Naga City'
 };

@@ -78,11 +78,11 @@ export const TERMS_OF_SERVICE_CONTENT = {
     {
       title: "Dispute Resolution",
       content: `• Any disputes will be resolved through arbitration
-• The arbitration will be conducted in San Francisco, California
+• The arbitration will be conducted in Philippines
 • You waive your right to participate in class actions
 • You must raise any claims within one year
 • We each bear our own legal costs
-• This agreement is governed by California law`
+• This agreement is governed by Philippines law`
     },
     {
       title: "Termination",
@@ -103,9 +103,7 @@ export const TERMS_OF_SERVICE_CONTENT = {
 
 MerchTrack
 Email: legal@merchtrack.tech
-Address: 123 Tech Avenue, Innovation District
-San Francisco, CA 94105
-United States`
+Address: Ateneo de Naga University, Bagumbayan Sur, Naga City, Philippines`
     }
   ]
 };

@@ -14,6 +14,12 @@ import {
   Row,
   Column,
 } from "@react-email/components";
+import { 
+  COMPANY_INFO, 
+  DELIVERY_FAQS, 
+  EMAIL_STYLES, 
+  formatPrice 
+} from "./emailConstants";
 import { ExtendedOrder } from "@/types/orders";
 
 interface OrderStatusEmailProps {
@@ -33,13 +39,6 @@ export const OrderStatusEmail = ({
   order,
   reason
 }: OrderStatusEmailProps) => {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'PHP'
-    }).format(price);
-  };
-
   const getStatusMessage = () => {
     switch (newStatus) {
     case OrderStatus.PENDING:
@@ -74,22 +73,22 @@ export const OrderStatusEmail = ({
     <Html>
       <Head />
       <Preview>Order Status Update - #{orderNumber}</Preview>
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <div style={headerContent}>
+      <Body style={EMAIL_STYLES.main}>
+        <Container style={EMAIL_STYLES.container}>
+          <Section style={EMAIL_STYLES.header}>
+            <div style={EMAIL_STYLES.headerContent}>
               <Img
-                src="https://merchtrack.tech/img/logo-white.png"
+                src={COMPANY_INFO.logoUrl}
                 width={45}
                 height={45}
-                alt="MerchTrack"
-                style={logo}
+                alt={COMPANY_INFO.name}
+                style={EMAIL_STYLES.logo}
               />
-              <Text style={headerText}>MerchTrack</Text>
+              <Text style={EMAIL_STYLES.headerText}>{COMPANY_INFO.name}</Text>
             </div>
           </Section>
 
-          <Section style={contentContainer}>
+          <Section style={EMAIL_STYLES.contentContainer}>
             <Heading style={h1}>
               {getStatusEmoji()} Order Status Update
             </Heading>
@@ -147,7 +146,7 @@ export const OrderStatusEmail = ({
               <Section style={surveySection}>
                 <Text style={surveyText}>Your feedback helps us improve! 🌟</Text>
                 <Button style={button} href={surveyLink}>
-                              Share Your Experience
+                  Share Your Experience
                 </Button>
               </Section>
             )}
@@ -198,51 +197,45 @@ export const OrderStatusEmail = ({
               </Section>
             </Section>
 
-            <Hr style={divider} />
+            <Hr style={EMAIL_STYLES.divider} />
 
             <Section style={faqSection}>
               <Heading style={h2}>Frequently Asked Questions</Heading>
-              <div style={faqItem}>
-                <Text style={faqQuestion}>How long does order processing take?</Text>
-                <Text style={faqAnswer}>Orders are typically processed within 1-2 business days after payment confirmation.</Text>
-              </div>
-              <div style={faqItem}>
-                <Text style={faqQuestion}>When will my order be delivered?</Text>
-                <Text style={faqAnswer}>Standard shipping takes 3-5 business days, while express delivery is available for 1-2 business days.</Text>
-              </div>
-              <div style={faqItem}>
-                <Text style={faqQuestion}>How can I track my delivery?</Text>
-                <Text style={faqAnswer}>You can track your order status by logging into your MerchTrack account and visiting the Orders section.</Text>
-              </div>
+              {DELIVERY_FAQS.map((faq, index) => (
+                <div key={index} style={faqItem}>
+                  <Text style={faqQuestion}>{faq.question}</Text>
+                  <Text style={faqAnswer}>{faq.answer}</Text>
+                </div>
+              ))}
             </Section>
 
             <Section style={buttonContainer}>
               <Text style={callToAction}>
                 Visit our website to explore more products or check your order status
               </Text>
-              <a href="https://merchtrack.tech" style={button}>
-                Visit MerchTrack
+              <a href={COMPANY_INFO.website} style={button}>
+                Visit {COMPANY_INFO.name}
               </a>
             </Section>
 
-            <Hr style={divider} />
+            <Hr style={EMAIL_STYLES.divider} />
 
-            <Section style={footer}>
-              <Text style={footerText}>
+            <Section style={EMAIL_STYLES.footer}>
+              <Text style={EMAIL_STYLES.footerText}>
                 Have questions about your order? Visit our{" "}
-                <a href="https://merchtrack.tech/contacts" style={link}>
+                <a href={COMPANY_INFO.contactPageUrl} style={EMAIL_STYLES.link}>
                   Contact Page
                 </a>
                 {" "}or reach out to our support team.
               </Text>
-              <Text style={footerContact}>
-                Email: support@merchtrack.tech | Phone: +63 912 345 6789
+              <Text style={EMAIL_STYLES.footerContact}>
+                Email: {COMPANY_INFO.email} | Phone: {COMPANY_INFO.phone}
               </Text>
-              <Text style={footerAddress}>
-                MerchTrack Inc. | 123 Business Avenue, Makati City, Philippines
+              <Text style={EMAIL_STYLES.footerAddress}>
+                {COMPANY_INFO.address}
               </Text>
-              <Text style={footerCopyright}>
-                © {new Date().getFullYear()} MerchTrack. All rights reserved.
+              <Text style={EMAIL_STYLES.footerCopyright}>
+                © {new Date().getFullYear()} {COMPANY_INFO.name}. All rights reserved.
               </Text>
             </Section>
           </Section>
@@ -252,37 +245,7 @@ export const OrderStatusEmail = ({
   );
 };
 
-const main = {
-  backgroundColor: "#f6f9fc",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
-
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  borderRadius: "12px",
-  overflow: "hidden",
-  maxWidth: "600px",
-};
-
-const header = {
-  backgroundColor: "#2C59DB",
-  padding: "24px",
-  textAlign: "center" as const,
-};
-
-const logo = {
-  margin: "0",
-  display: "block",
-};
-
-const contentContainer = {
-  padding: "40px 48px",
-};
-
+// Specific styles not part of shared styles
 const h1 = {
   color: "#1a1a1a",
   fontSize: "24px",
@@ -312,7 +275,7 @@ const statusSection = {
 const statusBadge = {
   display: "inline-block",
   padding: "6px 12px",
-  backgroundColor: "#2C59DB",
+  backgroundColor: EMAIL_STYLES.primaryColor,
   color: "#ffffff",
   borderRadius: "16px",
   fontSize: "14px",
@@ -342,55 +305,15 @@ const surveyText = {
 };
 
 const button = {
-  backgroundColor: "#2C59DB",
-  borderRadius: "6px",
-  color: "#fff",
-  fontSize: "16px",
-  fontWeight: "600",
-  padding: "12px 24px",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  border: "none",
-  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
+  ...EMAIL_STYLES.button,
 };
-
 
 const callToAction = {
   fontSize: "16px",
-  color: "#2C59DB",
+  color: EMAIL_STYLES.primaryColor,
   margin: "32px 0",
   textAlign: "center" as const,
   fontWeight: "500",
-};
-
-const divider = {
-  borderTop: "1px solid #e2e8f0",
-  margin: "32px 0",
-};
-
-const footer = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "24px 0",
-  textAlign: "center" as const,
-};
-
-const headerContent = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "12px",
-  margin: "0 auto",
-  width: "fit-content",
-};
-
-const headerText = {
-  color: "#ffffff",
-  fontSize: "24px",
-  fontWeight: "600",
-  margin: "0",
-  lineHeight: "45px", // Match the logo height
 };
 
 const itemImageCol = {
@@ -506,7 +429,7 @@ const totalLabel = {
 const totalAmount = {
   fontSize: "18px",
   fontWeight: "600",
-  color: "#2C59DB",
+  color: EMAIL_STYLES.primaryColor,
   margin: "0",
   textAlign: "right" as const,
 };
@@ -539,40 +462,6 @@ const faqAnswer = {
 
 const buttonContainer = {
   margin: "32px 0",
-  textAlign: "center" as const,
-};
-
-const link = {
-  color: "#2C59DB",
-  textDecoration: "none",
-  fontWeight: "500",
-};
-
-const footerText = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "0 0 12px",
-  textAlign: "center" as const,
-};
-
-const footerContact = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "8px 0",
-  textAlign: "center" as const,
-};
-
-const footerAddress = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "8px 0",
-  textAlign: "center" as const,
-};
-
-const footerCopyright = {
-  fontSize: "12px",
-  color: "#9ca3af",
-  margin: "16px 0 0",
   textAlign: "center" as const,
 };
 

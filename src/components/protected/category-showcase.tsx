@@ -12,7 +12,7 @@ interface CategoryShowcaseProps {
 }
 
 const DEFAULT_IMAGES = [
-  '/img/carousel-img.png',
+  '/img/carousel-image.jpg',
   '/img/carousel-image.jpg',
 ];
 

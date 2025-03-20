@@ -21,7 +21,7 @@ const HeroSection = () => {
     <div ref={containerRef} className="relative min-h-[calc(100vh-80px)] w-full">
       <motion.div
         style={{ y, opacity }}
-        className="flex min-h-[calc(100vh-80px)] w-full flex-col items-center justify-center"
+        className="mt-16 flex min-h-[calc(100vh-80px)] w-full flex-col items-center justify-center"
       >
         <div className="relative w-full pb-16 pt-8">
           {/* Background decoration */}
@@ -104,7 +104,7 @@ const HeroSection = () => {
                 <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/20 to-primary/40 opacity-75 blur"></div>
                 <div className="relative overflow-hidden rounded-lg">
                   <Image
-                    src="/img/carousel-img.png"
+                    src="/img/carousel-image.png"
                     alt="University Merchandise Collection"
                     fill
                     className="object-cover"

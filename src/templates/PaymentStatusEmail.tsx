@@ -10,6 +10,12 @@ import {
   Hr,
   Img,
 } from "@react-email/components";
+import { 
+  COMPANY_INFO,
+  PAYMENT_FAQS, 
+  EMAIL_STYLES, 
+  formatPrice 
+} from "./emailConstants";
 
 interface PaymentStatusEmailProps {
   orderNumber: string;
@@ -32,13 +38,6 @@ export const PaymentStatusEmail = ({
   refundReason,
   refundDetails
 }: PaymentStatusEmailProps) => {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'PHP'
-    }).format(price);
-  };
-
   const getStatusMessage = () => {
     switch (status) {
     case 'verified':
@@ -69,22 +68,22 @@ export const PaymentStatusEmail = ({
     <Html>
       <Head />
       <Preview>Payment {status === 'verified' ? 'Verification' : status === 'refunded' ? 'Refund' : 'Declined'} - Order #{orderNumber}</Preview>
-      <Body style={main}>
-        <Container style={container}>
-          <Section style={header}>
-            <div style={headerContent}>
+      <Body style={EMAIL_STYLES.main}>
+        <Container style={EMAIL_STYLES.container}>
+          <Section style={EMAIL_STYLES.header}>
+            <div style={EMAIL_STYLES.headerContent}>
               <Img
-                src="https://merchtrack.tech/img/logo-white.png"
+                src={COMPANY_INFO.logoUrl}
                 width={45}
                 height={45}
-                alt="MerchTrack"
-                style={logo}
+                alt={COMPANY_INFO.name}
+                style={EMAIL_STYLES.logo}
               />
-              <Text style={headerText}>MerchTrack</Text>
+              <Text style={EMAIL_STYLES.headerText}>{COMPANY_INFO.name}</Text>
             </div>
           </Section>
 
-          <Section style={contentContainer}>
+          <Section style={EMAIL_STYLES.contentContainer}>
             <Heading style={h1}>
               {getHeaderMessage()} - Order #{orderNumber}
             </Heading>
@@ -153,51 +152,45 @@ export const PaymentStatusEmail = ({
               </Section>
             )}
 
-            <Hr style={divider} />
+            <Hr style={EMAIL_STYLES.divider} />
 
             <Section style={faqSection}>
               <Heading style={h2}>Frequently Asked Questions</Heading>
-              <div style={faqItem}>
-                <Text style={faqQuestion}>How long does payment verification take?</Text>
-                <Text style={faqAnswer}>Payment verification usually takes 1-2 business days depending on your payment method.</Text>
-              </div>
-              <div style={faqItem}>
-                <Text style={faqQuestion}>What payment methods do you accept?</Text>
-                <Text style={faqAnswer}>We accept major credit/debit cards, GCash, Maya, and bank transfers.</Text>
-              </div>
-              <div style={faqItem}>
-                <Text style={faqQuestion}>How can I track my order?</Text>
-                <Text style={faqAnswer}>You can track your order by logging into your MerchTrack account and visiting the Orders section.</Text>
-              </div>
+              {PAYMENT_FAQS.map((faq, index) => (
+                <div key={index} style={faqItem}>
+                  <Text style={faqQuestion}>{faq.question}</Text>
+                  <Text style={faqAnswer}>{faq.answer}</Text>
+                </div>
+              ))}
             </Section>
 
             <Section style={buttonContainer}>
               <Text style={callToAction}>
                 Visit our website to explore more products or check your order status
               </Text>
-              <a href="https://merchtrack.tech" style={button}>
-                Visit MerchTrack
+              <a href={COMPANY_INFO.website} style={button}>
+                Visit {COMPANY_INFO.name}
               </a>
             </Section>
 
-            <Hr style={divider} />
+            <Hr style={EMAIL_STYLES.divider} />
 
-            <Section style={footer}>
-              <Text style={footerText}>
+            <Section style={EMAIL_STYLES.footer}>
+              <Text style={EMAIL_STYLES.footerText}>
                 Have questions? Visit our{" "}
-                <a href="https://merchtrack.tech/contacts" style={link}>
+                <a href={COMPANY_INFO.contactPageUrl} style={EMAIL_STYLES.link}>
                   Contact Page
                 </a>
                 {" "}or reach out to our support team.
               </Text>
-              <Text style={footerContact}>
-                Email: support@merchtrack.tech | Phone: +63 912 345 6789
+              <Text style={EMAIL_STYLES.footerContact}>
+                Email: {COMPANY_INFO.email} | Phone: {COMPANY_INFO.phone}
               </Text>
-              <Text style={footerAddress}>
-                MerchTrack Inc. | 123 Business Avenue, Makati City, Philippines
+              <Text style={EMAIL_STYLES.footerAddress}>
+                {COMPANY_INFO.address}
               </Text>
-              <Text style={footerCopyright}>
-                © {new Date().getFullYear()} MerchTrack. All rights reserved.
+              <Text style={EMAIL_STYLES.footerCopyright}>
+                © {new Date().getFullYear()} {COMPANY_INFO.name}. All rights reserved.
               </Text>
             </Section>
           </Section>
@@ -207,54 +200,7 @@ export const PaymentStatusEmail = ({
   );
 };
 
-const main = {
-  backgroundColor: "#f6f9fc",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
-
-const container = {
-  backgroundColor: "#ffffff",
-  margin: "0 auto",
-  padding: "0",
-  marginBottom: "64px",
-  borderRadius: "12px",
-  overflow: "hidden",
-  maxWidth: "600px",
-};
-
-const header = {
-  backgroundColor: "#2C59DB",
-  padding: "24px",
-  textAlign: "center" as const,
-};
-
-const headerContent = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "12px",
-  margin: "0 auto",
-  width: "fit-content",
-};
-
-const headerText = {
-  color: "#ffffff",
-  fontSize: "24px",
-  fontWeight: "600",
-  margin: "0",
-  lineHeight: "45px",
-};
-
-const logo = {
-  margin: "0",
-  display: "block",
-};
-
-const contentContainer = {
-  padding: "40px 48px",
-};
-
+// Specific styles not part of shared styles
 const h1 = {
   color: "#1a1a1a",
   fontSize: "24px",
@@ -300,22 +246,10 @@ const infoSection = {
 
 const callToAction = {
   fontSize: "16px",
-  color: "#2C59DB",
+  color: EMAIL_STYLES.primaryColor,
   margin: "32px 0",
   textAlign: "center" as const,
   fontWeight: "500",
-};
-
-const divider = {
-  borderTop: "1px solid #e2e8f0",
-  margin: "32px 0",
-};
-
-const footer = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "24px 0",
-  textAlign: "center" as const,
 };
 
 const h2 = {
@@ -357,52 +291,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: "#2C59DB",
-  borderRadius: "6px",
-  color: "#fff",
-  fontSize: "16px",
-  fontWeight: "600",
-  padding: "12px 24px",
-  textDecoration: "none",
-  display: "inline-block",
-  margin: "16px 0",
-  border: "none",
-  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
-  transition: "background-color 0.2s ease",
-};
-
-const link = {
-  color: "#2C59DB",
-  textDecoration: "none",
-  fontWeight: "500",
-};
-
-const footerText = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "0 0 12px",
-  textAlign: "center" as const,
-};
-
-const footerContact = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "8px 0",
-  textAlign: "center" as const,
-};
-
-const footerAddress = {
-  fontSize: "14px",
-  color: "#6b7280",
-  margin: "8px 0",
-  textAlign: "center" as const,
-};
-
-const footerCopyright = {
-  fontSize: "12px",
-  color: "#9ca3af",
-  margin: "16px 0 0",
-  textAlign: "center" as const,
+  ...EMAIL_STYLES.button,
 };
 
 const refundSection = {

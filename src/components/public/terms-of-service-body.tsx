@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, FileText, Shield, ScrollText, DollarSign, Bookmark } from "lucide-react";
@@ -31,30 +33,14 @@ function TermsOfServiceBody() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 px-4 py-16 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-4xl">   
+    <div className="min-h-screen px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">   
         <motion.div 
           className="overflow-hidden rounded-2xl bg-white shadow-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Hero Section */}
-          <div className="relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-800 px-8 py-12 text-white sm:px-12">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)]"></div>
-            </div>
-            <div className="relative">
-              <h1 className="mb-4 flex items-center text-3xl font-bold tracking-tight sm:text-4xl">
-                <FileText className="mr-4 size-8" />
-                {TERMS_OF_SERVICE_CONTENT.title}
-              </h1>
-              <p className="text-lg text-primary-100">
-                Last updated: {TERMS_OF_SERVICE_CONTENT.lastUpdated}
-              </p>
-            </div>
-          </div>
-
           <div className="p-8 sm:p-12">
             {/* Introduction */}
             <motion.div 
@@ -63,7 +49,7 @@ function TermsOfServiceBody() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-inner">
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-6">
                 <p className="text-base leading-relaxed text-gray-700">
                   {TERMS_OF_SERVICE_CONTENT.sections[0].content}
                 </p>

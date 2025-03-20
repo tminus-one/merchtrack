@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
+import PageTitle from '@/components/public/page-title';
 
 const faqCategories = [
   {
@@ -75,7 +76,7 @@ const faqCategories = [
   }
 ];
 
-function FAQBody() {
+function FAQBody({ displayTitle = true }: { displayTitle?: boolean }) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [filteredFAQs, setFilteredFAQs] = React.useState(faqCategories);
 
@@ -122,16 +123,10 @@ function FAQBody() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 px-4 py-16 sm:px-6 lg:px-8">
+    <div className="min-h-screenpx-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">   
-        <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold tracking-tight text-primary">Frequently Asked Questions</h1>
-          <p className="mx-auto max-w-2xl text-gray-600">
-            Find answers to common questions about our merchandise, ordering process, and policies.
-          </p>
-        </div>
-
-        <div className="mb-10 flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
+        {displayTitle && <PageTitle title="Frequently Asked Questions" description="Find answers to common questions about our merchandise, ordering process, and policies." />}
+        <div className="my-10 flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
             <Input

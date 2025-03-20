@@ -100,7 +100,8 @@ export async function getProducts(
                 price: true,
                 rolePricing: true,
                 createdAt: true,
-                updatedAt: true
+                updatedAt: true,
+                inventory: true,
               }
             }
           },

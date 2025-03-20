@@ -4,6 +4,7 @@ import PageAnimation from '@/components/public/page-animation';
 import MyTickets from '@/components/public/profile/my-tickets';
 import MyProfileSideBar from '@/components/public/profile/my-profile-sidebar';
 import { Card } from '@/components/ui/card';
+import FAQBody from '@/components/public/faq-body';
 
 export const metadata = {
   title: 'Support Tickets | MerchTrack',
@@ -38,6 +39,10 @@ export default function PaymentHistoryPage() {
               </div>
             </Card>
             <MyTickets />
+            <div className="-mb-24 mt-8 flex items-center gap-3">
+              <h2 className="text-center text-xl font-semibold text-primary">Frequently Asked Questions</h2>
+            </div>
+            <FAQBody displayTitle={false} />
           </div>
         </div>
       </div>

@@ -45,3 +45,22 @@ export type ExtendedProduct = {
   variants: ExtendedProductVariant[];
   postedBy: User;
 };
+
+export interface ProductSearchParams {
+  search?: string;
+  q?: string;
+  sort?: string;
+  categories?: string;
+  inventoryType?: string;
+  availability?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  page?: string;
+}
+
+export interface ProductFilters {
+  categories: string[];
+  priceRange: [number, number];
+  inventoryType: string[];
+  availability: string[];
+}

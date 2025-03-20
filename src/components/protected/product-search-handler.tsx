@@ -1,108 +1,150 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Category } from '@prisma/client';
-import ProductSearch from './product-search';
+import { Search } from "lucide-react";
+import ProductFilters from './product-filters';
+import { ProductFilters as ProductFiltersType } from '@/types/products';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
-interface ProductSearchFilters {
-  query?: string;
-  sort?: string;
-  priceRange?: {
-    min: string;
-    max: string;
-  };
-  categories?: string[];
-  inventoryType?: string[];
-}
-
-interface ProductSearchHandlerProps {
+type ProductSearchHandlerProps = {
   categories: Category[];
-  initialFilters?: ProductSearchFilters;
+  initialFilters?: ProductFiltersType;
 }
 
 export default function ProductSearchHandler({ 
   categories,
-  initialFilters = {}
 }: Readonly<ProductSearchHandlerProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const currentSearch = searchParams?.get('search') ?? '';
+  const currentSort = searchParams?.get('sort') ?? 'featured';
   
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [hasInitialFilters, setHasInitialFilters] = useState(false);
-  
-  // Initialize filters from URL query parameters if present
-  useEffect(() => {
-    if (searchParams) {
-      const urlFilters = {
-        query: searchParams.get('search') ?? searchParams.get('q') ?? '',
-        sort: searchParams.get('sort') ?? 'featured',
-        categories: searchParams.get('categories')?.split(',').filter(Boolean) || [],
-        inventoryType: searchParams.get('inventoryType')?.split(',').filter(Boolean) || [],
-        priceRange: {
-          min: searchParams.get('minPrice') ?? '',
-          max: searchParams.get('maxPrice') ?? ''
-        }
-      };
-      
-      // We don't want to trigger a search immediately, just initialize the values
-      // The ProductSearch component will handle displaying these values
-      if (urlFilters.query || urlFilters.categories.length || 
-          urlFilters.inventoryType.length || urlFilters.priceRange.min || 
-          urlFilters.priceRange.max) {
-        setHasInitialFilters(true);
-      }
-    }
-  }, [searchParams]);
-  
-  const handleSearch = (filters: ProductSearchFilters) => {
-    // Build the query string from filters
+  const handleFilterChange = (filters: ProductFiltersType) => {
     const params = new URLSearchParams();
     
-    if (filters.query) {
-      params.set('search', filters.query);
+    if (currentSearch) {
+      params.set('search', currentSearch);
     }
     
-    if (filters.sort && filters.sort !== 'featured') {
-      params.set('sort', filters.sort);
+    if (currentSort !== 'featured') {
+      params.set('sort', currentSort);
     }
     
-    if (filters.priceRange?.min) {
-      params.set('minPrice', filters.priceRange.min);
-    }
-    
-    if (filters.priceRange?.max) {
-      params.set('maxPrice', filters.priceRange.max);
-    }
-    
+    // Add category filters
     if (filters.categories?.length) {
       params.set('categories', filters.categories.join(','));
     }
     
+    // Add price range filters
+    if (filters.priceRange?.[0] > 0) {
+      params.set('minPrice', filters.priceRange[0].toString());
+    }
+    if (filters.priceRange?.[1] < 5000) {
+      params.set('maxPrice', filters.priceRange[1].toString());
+    }
+    
+    // Add inventory type filters
     if (filters.inventoryType?.length) {
       params.set('inventoryType', filters.inventoryType.join(','));
     }
     
-    // Navigate to the products page with the query parameters
-    const queryString = params.toString();
-    router.push(`/products${queryString ? `?${queryString}` : ''}`);
+    // Add availability filters
+    if (filters.availability?.length) {
+      params.set('availability', filters.availability.join(','));
+    }
+    
+    // Reset to page 1 when filters change
+    params.set('page', '1');
+    
+    // Navigate with the new filters
+    router.push(`/products?${params.toString()}`);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const search = formData.get('search') as string;
+    const sort = formData.get('sort') as string;
+    
+    const params = new URLSearchParams(searchParams?.toString());
+    
+    if (search) {
+      params.set('search', search);
+    } else {
+      params.delete('search');
+    }
+    
+    if (sort && sort !== 'featured') {
+      params.set('sort', sort);
+    } else {
+      params.delete('sort');
+    }
+    
+    // Reset to page 1 when search changes
+    params.set('page', '1');
+    
+    router.push(`/products?${params.toString()}`);
   };
 
   return (
-    <ProductSearch 
-      categories={categories}
-      onSearch={handleSearch}
-      initialFilters={{
-        query: searchParams?.get('search') ?? searchParams?.get('q') ?? '',
-        sort: searchParams?.get('sort') ?? 'featured',
-        categories: searchParams?.get('categories')?.split(',').filter(Boolean) ?? [],
-        inventoryType: searchParams?.get('inventoryType')?.split(',').filter(Boolean) ?? [],
-        priceRange: {
-          min: searchParams?.get('minPrice') ?? '',
-          max: searchParams?.get('maxPrice') ?? ''
-        },
-        ...initialFilters
-      }}
-    />
+    <div className="space-y-6">
+      <form onSubmit={handleSearch} className="flex flex-col gap-4 sm:flex-row">
+        <div className="relative flex-1">
+          <Input
+            name="search"
+            type="search"
+            placeholder="Search products..."
+            defaultValue={currentSearch}
+            className="pr-10"
+          />
+          <Button
+            type="submit"
+            variant="ghost"
+            size="icon"
+            className="absolute right-0 top-0"
+          >
+            <Search className="size-4" />
+            <span className="sr-only">Search</span>
+          </Button>
+        </div>
+        
+        <Select name="sort" defaultValue={currentSort}>
+          <SelectTrigger className="w-[180px] shrink-0">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="featured">Featured</SelectItem>
+            <SelectItem value="newest">Newest Arrivals</SelectItem>
+            <SelectItem value="price_asc">Price: Low to High</SelectItem>
+            <SelectItem value="price_desc">Price: High to Low</SelectItem>
+            <SelectItem value="rating">Highest Rated</SelectItem>
+            <SelectItem value="bestseller">Best Sellers</SelectItem>
+          </SelectContent>
+        </Select>
+      </form>
+
+      <ProductFilters
+        categories={categories}
+        onFilterChange={handleFilterChange}
+        initialFilters={{
+          categories: searchParams?.get('categories')?.split(',').filter(Boolean) ?? [],
+          inventoryType: searchParams?.get('inventoryType')?.split(',').filter(Boolean) ?? [],
+          availability: searchParams?.get('availability')?.split(',').filter(Boolean) ?? [],
+          priceRange: [
+            Number(searchParams?.get('minPrice')) || 0,
+            Number(searchParams?.get('maxPrice')) || 5000
+          ]
+        }}
+      />
+    </div>
   );
 }

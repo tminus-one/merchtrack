@@ -198,7 +198,7 @@ export default function ProductSearch({
               Sort
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56">
+          <DropdownMenuContent className="w-56 bg-white">
             <DropdownMenuLabel>Sort Products</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => {setSelectedSort('featured'); handleSearch();}}>

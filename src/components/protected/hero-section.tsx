@@ -25,7 +25,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
     id: 1,
     title: "Discover Premium Merchandise",
     description: "Explore our exclusive collection of high-quality products at unbeatable prices",
-    imageUrl: "/img/carousel-img.png",
+    imageUrl: "/img/carousel-image.jpg",
     buttonText: "Shop Now",
     buttonLink: "/products"
   },
