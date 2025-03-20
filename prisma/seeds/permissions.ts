@@ -7,5 +7,6 @@ export const permissions = [
   { code: 'payments', name: 'Payments', description: 'Permission to process payments' },
   { code: 'inventory', name: 'Inventory', description: 'Permission to manage inventory' },
   { code: 'dashboard', name: 'Dashboard', description: 'Permission to view dashboard' },
-  { code: 'settings', name: 'Settings', description: 'Permission to access settings' }
+  { code: 'settings', name: 'Settings', description: 'Permission to access settings' },
+  { code: 'messages', name: 'Messages', description: 'Permission to send and receive messages' },
 ];

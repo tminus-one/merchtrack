@@ -73,7 +73,7 @@ const HeaderLP = () => {
             className="flex items-center gap-4"
           >
             <div className="mr-4 hidden items-center gap-6 sm:flex">
-              {["About", "Contact"].map((item) => (
+              {["Products", "About", "Contact"].map((item) => (
                 <motion.div
                   key={item}
                   whileHover={{ y: -2 }}

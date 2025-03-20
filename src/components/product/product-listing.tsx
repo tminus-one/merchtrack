@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { FaCartPlus } from "react-icons/fa";
-import { toast } from "sonner";
+
+import { SignInButton } from "@clerk/nextjs";
 import ProductRecommendations from "./product-recommendations";
 import UserReview from "./user-review";
 import ProductReviews from "./product-reviews";
@@ -17,6 +18,8 @@ import { ExtendedProduct, ExtendedProductVariant } from "@/types/extended";
 import { useRolePricing } from "@/hooks/use-role-pricing";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import useToast from "@/hooks/use-toast";
+
 
 interface ProductListingProps {
   product: ExtendedProduct;
@@ -29,6 +32,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
   const [selectedVariant, setSelectedVariant] = useState<ExtendedProductVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [refreshReviews, setRefreshReviews] = useState(false);
+  const toast = useToast;
 
   useEffect(() => {
     if (product?.variants?.length > 0) {
@@ -48,9 +52,20 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
   });
 
   const handleAddToCart = () => {
+    if (!user) {
+      return toast({
+        type: 'error',
+        title: "Sign in required",
+        message: "Please sign in to add items to your cart",
+      });
+    }
+
     if (!selectedVariant) {
-      toast.error("Please select a variant");
-      return;
+      return toast({
+        type: 'error',
+        title: "Variant required",
+        message: "Please select a variant before adding to cart",
+      });
     }
 
     addItem({
@@ -66,7 +81,11 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
       }
     });
 
-    toast.success('Added to cart!');
+    toast({
+      title: 'Success',
+      message: 'Added to cart!',
+      type: 'success',
+    });
     setCartOpen(true);
   };
 
@@ -252,8 +271,11 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                     onReviewSubmitted={handleReviewSubmitted}
                   />
                 ) : (
-                  <div className="mb-8 rounded-lg bg-gray-50 p-4 text-center">
-                    <p>Please sign in to leave a review.</p>
+                  <div className="mb-8 rounded-lg bg-gray-50 p-6 text-center">
+                    <p className="mb-4 text-gray-600">Sign in to leave a review and unlock special pricing!</p>
+                    <SignInButton mode="modal">
+                      <Button variant="default">Sign in</Button>
+                    </SignInButton>
                   </div>
                 )}
                 

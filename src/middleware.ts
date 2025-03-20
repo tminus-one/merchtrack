@@ -39,7 +39,8 @@ const isPublicRoute = createRouteMatcher([
   '/terms-of-service',
   '/privacy-policy',
   '/survey(.*)',
-  '/track-order'
+  '/track-order',
+  '/products(.*)'  // Add products route as public
 ]);
 
 const isOnboardingRoute = createRouteMatcher([

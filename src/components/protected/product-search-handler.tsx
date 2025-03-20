@@ -3,8 +3,10 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Category } from '@prisma/client';
 import { Search } from "lucide-react";
+import { SignInButton } from "@clerk/nextjs";
 import ProductFilters from './product-filters';
 import { ProductFilters as ProductFiltersType } from '@/types/products';
+import { useUserStore } from '@/stores/user.store';
 import {
   Select,
   SelectContent,
@@ -27,6 +29,7 @@ export default function ProductSearchHandler({
   const searchParams = useSearchParams();
   const currentSearch = searchParams?.get('search') ?? '';
   const currentSort = searchParams?.get('sort') ?? 'featured';
+  const { user } = useUserStore();
   
   const handleFilterChange = (filters: ProductFiltersType) => {
     const params = new URLSearchParams();
@@ -116,7 +119,7 @@ export default function ProductSearchHandler({
             <span className="sr-only">Search</span>
           </Button>
         </div>
-        
+
         <Select name="sort" defaultValue={currentSort}>
           <SelectTrigger className="w-[180px] shrink-0">
             <SelectValue placeholder="Sort by" />
@@ -132,19 +135,28 @@ export default function ProductSearchHandler({
         </Select>
       </form>
 
-      <ProductFilters
-        categories={categories}
-        onFilterChange={handleFilterChange}
-        initialFilters={{
-          categories: searchParams?.get('categories')?.split(',').filter(Boolean) ?? [],
-          inventoryType: searchParams?.get('inventoryType')?.split(',').filter(Boolean) ?? [],
-          availability: searchParams?.get('availability')?.split(',').filter(Boolean) ?? [],
-          priceRange: [
-            Number(searchParams?.get('minPrice')) || 0,
-            Number(searchParams?.get('maxPrice')) || 5000
-          ]
-        }}
-      />
+      {user ? (
+        <ProductFilters
+          categories={categories}
+          onFilterChange={handleFilterChange}
+          initialFilters={{
+            categories: searchParams?.get('categories')?.split(',').filter(Boolean) ?? [],
+            inventoryType: searchParams?.get('inventoryType')?.split(',').filter(Boolean) ?? [],
+            availability: searchParams?.get('availability')?.split(',').filter(Boolean) ?? [],
+            priceRange: [
+              Number(searchParams?.get('minPrice')) || 0,
+              Number(searchParams?.get('maxPrice')) || 5000
+            ]
+          }}
+        />
+      ) : (
+        <div className="bg-muted/50 rounded-lg p-4 text-center">
+          <p className="text-muted-foreground mb-2 text-sm">Sign in to access advanced filters and special pricing!</p>
+          <SignInButton mode="modal">
+            <Button variant="default" size="sm">Sign in</Button>
+          </SignInButton>
+        </div>
+      )}
     </div>
   );
 }

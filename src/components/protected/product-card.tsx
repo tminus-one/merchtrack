@@ -1,33 +1,38 @@
 'use client';
-
+import DOMPurify from "isomorphic-dompurify";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Tag, Star, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
 import { cn } from "@/lib/utils";
+import { useUserStore } from "@/stores/user.store";
 import type { ExtendedProduct } from "@/types/extended";
+
+;
 
 interface ProductCardProps extends ExtendedProduct {
   index?: number;
 }
 
 export default function ProductCard({ index = 0, ...product }: Readonly<ProductCardProps>) {
+  const { user } = useUserStore();
   const lowestPrice = product.variants.length > 0
     ? Math.min(...product.variants.map(v => Number(v.price)))
     : 0;
-
   const inStock = product.variants.some(v => v.inventory > 0);
   const isPreorder = product.inventoryType === 'PREORDER';
   const router = useRouter();
 
-  // Function to add to cart
-  const handleAddToCart = (slug: string) => {
-    router.push(`/products/${slug}`);
+  const handleProductAction = () => {
+    if (!user) {
+      return toast.error("You need to sign in to view product details.");
+    }
+    router.push(`/products/${product.slug}`);
   };
 
   return (
@@ -87,9 +92,7 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
                 {product.title}
               </Link>
             </h3>
-            <p className="line-clamp-1 text-sm text-gray-500">
-              {product.description}
-            </p>
+            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description!) }} className="line-clamp-1 text-sm text-gray-500" />
           </div>
 
           <div className="flex items-center justify-between">
@@ -124,7 +127,7 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
                 "w-full gap-2 transition-colors",
                 !inStock && !isPreorder && "cursor-not-allowed opacity-50"
               )}
-              onClick={() =>handleAddToCart(product.slug)}
+              onClick={handleProductAction}
               disabled={!inStock && !isPreorder}
             >
               <ShoppingCart className="size-4" />

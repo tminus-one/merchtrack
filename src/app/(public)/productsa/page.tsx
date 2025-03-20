@@ -1,27 +1,17 @@
 import { Suspense } from "react";
-import { auth } from "@clerk/nextjs/server";
 import { SlidersHorizontal } from "lucide-react";
 import { Category } from "@prisma/client";
-import ProductGrid from "./components/product-grid";
 import { getCategories } from "@/actions/category.actions";
 import ProductSearchHandler from "@/components/protected/product-search-handler";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import ProductGrid from "@/app/products/components/product-grid";
 
 export default async function ProductsPage() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return (
-      <div className="flex h-[70vh] items-center justify-center">
-        <p>Please sign in to view products.</p>
-      </div>
-    );
-  }
 
   const categoriesResult = await getCategories();
   const categories = categoriesResult.success ? categoriesResult.data : [];
-
+  
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
