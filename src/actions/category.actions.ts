@@ -17,7 +17,17 @@ import { processActionReturnData } from "@/utils";
  */
 export async function getCategories(): Promise<ActionsReturnType<Category[]>> {
   try {
-    const categories = await prisma.category.findMany();
+    const categories = await prisma.category.findMany({
+      include: {
+        products: {
+          select: {
+            title: true,
+            description: true,
+            imageUrl: true,
+          }
+        }
+      }
+    });
     return {
       success: true,
       data: processActionReturnData(categories) as Category[],

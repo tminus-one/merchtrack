@@ -6,8 +6,14 @@ import { useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Category } from '@prisma/client';
 
-interface CategoryShowcaseProps {
-  categories: Category[];
+type CategoryShowcaseProps = {
+  categories: (Category & {
+    products: {
+      imageUrl: string[];
+      title: string;
+      description: string;
+    }[];
+  })[];
   title?: string;
 }
 
@@ -79,7 +85,7 @@ export default function CategoryShowcase({
                 {/* Category Image */}
                 <div className="relative h-36 overflow-hidden bg-gray-100">
                   <Image
-                    src={DEFAULT_IMAGES[0]}
+                    src={category.products[0]?.imageUrl[0] || DEFAULT_IMAGES[0]}
                     alt={category.name}
                     fill
                     sizes="180px"

@@ -148,8 +148,8 @@ function AboutUsBody() {
                       <Lightbulb className="size-8 text-indigo-500" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Experience</h3>
-                      <p className="text-gray-600">Over 10 years of industry expertise</p>
+                      <h3 className="text-lg font-semibold text-gray-800">Creativity</h3>
+                      <p className="text-gray-600">Inspiring ideas that shape the future</p>
                     </div>
                   </div>
                 </motion.div>
@@ -159,8 +159,8 @@ function AboutUsBody() {
                       <Users className="size-8 text-pink-500" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800">Global Reach</h3>
-                      <p className="text-gray-600">Serving clients worldwide</p>
+                      <h3 className="text-lg font-semibold text-gray-800">Community</h3>
+                      <p className="text-gray-600">Empowering connections and fostering growth</p>
                     </div>
                   </div>
                 </motion.div>

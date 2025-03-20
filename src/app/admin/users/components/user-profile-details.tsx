@@ -21,14 +21,14 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { updateUserSchema, type UpdateUserType } from "@/schema/user";
 import { useUserStore } from "@/stores/user.store";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import UserAvatar from "@/components/shared/user-avatar";
 
 interface UserProfileDetailsProps {
   email: string;
 }
 
 export function UserProfileDetails({ email }: UserProfileDetailsProps) {
-  const { data: user, isLoading } = useUserQuery(decodeURIComponent(email));
+  const { data: user, isLoading, refetch } = useUserQuery(decodeURIComponent(email));
   const { data: userImage } = useUserImageQuery(user?.clerkId);
   const [isEditing, setIsEditing] = useState(false);
   const { userId: currentUserId } = useUserStore();
@@ -44,6 +44,22 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
     }
   );
   
+  // Form setup
+  const form = useForm<UpdateUserType>({
+    resolver: zodResolver(updateUserSchema),
+    mode: "onBlur",
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      phone: "",
+      role: "STUDENT" as Role,
+      college: "COCS" as College,
+      courses: "",
+      isStaff: false,
+      isAdmin: false
+    }
+  });
+  
   // Fetch staff members managed by this user
   useEffect(() => {
     if (user) {
@@ -51,35 +67,40 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
     }
   }, [user]);
 
+  // Reset form with user data when user data is loaded or edit mode is toggled
   useEffect(() => {
-    if (isEditing) {
-      form.setValue("firstName", user?.firstName || "");
-      form.setValue("lastName", user?.lastName || "");
-      form.setValue("phone", user?.phone || "");
-      form.setValue("role", user?.role as Role || "STUDENT");
-      form.setValue("college", user?.college as College || "OTHER");
-      form.setValue("courses", user?.courses || "");
-      form.setValue("isStaff", user?.isStaff || false);
-      form.setValue("isAdmin", user?.isAdmin || false);
+    if (user) {
+      // Always reset the form when user data changes, regardless of edit mode
+      form.reset({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        phone: user.phone || "",
+        role: user.role as Role,
+        college: user.college as College,
+        courses: user.courses || "",
+        isStaff: user.isStaff || false,
+        isAdmin: user.isAdmin || false
+      });
     }
-  }, [user, isEditing]);
+  }, [user, form]);
 
-  
-  const form = useForm<UpdateUserType>({
-    resolver: zodResolver(updateUserSchema),
-    mode: "onBlur",
-    defaultValues: {
-      firstName: user?.firstName ?? "",
-      lastName: user?.lastName ?? "",
-      phone: user?.phone ?? "",
-      role: user?.role as Role,
-      college: user?.college as College,
-      courses: user?.courses ?? "",
-      imageUrl: user?.imageUrl ?? undefined,
-      isStaff: user?.isStaff ?? false,
-      isAdmin: user?.isAdmin ?? false
+  // Toggle edit mode handler
+  const toggleEditMode = () => {
+    if (!isEditing && user) {
+      // Ensure form values are up to date when entering edit mode
+      form.reset({
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        phone: user.phone || "",
+        role: user.role as Role,
+        college: user.college as College,
+        courses: user.courses || "",
+        isStaff: user.isStaff || false,
+        isAdmin: user.isAdmin || false
+      });
     }
-  });
+    setIsEditing(prev => !prev);
+  };
 
   const mutation = useMutation({
     mutationFn: async (data: UpdateUserType) => {
@@ -101,6 +122,7 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
       toast.success("User details updated successfully");
       setIsEditing(false);
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      refetch();
     },
     onError: (error: Error) => {
       toast.error(error.message);
@@ -174,7 +196,7 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
               size="sm" 
               variant="outline" 
               className="border-white/20 bg-white/10 text-white hover:bg-white/20"
-              onClick={() => setIsEditing(true)}
+              onClick={toggleEditMode}
             >
               <FaEdit className="mr-2 size-4" />
               Edit Profile
@@ -228,6 +250,7 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select 
+                  defaultValue={user.role}
                   value={form.watch("role")} 
                   onValueChange={(value) => form.setValue("role", value as Role)}
                 >
@@ -250,6 +273,7 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
               <div className="space-y-2">
                 <Label htmlFor="college">College</Label>
                 <Select 
+                  defaultValue={user.college}
                   value={form.watch("college")} 
                   onValueChange={(value) => form.setValue("college", value as College)}
                 >
@@ -379,8 +403,13 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
                       </Badge>
                     )}
                     
-                    <Badge variant="outline" className={`border-${user.isDeleted ? 'red' : 'green'}-200 bg-${user.isDeleted ? 'red' : 'green'}-50 text-${user.isDeleted ? 'red' : 'green'}-700`}>
-                      <FaCircle className={`text- mr-1 size-2${user.isDeleted ? 'red' : 'green'}-500`} />
+                    <Badge 
+                      variant="outline" 
+                      className={user.isDeleted 
+                        ? "border-red-200 bg-red-50 text-red-700" 
+                        : "border-green-200 bg-green-50 text-green-700"}
+                    >
+                      <FaCircle className={`mr-1 size-2 ${user.isDeleted ? "text-red-500" : "text-green-500"}`} />
                       {user.isDeleted ? 'Inactive' : 'Active'}
                     </Badge>
                   </div>
@@ -406,12 +435,13 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
                         <h4 className="mb-3 text-xs font-medium text-gray-500">Reporting To</h4>
                         <div className="rounded-lg border bg-blue-50/50 p-4">
                           <div className="flex items-center gap-4">
-                            <Avatar className="size-12 border-2 border-white shadow-sm">
-                              <AvatarFallback className="bg-blue-600 text-lg text-white">
-                                {manager.firstName?.[0]}
-                                {manager.lastName?.[0]}
-                              </AvatarFallback>
-                            </Avatar>
+                            <UserAvatar
+                              userId={manager.clerkId}
+                              firstName={manager.firstName!}
+                              lastName={manager.lastName!}
+                              email={manager.email!}
+                              className="size-14 border shadow-sm" 
+                            />
                             <div>
                               <p className="font-medium text-gray-900">
                                 {manager.firstName} {manager.lastName}
@@ -437,12 +467,13 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
                           <div className="space-y-3 overflow-hidden">
                             {managedStaff.slice(0, 3).map((staff) => (
                               <div key={staff.id} className="flex items-center gap-3">
-                                <Avatar className="size-10 border shadow-sm">
-                                  <AvatarFallback className="bg-blue-600 text-white">
-                                    {staff.firstName?.[0]}
-                                    {staff.lastName?.[0]}
-                                  </AvatarFallback>
-                                </Avatar>
+                                <UserAvatar
+                                  userId={staff.clerkId}
+                                  firstName={staff.firstName!}
+                                  lastName={staff.lastName!}
+                                  email={staff.email!}
+                                  className="size-10 border shadow-sm"
+                                />
                                 <div>
                                   <p className="font-medium text-gray-900">
                                     {staff.firstName} {staff.lastName}

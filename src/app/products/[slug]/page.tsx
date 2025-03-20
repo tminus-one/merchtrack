@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getProductBySlug } from '@/actions/products.actions';
 import ProductListing from "@/components/product/product-listing";
-import SmoothScrollLayout from "@/components/public/smooth-scroll-layout";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -65,10 +64,8 @@ export default async function ProductPage({ params }: Readonly<Props>) {
   const product = productResult.data;
 
   return (
-    <SmoothScrollLayout>
-      <div className="mx-auto max-w-4xl px-4 py-6">
-        <ProductListing slug={slug} product={product} />
-      </div>
-    </SmoothScrollLayout>
+    <div className="mx-auto max-w-4xl px-4 py-6">
+      <ProductListing slug={slug} product={product} />
+    </div>
   );
 }

@@ -69,6 +69,9 @@ export default function ProtectedFooter() {
           <div className="flex flex-col space-y-4">
             <h3 className="text-lg font-bold">Help & Support</h3>
             <div className="grid grid-cols-1 gap-2">
+              <Link href="/how-it-works" className="text-sm text-gray-300 transition-colors hover:text-white">
+                How It Works
+              </Link>
               <Link href="/faqs" className="text-sm text-gray-300 transition-colors hover:text-white">
                 FAQs
               </Link>

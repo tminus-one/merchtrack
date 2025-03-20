@@ -55,7 +55,7 @@ const PROMOTIONS = [
     title: "Need Help?",
     description: "Our support team is here to assist you. Feel free to reach out!",
     ctaText: "Contact Support",
-    ctaLink: "/support",
+    ctaLink: "/my-account/tickets",
     color: "purple"
   }
 ];
@@ -154,7 +154,7 @@ export default async function DashboardPage() {
           </div>
         }>
           <CategoryShowcase 
-            categories={categories as Category[]}
+            categories={categories as (Category & { products: { imageUrl: string[]; title: string; description: string; }[] })[]}
             title="Shop By Category"
           />
         </Suspense>
@@ -170,7 +170,7 @@ export default async function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ProductSearchHandler categories={categories as Category[]} />
+            <ProductSearchHandler categories={categories as Category[]} disableUrlUpdate={true} />
           </CardContent>
         </Card>
       </div>

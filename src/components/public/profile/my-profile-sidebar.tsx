@@ -9,6 +9,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useUserStore } from '@/stores/user.store';
 import { cn } from '@/lib/utils';
 import { useUserImageQuery } from '@/hooks/messages.hooks';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const sidebarLinks = [
   {
@@ -78,12 +79,13 @@ function SidebarContent({
     <div className='flex size-full flex-col bg-white'>
       <div className='flex flex-col items-center border-b p-6'>
         <div className='relative mb-4 size-24 overflow-hidden rounded-full border-2 border-primary/10'>
-          <Image
-            src={userImage ?? "/img/profile-placeholder-img.png"}
-            alt="User Profile"
-            fill
-            className="object-cover"
-          />
+          <Avatar className='size-24'>
+            {userImage ? <Image src={userImage} alt="User Image" width={100} height={100} className="rounded-full" /> : null}
+            <AvatarFallback className='bg-primary text-xl text-white'>
+              {user?.firstName?.[0] ?? 'U'}
+              {user?.lastName?.[0] ?? 'U'}
+            </AvatarFallback>
+          </Avatar>
         </div>
         <h3 className='text-center text-lg font-semibold'>{user?.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'User'}</h3>
         <p className='text-muted-foreground text-sm'>{user?.email ?? 'email@example.com'}</p>

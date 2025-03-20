@@ -73,7 +73,7 @@ export function PaymentsContent() {
   }, [debouncedSearchQuery, searchField]);
 
   // Query orders with pagination and search
-  const { data: orders, isLoading } = useOrdersQuery({
+  const { data: orders, isLoading, refetch: orderRefetch } = useOrdersQuery({
     where: queryWhereClause,
     page: currentPage,
     take: itemsPerPage,
@@ -83,7 +83,7 @@ export function PaymentsContent() {
     }
   });
 
-  const { data: paymentsResponse, isLoading: isPaymentsLoading } = usePaymentsQuery({
+  const { data: paymentsResponse, isLoading: isPaymentsLoading, refetch: paymentsRefetch } = usePaymentsQuery({
     take: 10,
     orderBy: { createdAt: 'desc' },
     where: {
@@ -93,6 +93,11 @@ export function PaymentsContent() {
       }
     }
   });
+
+  const refetchData = () => {
+    orderRefetch();
+    paymentsRefetch();
+  };
 
   // Query specifically for pending offsite payments
   const { data: offsitePaymentsResponse, isLoading: isOffsitePaymentsLoading } = usePaymentsQuery({
@@ -200,10 +205,12 @@ export function PaymentsContent() {
 
   const handleVerifyPayment = async (paymentId: string, notes: string) => {
     verifyPaymentMutation({ paymentId, notes });
+    refetchData();
   };
 
   const handleRejectPayment = async (paymentId: string, notes: string) => {
     rejectPaymentMutation({ paymentId, notes });
+    refetchData();
   };
 
   return (

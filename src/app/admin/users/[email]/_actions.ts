@@ -1,6 +1,7 @@
 'use server';
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db";
 import { verifyPermission } from "@/utils";
 import { ResetUserPasswordType, UpdateUserType } from "@/schema/user";
@@ -52,6 +53,7 @@ export async function updateUserDetails({ userId, targetUserId, data }: UpdateUs
       select: {
         firstName: true,
         lastName: true,
+        email: true,
         phone: true,
         role: true,
         college: true,
@@ -92,6 +94,8 @@ export async function updateUserDetails({ userId, targetUserId, data }: UpdateUs
       userText: "Your profile has been updated successfully."
     });
 
+    
+    revalidatePath(`/admin/users/${existingUser.email}`);
     return { success: true, message: "User details updated successfully." };
   } catch (error) {
     console.error("Error updating user:", error);

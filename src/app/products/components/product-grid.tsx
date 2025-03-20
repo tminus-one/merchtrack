@@ -1,6 +1,7 @@
 'use client';
 
 import { useSearchParams } from "next/navigation";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 import ProductCard from "@/components/protected/product-card";
 import ProductGridSkeleton from "@/components/skeletons/product-grid-skeleton";
 import ProductEmptyState from "@/components/product/product-empty-state";
@@ -13,6 +14,7 @@ const ITEMS_PER_PAGE = 12;
 export default function ProductGrid() {
   const searchParams = useSearchParams();
   const currentPage = Number(searchParams.get('page')) || 1;
+  const [parent] = useAutoAnimate();
 
   // Build query with all filters
   const query: QueryParams = {
@@ -135,7 +137,7 @@ export default function ProductGrid() {
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div ref={parent} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {sortedProducts.map((product, index) => (
           <ProductCard 
             key={product.id} 

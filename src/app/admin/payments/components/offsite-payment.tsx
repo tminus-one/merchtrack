@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-"use client";
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -17,7 +16,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 
-interface OffsitePaymentProps {
+type OffsitePaymentProps = {
   payments: Payment[];
   isLoading: boolean;
   onVerify: (paymentId: string, notes: string) => Promise<void>;

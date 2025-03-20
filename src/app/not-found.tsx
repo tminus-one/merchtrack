@@ -4,16 +4,27 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Home, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Home, CompassIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import HeaderLP from '@/components/public/header';
 import Footer from '@/components/public/footer';
 
-const particles = Array.from({ length: 30 }, () => ({
-  size: Math.random() * 6 + 2,
-  initialX: Math.random() * 100,
-  initialY: Math.random() * 100,
-}));
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      staggerChildren: 0.15,
+      delayChildren: 0.2
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { y: 0, opacity: 1 }
+};
 
 export default function NotFound() {
   const router = useRouter();
@@ -43,15 +54,15 @@ export default function NotFound() {
       <div className="from-primary-50 relative flex min-h-[75vh] flex-col items-center justify-center overflow-hidden bg-gradient-to-b to-white px-4 py-20">
         {/* Animated background particles */}
         <div className="absolute inset-0 overflow-hidden">
-          {particles.map((particle, i) => (
+          {Array.from({ length: 30 }).map((_, i) => (
             <motion.div
               key={i}
               className="absolute rounded-full bg-primary/20"
               style={{ 
-                width: particle.size, 
-                height: particle.size,
-                left: `${particle.initialX}%`,
-                top: `${particle.initialY}%`,
+                width: Math.random() * 6 + 2, 
+                height: Math.random() * 6 + 2,
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
               }}
               animate={{
                 y: [0, -30, 0],
@@ -67,98 +78,116 @@ export default function NotFound() {
             />
           ))}
         </div>
+        
+        {/* Animated gradient overlay */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(44,89,219,0.15),transparent)]" />
 
-        <div className="relative z-10">
+        <motion.div 
+          className="relative z-10 mt-10 w-full max-w-3xl text-center"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
           {/* Main content */}
-          <div className="relative mb-8 text-center">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="mb-6 flex justify-center"
-            >
-              <div className="relative">
-                <motion.div
-                  className="absolute inset-0 rounded-full bg-primary/20 blur-2xl"
-                  animate={{
-                    scale: [1, 1.2, 1],
-                  }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                  }}
-                />
-                <AlertCircle className="relative size-20 text-primary" />
+          <motion.div variants={itemVariants} className="mb-8">
+            <div className="relative mb-8 flex justify-center">
+              <motion.div
+                className="absolute inset-0 rounded-full bg-primary/20 blur-lg"
+                animate={{
+                  scale: [1, 1.3, 1],
+                  opacity: [0.7, 1, 0.7]
+                }}
+                transition={{
+                  duration: 4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              <div className="relative flex size-28 items-center justify-center rounded-full bg-primary/10">
+                <CompassIcon className="size-16 text-primary" />
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="absolute -inset-0.5 bg-primary/20 opacity-50 blur-xl" />
-              <h1 className="relative text-[8rem] font-light tracking-tighter text-primary sm:text-[12rem]">
+            <div className="relative mb-4">
+              <motion.div
+                className="absolute -inset-1 bg-primary/20 opacity-50 blur-xl"
+                animate={{
+                  scale: [1, 1.05, 1],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+              <h1 className="relative mx-auto text-[10rem] font-light leading-none tracking-tighter text-primary sm:text-[12rem]">
                 404
               </h1>
-            </motion.div>
+            </div>
 
-            <motion.h2
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-6 text-xl font-light text-gray-600 sm:text-2xl"
-            >
-              The page you&apos;re looking for isn&apos;t here.
-            </motion.h2>
-          </div>
+            <h2 className="mb-2 text-2xl font-semibold text-primary sm:text-3xl">
+              Page Not Found
+            </h2>
+            <p className="mx-auto max-w-lg text-neutral-6">
+              The page you&apos;re looking for might have been moved, deleted, or maybe never existed. 
+              Let&apos;s get you back on track.
+            </p>
+          </motion.div>
 
           {/* Action buttons */}
-          <motion.div 
-            className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-          >
+          <motion.div variants={itemVariants} className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
             <motion.button
-              whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }}
+              whileHover={{ y: -2, boxShadow: "0 4px 12px rgba(44,89,219,0.2)" }}
               whileTap={{ scale: 0.98 }}
               onClick={handleGoBack}
               disabled={isNavigating}
-              className="group inline-flex items-center gap-2 rounded-full border-2 border-primary/20 bg-white px-6 py-2.5 text-sm font-medium text-primary transition-all hover:border-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
+              className="hover:bg-primary-50/50 group inline-flex items-center gap-2 rounded-lg border-2 border-primary/20 bg-white px-6 py-2.5 text-sm font-medium text-primary shadow-sm transition-all hover:border-primary/30 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <ArrowLeft className={cn("size-4", { "animate-pulse": isNavigating })} />
+              <ArrowLeft className={cn("size-4 transition-transform", { "animate-pulse": isNavigating })} />
               {isNavigating ? "Navigating..." : "Go Back"}
             </motion.button>
 
             <Link
               href="/"
-              className="group relative inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-white transition-all hover:bg-primary/90"
+              className="group relative inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-600"
             >
-              <motion.div
-                className="absolute inset-0 rounded-full bg-primary"
-                initial={false}
+              <motion.span
+                className="absolute inset-0 rounded-lg"
                 whileHover={{
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  boxShadow: "0 4px 12px rgba(44,89,219,0.3)",
                 }}
               />
               <Home className="relative z-10 size-4" />
               <span className="relative z-10">Return Home</span>
             </Link>
           </motion.div>
-        </div>
 
-        {/* Decorative elements */}
-        <motion.div
-          className="absolute bottom-20 left-1/2 h-px w-40 -translate-x-1/2 bg-gradient-to-r from-transparent via-primary/30 to-transparent"
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-        />
-        
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(59,130,246,0.1),transparent)]" />
+          {/* Decorative elements */}
+          <motion.div 
+            variants={itemVariants}
+            className="mt-16 flex items-center justify-center space-x-2"
+          >
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                className={cn(
+                  "h-1.5 rounded-full bg-primary/30",
+                  i === 1 ? "w-8" : "w-3"
+                )}
+                animate={{
+                  opacity: [0.3, 0.8, 0.3],
+                  scale: i === 1 ? [1, 1.1, 1] : [1, 1, 1]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  delay: i * 0.3,
+                  ease: "easeInOut"
+                }}
+              />
+            ))}
+          </motion.div>
+        </motion.div>
       </div>
       <Footer />
     </>

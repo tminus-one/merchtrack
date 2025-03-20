@@ -1,12 +1,14 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Category } from '@prisma/client';
 import { Search } from "lucide-react";
 import { SignInButton } from "@clerk/nextjs";
+import { useEffect, useState } from 'react';
 import ProductFilters from './product-filters';
 import { ProductFilters as ProductFiltersType } from '@/types/products';
 import { useUserStore } from '@/stores/user.store';
+import { useDebouncedValue } from '@/hooks';
 import {
   Select,
   SelectContent,
@@ -20,26 +22,75 @@ import { Button } from "@/components/ui/button";
 type ProductSearchHandlerProps = {
   categories: Category[];
   initialFilters?: ProductFiltersType;
+  disableUrlUpdate?: boolean;
 }
 
 export default function ProductSearchHandler({ 
   categories,
+  disableUrlUpdate = false
 }: Readonly<ProductSearchHandlerProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const currentSearch = searchParams?.get('search') ?? '';
   const currentSort = searchParams?.get('sort') ?? 'featured';
   const { user } = useUserStore();
   
-  const handleFilterChange = (filters: ProductFiltersType) => {
-    const params = new URLSearchParams();
-    
-    if (currentSearch) {
-      params.set('search', currentSearch);
+  // State for search and sort values
+  const [searchValue, setSearchValue] = useState(currentSearch);
+  const [sortValue, setSortValue] = useState(currentSort);
+  
+  // Create debounced versions of the values
+  const debouncedSearch = useDebouncedValue(searchValue, 500);
+  const debouncedSort = useDebouncedValue(sortValue, 300);
+  
+  // Effect to update URL when debounced values change
+  useEffect(() => {
+    // Don't update URL if we're on dashboard or if URL updating is disabled
+    if (disableUrlUpdate || pathname === '/dashboard') {
+      return;
     }
     
-    if (currentSort !== 'featured') {
-      params.set('sort', currentSort);
+    const params = new URLSearchParams(searchParams?.toString());
+    
+    if (debouncedSearch) {
+      params.set('search', debouncedSearch);
+    } else {
+      params.delete('search');
+    }
+    
+    if (debouncedSort && debouncedSort !== 'featured') {
+      params.set('sort', debouncedSort);
+    } else {
+      params.delete('sort');
+    }
+    
+    // Reset to page 1 when search changes
+    params.set('page', '1');
+    
+    // Prevent unnecessary navigation if values haven't changed
+    const currentUrl = `/products?${params.toString()}`;
+    const currentPath = window.location.pathname + window.location.search;
+    if (currentUrl !== currentPath) {
+      router.push(currentUrl);
+    }
+    
+  }, [debouncedSearch, debouncedSort, router, searchParams, pathname, disableUrlUpdate]);
+
+  const handleFilterChange = (filters: ProductFiltersType) => {
+    // Don't update URL if we're on dashboard or if URL updating is disabled
+    if (disableUrlUpdate || pathname === '/dashboard') {
+      return;
+    }
+    
+    const params = new URLSearchParams();
+    
+    if (searchValue) {
+      params.set('search', searchValue);
+    }
+    
+    if (sortValue !== 'featured') {
+      params.set('sort', sortValue);
     }
     
     // Add category filters
@@ -72,55 +123,45 @@ export default function ProductSearchHandler({
     router.push(`/products?${params.toString()}`);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const search = formData.get('search') as string;
-    const sort = formData.get('sort') as string;
-    
-    const params = new URLSearchParams(searchParams?.toString());
-    
-    if (search) {
-      params.set('search', search);
-    } else {
-      params.delete('search');
+  // Handle search button click
+  const handleSearch = () => {
+    if (searchValue.trim() && pathname === '/dashboard') {
+      // If on dashboard, navigate directly to products page with search query
+      router.push(`/products?search=${encodeURIComponent(searchValue.trim())}`);
     }
-    
-    if (sort && sort !== 'featured') {
-      params.set('sort', sort);
-    } else {
-      params.delete('sort');
-    }
-    
-    // Reset to page 1 when search changes
-    params.set('page', '1');
-    
-    router.push(`/products?${params.toString()}`);
   };
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSearch} className="flex flex-col gap-4 sm:flex-row">
+      <div className="flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
           <Input
-            name="search"
             type="search"
             placeholder="Search products..."
-            defaultValue={currentSearch}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
             className="pr-10"
           />
-          <Button
-            type="submit"
-            variant="ghost"
-            size="icon"
-            className="absolute right-0 top-0"
-          >
-            <Search className="size-4" />
-            <span className="sr-only">Search</span>
-          </Button>
+          {pathname === '/dashboard' ? (
+            <Button 
+              type="button" 
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-0 top-0 h-full"
+              onClick={handleSearch}
+            >
+              <Search className="text-muted-foreground size-4" />
+              <span className="sr-only">Search</span>
+            </Button>
+          ) : (
+            <Search className="text-muted-foreground absolute right-3 top-1/2 size-4 -translate-y-1/2" />
+          )}
         </div>
 
-        <Select name="sort" defaultValue={currentSort}>
+        <Select 
+          value={sortValue} 
+          onValueChange={setSortValue}
+        >
           <SelectTrigger className="w-[180px] shrink-0">
             <SelectValue placeholder="Sort by" />
           </SelectTrigger>
@@ -133,7 +174,7 @@ export default function ProductSearchHandler({
             <SelectItem value="bestseller">Best Sellers</SelectItem>
           </SelectContent>
         </Select>
-      </form>
+      </div>
 
       {user ? (
         <ProductFilters
