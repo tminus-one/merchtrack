@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { processActionReturnData } from "@/utils";
+import { calculatePagination, processActionReturnData } from "@/utils";
 import { QueryParams } from "@/types/common";
 
 export async function POST(
@@ -8,7 +8,8 @@ export async function POST(
 ): Promise<NextResponse> {
   try {
     const params: QueryParams = await req.json();
-    const { take, skip, where, include, orderBy, limitFields } = params;
+    const {  where, include, orderBy, limitFields } = params;
+    const { take, skip, page } = calculatePagination(params);
     const orders = await prisma.order.findMany({
       take: take ? Number(take) : 10,
       skip: skip ? Number(skip) : 0,
@@ -31,10 +32,10 @@ export async function POST(
       data: processActionReturnData(orders, limitFields),
       metadata: {
         total,
-        page: params.page ?? 1,
+        page: page ?? 1,
         lastPage: Math.ceil(total / (params.limit ?? 10)),
-        hasNextPage: (params.page ?? 1) < Math.ceil(total / (params.limit ?? 10)),
-        hasPrevPage: (params.page ?? 1) > 1
+        hasNextPage: (page ?? 1) < Math.ceil(total / (params.limit ?? 10)),
+        hasPrevPage: (page ?? 1) > 1
       } 
     });
 

@@ -2,7 +2,8 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ShoppingBag } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const CallToAction = () => {
@@ -35,21 +36,39 @@ const CallToAction = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
+          <div className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary ring-1 ring-inset ring-primary/20">
+            Limited Time Offer
+          </div>
           <h2 className="text-4xl font-bold tracking-tight text-primary md:text-5xl">
             Ready to Get Started?
           </h2>
           <p className="text-muted-foreground max-w-2xl text-xl">
             Join thousands of students and alumni who trust us for their university merchandise needs.
           </p>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button size="lg" className="group text-neutral-2">
-              Shop Now
-              <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </motion.div>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button size="lg" className="group text-neutral-2" asChild>
+                <Link href="/products">
+                  Shop Now
+                  <ShoppingBag className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Button size="lg" variant="outline" className="group" asChild>
+                <Link href="/about">
+                  Learn More
+                  <ArrowRight className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+            </motion.div>
+          </div>
         </motion.div>
       </div>
     </motion.section>

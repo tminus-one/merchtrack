@@ -1,181 +1,240 @@
 import React from 'react';
-import { Mail, Phone, MapPin } from "lucide-react";
+import { motion } from 'framer-motion';
+import { Mail, Phone, MapPin, FileText, Shield, ScrollText, DollarSign, Bookmark } from "lucide-react";
 import { FOOTER_DETAILS, TERMS_OF_SERVICE_CONTENT } from '@/constants';
 
 function TermsOfServiceBody() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1
+    }
+  };
+
+  const sectionIcons = {
+    definitions: <Bookmark className="size-6 text-primary" />,
+    account: <Shield className="size-6 text-primary" />,
+    obligations: <ScrollText className="size-6 text-primary" />,
+    ip: <FileText className="size-6 text-primary" />,
+    payment: <DollarSign className="size-6 text-primary" />,
+  };
+
   return (
-    <div className="min-h-screen px-4 py-16 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 px-4 py-16 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">   
-        <div className="overflow-hidden rounded-2xl border bg-white transition-all">
-          <div className="p-8 sm:p-12">
-            {/* Header */}
-            <div className="mb-12">
-              <h2 className="mb-6 flex items-center text-2xl font-bold text-gray-800">
-                <span className="mr-4 rounded-lg bg-blue-100 p-2 text-blue-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </span>
+        <motion.div 
+          className="overflow-hidden rounded-2xl bg-white shadow-sm"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Hero Section */}
+          <div className="relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-800 px-8 py-12 text-white sm:px-12">
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)]"></div>
+            </div>
+            <div className="relative">
+              <h1 className="mb-4 flex items-center text-3xl font-bold tracking-tight sm:text-4xl">
+                <FileText className="mr-4 size-8" />
                 {TERMS_OF_SERVICE_CONTENT.title}
-              </h2>
-              <p className="mb-4 text-base leading-relaxed text-gray-600">
+              </h1>
+              <p className="text-lg text-primary-100">
                 Last updated: {TERMS_OF_SERVICE_CONTENT.lastUpdated}
               </p>
             </div>
-
-            {/* Introduction */}
-            <div className="mb-12">
-              <p className="text-base leading-relaxed text-gray-600">
-                {TERMS_OF_SERVICE_CONTENT.sections[0].content}
-              </p>
-            </div>
-
-            {/* Definitions */}
-            <div className="mb-12">
-              <h2 className="mb-6 text-2xl font-bold text-gray-800">
-                {TERMS_OF_SERVICE_CONTENT.sections[1].title}
-              </h2>
-              <div className="prose prose-gray max-w-none">
-                <div className="whitespace-pre-line text-gray-600">
-                  {TERMS_OF_SERVICE_CONTENT.sections[1].content}
-                </div>
-              </div>
-            </div>
-
-            {/* Account Registration and Security */}
-            <div className="mb-12">
-              <h2 className="mb-6 text-2xl font-bold text-gray-800">
-                {TERMS_OF_SERVICE_CONTENT.sections[2].title}
-              </h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[2].content}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* User Obligations and IP Rights */}
-            <div className="mb-12">
-              <h2 className="mb-6 text-2xl font-bold text-gray-800">
-                {TERMS_OF_SERVICE_CONTENT.sections[3].title}
-              </h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[3].content}
-                  </div>
-                </div>
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <h3 className="mb-4 text-xl font-semibold text-gray-800">
-                    {TERMS_OF_SERVICE_CONTENT.sections[4].title}
-                  </h3>
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[4].content}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Terms and Service Availability */}
-            <div className="mb-12">
-              <h2 className="mb-6 text-2xl font-bold text-gray-800">Service Terms</h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <h3 className="mb-4 text-xl font-semibold text-gray-800">
-                    {TERMS_OF_SERVICE_CONTENT.sections[5].title}
-                  </h3>
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[5].content}
-                  </div>
-                </div>
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <h3 className="mb-4 text-xl font-semibold text-gray-800">
-                    {TERMS_OF_SERVICE_CONTENT.sections[6].title}
-                  </h3>
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[6].content}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Liability and Dispute Resolution */}
-            <div className="mb-12">
-              <h2 className="mb-6 text-2xl font-bold text-gray-800">Legal Terms</h2>
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <h3 className="mb-4 text-xl font-semibold text-gray-800">
-                    {TERMS_OF_SERVICE_CONTENT.sections[7].title}
-                  </h3>
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[7].content}
-                  </div>
-                </div>
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <h3 className="mb-4 text-xl font-semibold text-gray-800">
-                    {TERMS_OF_SERVICE_CONTENT.sections[8].title}
-                  </h3>
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[8].content}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Termination and Changes */}
-            <div className="mb-12">
-              <div className="grid gap-6 md:grid-cols-2">
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <h3 className="mb-4 text-xl font-semibold text-gray-800">
-                    {TERMS_OF_SERVICE_CONTENT.sections[9].title}
-                  </h3>
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[9].content}
-                  </div>
-                </div>
-                <div className="rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                  <h3 className="mb-4 text-xl font-semibold text-gray-800">
-                    {TERMS_OF_SERVICE_CONTENT.sections[10].title}
-                  </h3>
-                  <div className="whitespace-pre-line text-gray-600">
-                    {TERMS_OF_SERVICE_CONTENT.sections[10].content}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Information */}
-            <div>
-              <h2 className="mb-8 flex items-center text-2xl font-bold text-gray-800">
-                <span className="mr-4 rounded-lg bg-indigo-100 p-2 text-indigo-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </span>
-                {TERMS_OF_SERVICE_CONTENT.sections[11].title}
-              </h2>
-              <div className="mb-8 whitespace-pre-line text-gray-600">
-                {TERMS_OF_SERVICE_CONTENT.sections[11].content}
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <Mail className="size-5 text-primary" />
-                  <span className="text-foreground text-sm font-medium">{FOOTER_DETAILS.email}</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="size-5 text-primary" />
-                  <span className="text-foreground text-sm font-medium">{FOOTER_DETAILS.phone}</span>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <MapPin className="mt-0.5 size-5 text-primary" />
-                  <span className="text-foreground text-sm font-medium">{FOOTER_DETAILS.address}</span>
-                </div>
-              </div>
-            </div>
           </div>
-        </div>
+
+          <div className="p-8 sm:p-12">
+            {/* Introduction */}
+            <motion.div 
+              className="mb-12"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div className="rounded-xl border border-blue-100 bg-blue-50 p-6 shadow-inner">
+                <p className="text-base leading-relaxed text-gray-700">
+                  {TERMS_OF_SERVICE_CONTENT.sections[0].content}
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Main Content Sections */}
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="space-y-12"
+            >
+              {/* Definitions */}
+              <motion.div variants={itemVariants} className="rounded-xl border border-gray-100 p-6 shadow-sm">
+                <h2 className="mb-6 flex items-center text-2xl font-bold text-gray-800">
+                  <span className="mr-4 flex size-10 items-center justify-center rounded-lg bg-blue-100 text-primary">
+                    {sectionIcons.definitions}
+                  </span>
+                  {TERMS_OF_SERVICE_CONTENT.sections[1].title}
+                </h2>
+                <div className="prose prose-blue max-w-none">
+                  <div className="whitespace-pre-line text-gray-600">
+                    {TERMS_OF_SERVICE_CONTENT.sections[1].content}
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Account Registration and Security */}
+              <motion.div variants={itemVariants} className="rounded-xl border border-gray-100 p-6 shadow-sm">
+                <h2 className="mb-6 flex items-center text-2xl font-bold text-gray-800">
+                  <span className="mr-4 flex size-10 items-center justify-center rounded-lg bg-green-100 text-green-600">
+                    {sectionIcons.account}
+                  </span>
+                  {TERMS_OF_SERVICE_CONTENT.sections[2].title}
+                </h2>
+                <div className="whitespace-pre-line text-gray-600">
+                  {TERMS_OF_SERVICE_CONTENT.sections[2].content}
+                </div>
+              </motion.div>
+
+              {/* User Obligations and IP Rights */}
+              <motion.div variants={itemVariants}>
+                <h2 className="mb-6 text-2xl font-bold text-gray-800">Legal Terms</h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+                    <h3 className="mb-4 flex items-center text-xl font-semibold text-gray-800">
+                      <span className="mr-3 flex size-8 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+                        {sectionIcons.obligations}
+                      </span>
+                      {TERMS_OF_SERVICE_CONTENT.sections[3].title}
+                    </h3>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {TERMS_OF_SERVICE_CONTENT.sections[3].content}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+                    <h3 className="mb-4 flex items-center text-xl font-semibold text-gray-800">
+                      <span className="mr-3 flex size-8 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+                        {sectionIcons.ip}
+                      </span>
+                      {TERMS_OF_SERVICE_CONTENT.sections[4].title}
+                    </h3>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {TERMS_OF_SERVICE_CONTENT.sections[4].content}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Payment Terms and Service Availability */}
+              <motion.div variants={itemVariants}>
+                <h2 className="mb-6 text-2xl font-bold text-gray-800">Service Terms</h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+                    <h3 className="mb-4 flex items-center text-xl font-semibold text-gray-800">
+                      <span className="mr-3 flex size-8 items-center justify-center rounded-lg bg-orange-100 text-orange-600">
+                        {sectionIcons.payment}
+                      </span>
+                      {TERMS_OF_SERVICE_CONTENT.sections[5].title}
+                    </h3>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {TERMS_OF_SERVICE_CONTENT.sections[5].content}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+                    <h3 className="mb-4 text-xl font-semibold text-gray-800">
+                      {TERMS_OF_SERVICE_CONTENT.sections[6].title}
+                    </h3>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {TERMS_OF_SERVICE_CONTENT.sections[6].content}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Liability and Dispute Resolution */}
+              <motion.div variants={itemVariants}>
+                <h2 className="mb-6 text-2xl font-bold text-gray-800">Liability</h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+                    <h3 className="mb-4 text-xl font-semibold text-gray-800">
+                      {TERMS_OF_SERVICE_CONTENT.sections[7].title}
+                    </h3>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {TERMS_OF_SERVICE_CONTENT.sections[7].content}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+                    <h3 className="mb-4 text-xl font-semibold text-gray-800">
+                      {TERMS_OF_SERVICE_CONTENT.sections[8].title}
+                    </h3>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {TERMS_OF_SERVICE_CONTENT.sections[8].content}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Termination and Changes */}
+              <motion.div variants={itemVariants}>
+                <h2 className="mb-6 text-2xl font-bold text-gray-800">Changes & Termination</h2>
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+                    <h3 className="mb-4 text-xl font-semibold text-gray-800">
+                      {TERMS_OF_SERVICE_CONTENT.sections[9].title}
+                    </h3>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {TERMS_OF_SERVICE_CONTENT.sections[9].content}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+                    <h3 className="mb-4 text-xl font-semibold text-gray-800">
+                      {TERMS_OF_SERVICE_CONTENT.sections[10].title}
+                    </h3>
+                    <div className="whitespace-pre-line text-gray-600">
+                      {TERMS_OF_SERVICE_CONTENT.sections[10].content}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Contact Information */}
+              <motion.div variants={itemVariants} className="bg-primary-50 mt-8 rounded-xl border border-primary-100 p-6">
+                <h2 className="mb-6 flex items-center text-2xl font-bold text-gray-800">
+                  <span className="mr-4 flex size-10 items-center justify-center rounded-lg bg-primary-100 text-primary">
+                    <Mail className="size-6" />
+                  </span>
+                  {TERMS_OF_SERVICE_CONTENT.sections[11].title}
+                </h2>
+                <div className="mb-8 whitespace-pre-line text-gray-700">
+                  {TERMS_OF_SERVICE_CONTENT.sections[11].content}
+                </div>
+                <div className="space-y-4 rounded-lg bg-white p-6">
+                  <div className="flex items-center space-x-3">
+                    <Mail className="size-5 text-primary" />
+                    <span className="text-foreground text-sm font-medium">{FOOTER_DETAILS.email}</span>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Phone className="size-5 text-primary" />
+                    <span className="text-foreground text-sm font-medium">{FOOTER_DETAILS.phone}</span>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <MapPin className="mt-0.5 size-5 text-primary" />
+                    <span className="text-foreground text-sm font-medium">{FOOTER_DETAILS.address}</span>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );

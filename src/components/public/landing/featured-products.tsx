@@ -4,6 +4,7 @@ import React, { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ShoppingCart } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,39 +13,13 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { FeaturedProduct } from "@/actions/landing.actions";
 
-const products = [
-  {
-    id: 1,
-    name: "Classic University Hoodie",
-    price: 49.99,
-    image: "/img/placeholder.jpg",
-    badge: "Best Seller",
-  },
-  {
-    id: 2,
-    name: "Campus Backpack",
-    price: 39.99,
-    image: "/img/placeholder.jpg",
-    badge: "New Arrival",
-  },
-  {
-    id: 3,
-    name: "Vintage College Tee",
-    price: 24.99,
-    image: "/img/placeholder.jpg",
-    badge: "Popular",
-  },
-  {
-    id: 4,
-    name: "Student Essentials Bundle",
-    price: 79.99,
-    image: "/img/placeholder.jpg",
-    badge: "Limited Edition",
-  },
-];
+interface FeaturedProductsProps {
+  products: FeaturedProduct[];
+}
 
-const FeaturedProducts = () => {
+const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -86,20 +61,26 @@ const FeaturedProducts = () => {
                 <CardHeader className="p-0">
                   <div className="relative aspect-square">
                     <Image
-                      src={product.image}
+                      src={product.image[0] || "/img/placeholder.jpg"}
                       alt={product.name}
                       fill
                       className="object-cover transition-transform group-hover:scale-105"
                     />
-                    <div className="absolute left-2 top-2">
-                      <Badge className="font-medium text-neutral-2">
-                        {product.badge}
-                      </Badge>
-                    </div>
+                    {product.badge && (
+                      <div className="absolute left-2 top-2">
+                        <Badge variant="secondary" className="font-medium">
+                          {product.badge}
+                        </Badge>
+                      </div>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="p-4">
-                  <h3 className="truncate font-semibold">{product.name}</h3>
+                  <Link href={`/products/${product.slug}`}>
+                    <h3 className="truncate font-semibold transition-colors hover:text-primary">
+                      {product.name}
+                    </h3>
+                  </Link>
                   <p className="text-muted-foreground">
                     ${product.price.toFixed(2)}
                   </p>

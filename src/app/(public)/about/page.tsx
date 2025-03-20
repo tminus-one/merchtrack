@@ -1,19 +1,25 @@
-import React from "react";
-import AboutUsBody from "@/components/public/about-us-body";
-import PageAnimation from "@/components/public/page-animation";
-import PageTitle from "@/components/public/page-title";
-import { ABOUT_US_CONTENT } from "@/constants";
+import { Metadata } from 'next';
+import { Suspense } from 'react';
+import AboutUsBody from '@/components/public/about-us-body';
+import { Spinner } from '@/components/ui/spinner';
 
-const AboutPage = () => {
-  return (
-    <PageAnimation className="max-w-4xl">
-      <PageTitle
-        title={ABOUT_US_CONTENT.title}
-        description="Learn about MerchTrack's mission, vision, and the dedicated team behind our innovative merchandise management platform."
-      />
-      <AboutUsBody />
-    </PageAnimation>
-  );
+export const metadata: Metadata = {
+  title: 'About Us | MerchTrack',
+  description: 'Learn about the team behind MerchTrack and our mission to revolutionize merchandise management.',
 };
 
-export default AboutPage;
+// Enable static rendering for this page
+export const dynamic = 'force-static';
+
+// Set revalidation time to 1 day (in seconds)
+export const revalidate = 86400;
+
+export default function AboutPage() {
+  return (
+    <main>
+      <Suspense fallback={<div className="flex h-screen w-full items-center justify-center"><Spinner size="lg" /></div>}>
+        <AboutUsBody />
+      </Suspense>
+    </main>
+  );
+}

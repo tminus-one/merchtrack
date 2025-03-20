@@ -63,29 +63,36 @@ We continue to set industry standards while maintaining our focus on what matter
   ]
 };
 
+export const ABOUT_DEVELOPERS_LEAD = {
+  name: "Gabriel Angelo Catimbang",
+  role: "Lead Developer",
+  description: "Our leadership team brings together decades of experience in retail technology, software development, and business management. With diverse backgrounds from leading tech companies, they guide our strategic vision and growth.",
+  image: "/img/dev_gab.JPG"
+};
+
 export const ABOUT_DEVELOPERS = [
   {
-    name: "Leadership Team",
-    role: "Executive Leadership",
-    description: "Our leadership team brings together decades of experience in retail technology, software development, and business management. With diverse backgrounds from leading tech companies, they guide our strategic vision and growth.",
-    image: "/img/profile-placeholder-img.png"
-  },
-  {
-    name: "Engineering Team",
-    role: "Technical Excellence",
+    name: "Reiven Lee",
+    role: "Developer",
     description: "Our engineers are passionate about building robust, scalable solutions that make a real difference in how businesses operate. With deep expertise in modern technologies, they ensure MerchTrack remains at the cutting edge.",
-    image: "/img/profile-placeholder-img.png"
+    image: "/img/dev_reiven.png"
   },
   {
-    name: "Support Team",
-    role: "Customer Success",
+    name: "Kyla Ronquillo",
+    role: "Developer",
     description: "Our dedicated support team ensures you get the most out of MerchTrack with 24/7 assistance and expert guidance. With extensive product knowledge and a customer-first mindset, they're committed to your success.",
-    image: "/img/profile-placeholder-img.png"
+    image: "/img/dev_kyla.jpg"
   },
   {
-    name: "Product Team",
-    role: "Innovation & Design",
+    name: "John Michael Coronel",
+    role: "Developer",
     description: "Our product team combines deep industry knowledge with user-centered design principles to create intuitive, powerful features that solve real business challenges. They continuously iterate to improve the platform.",
-    image: "/img/profile-placeholder-img.png"
+    image: "/img/dev_jm.png"
+  },
+  {
+    name: "Miguel Andre Pajarillo",
+    role: "Contributor",
+    description: "A new team member who brings fresh perspectives and innovative ideas to our projects.",
+    image: "/img/dev_miguel.jpg"
   }
 ];

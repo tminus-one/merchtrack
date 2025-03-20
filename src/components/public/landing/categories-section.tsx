@@ -4,30 +4,15 @@ import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { FolderIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import type { CategoryWithProducts } from "@/actions/landing.actions";
 
-const categories = [
-  {
-    name: "Apparel",
-    description: "Hoodies, T-shirts, and more",
-    image: "/img/placeholder.jpg",
-    href: "/categories/apparel",
-  },
-  {
-    name: "Accessories",
-    description: "Bags, caps, and accessories",
-    image: "/img/placeholder.jpg",
-    href: "/categories/accessories",
-  },
-  {
-    name: "Supplies",
-    description: "Notebooks, pens, and supplies",
-    image: "/img/placeholder.jpg",
-    href: "/categories/supplies",
-  },
-];
+interface CategoriesSectionProps {
+  categories: CategoryWithProducts[];
+}
 
-const CategoriesSection = () => {
+const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -71,7 +56,7 @@ const CategoriesSection = () => {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
             <motion.div
-              key={category.name}
+              key={category.id}
               variants={cardVariants}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -87,8 +72,11 @@ const CategoriesSection = () => {
                         className="object-cover transition-transform hover:scale-105"
                       />
                     </div>
-                    <h3 className="mb-2 text-xl font-semibold">{category.name}</h3>
-                    <p className="text-muted-foreground">{category.description}</p>
+                    <div className="flex items-center gap-2">
+                      <FolderIcon className="size-5 text-primary" />
+                      <h3 className="mb-2 text-xl font-semibold">{category.name}</h3>
+                    </div>
+                    <p className="text-muted-foreground">{category.description || `Browse our ${category.name} collection`}</p>
                   </CardContent>
                 </Card>
               </Link>

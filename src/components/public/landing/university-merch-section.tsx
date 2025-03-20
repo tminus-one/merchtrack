@@ -3,100 +3,104 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { Check, Zap, Medal, Users } from "lucide-react";
+
+const features = [
+  {
+    title: "Premium Quality",
+    description: "All our merchandise is crafted with high-quality materials that stand the test of time.",
+    icon: <Medal className="size-5 text-primary" />,
+  },
+  {
+    title: "Fast Turnaround",
+    description: "Quick processing and delivery to meet your university event deadlines.",
+    icon: <Zap className="size-5 text-primary" />,
+  },
+  {
+    title: "Custom Designs",
+    description: "Personalize your university merchandise with custom designs and branding.",
+    icon: <Users className="size-5 text-primary" />,
+  },
+  {
+    title: "University Approved",
+    description: "All products are officially licensed and approved by your university.",
+    icon: <Check className="size-5 text-primary" />,
+  },
+];
 
 const UniversityMerchSection = () => {
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut",
-      },
-    },
-  };
-
   return (
-    <motion.section
-      variants={containerVariants}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, margin: "-100px" }}
-      className="w-full py-24"
-    >
-      <div className="w-full">
-        <div className="grid grid-cols-1 items-center gap-12 md:grid-cols-2">
-          <motion.div variants={itemVariants} className="relative aspect-square">
-            <div className="absolute inset-0 overflow-hidden rounded-2xl">
-              <Image
-                src="/img/merch-track-logo.png"
-                alt="University Merchandise"
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 50vw"
-                quality={90}
-                className="object-cover"
-              />
+    <section className="w-full overflow-hidden py-24">
+      <div className="relative">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-12">
+          {/* Image */}
+          <motion.div
+            className="relative mx-auto max-w-md px-6 sm:max-w-2xl lg:col-span-6 lg:flex lg:items-center lg:px-0"
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="relative overflow-hidden rounded-lg shadow-xl">
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-primary/30 to-primary/20 opacity-50 blur-xl"></div>
+              <div className="relative overflow-hidden rounded-lg">
+                <Image
+                  src="/img/carousel-image.jpg"
+                  alt="University merchandise"
+                  width={600}
+                  height={600}
+                  className="w-full object-cover"
+                />
+              </div>
             </div>
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 1, delay: 0.5 }}
-              className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/10 to-transparent"
-            />
           </motion.div>
 
-          <motion.div variants={itemVariants} className="flex flex-col gap-6">
-            <h2 className="text-3xl font-bold tracking-tight text-primary md:text-4xl">
-              Personalize Your
-              <br />
-              University Experience
-            </h2>
-            <p className="text-muted-foreground text-lg">
-              Express your school pride with our exclusive collection of customizable university merchandise. From classic hoodies to unique accessories, find everything you need to show your spirit.
-            </p>
-            <ul className="space-y-4">
-              {[
-                "Premium quality materials",
-                "Custom designs for every school",
-                "Fast and reliable shipping",
-                "Student-friendly prices"
-              ].map((feature, index) => (
-                <motion.li
-                  key={index}
-                  variants={itemVariants}
-                  className="flex items-center gap-3"
-                >
-                  <div className="size-2 rounded-full bg-primary" />
-                  {feature}
-                </motion.li>
-              ))}
-            </ul>
-            <motion.div
-              variants={itemVariants}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button size="lg" className="text-neutral-2">
-                Explore Collection
-              </Button>
-            </motion.div>
+          {/* Content */}
+          <motion.div 
+            className="mt-12 lg:col-span-6 lg:mt-0"
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="px-6 lg:pr-0">
+              <div className="mb-4 inline-flex rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary ring-1 ring-inset ring-primary/20">
+                Why Choose Us
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
+                University Merchandise Designed for the Modern Student
+              </h2>
+              <p className="text-muted-foreground mt-6 text-lg">
+                We understand the importance of quality, design, and representing your university with pride. Our merchandise is crafted to exceed your expectations.
+              </p>
+
+              <dl className="mt-10 space-y-8">
+                {features.map((feature, index) => (
+                  <motion.div 
+                    key={feature.title}
+                    className="relative"
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                  >
+                    <dt>
+                      <div className="absolute flex size-10 items-center justify-center rounded-md bg-primary/10">
+                        {feature.icon}
+                      </div>
+                      <p className="ml-16 text-lg font-semibold">{feature.title}</p>
+                    </dt>
+                    <dd className="text-muted-foreground ml-16 mt-2 text-base">
+                      {feature.description}
+                    </dd>
+                  </motion.div>
+                ))}
+              </dl>
+            </div>
           </motion.div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 };
 
