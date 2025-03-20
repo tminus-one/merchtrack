@@ -187,7 +187,7 @@ export async function getUsers({userId, params}: GetUsersParams): Promise<Action
  *   console.error('Error:', result.message);
  * }
  */
-export async function getUser({userId, limitFields, userLookupId}: GetObjectByTParams<"userLookupId">): Promise<ActionsReturnType<ExtendedUser>> {
+export async function getUser({userId, limitFields, userLookupId, include}: GetObjectByTParams<"userLookupId">): Promise<ActionsReturnType<ExtendedUser>> {
   if (!await verifyPermission({
     userId,
     permissions: {
@@ -203,8 +203,13 @@ export async function getUser({userId, limitFields, userLookupId}: GetObjectByTP
   try {
     let user: PrismaUser | null = await getCached(`user:${userLookupId}`);
     if (!user) {
-      user = await prisma.user.findUnique({
-        where: { email: userLookupId },
+      user = await prisma.user.findFirst({
+        where: { 
+          OR: [
+            { email: userLookupId },
+            { id: userLookupId },
+          ] 
+        },
         include: {
           logs: true,
           createdLogs: true,
@@ -215,6 +220,7 @@ export async function getUser({userId, limitFields, userLookupId}: GetObjectByTP
           userPermissions: true,
           createdTickets: true,
           Cart: true,
+          ...include
         }
       });
       await setCached(`user:${userLookupId}`, user);

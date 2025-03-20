@@ -1,9 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Role, College, User } from "@prisma/client";
-import { FaUser, FaEdit, FaEnvelope, FaGraduationCap, FaCalendarAlt, FaCircle, FaUserShield, FaSave } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { FaUser, FaEdit, FaEnvelope, FaCircle, FaUserShield, FaSave, FaUsers } from "react-icons/fa";
 import Image from "next/image";
+import { toast } from "sonner";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { updateUserDetails } from "../[email]/_actions";
+import { College, Role } from "@/types/Misc";
 import { useUserQuery } from "@/hooks/users.hooks";
 import { useUserImageQuery } from "@/hooks/messages.hooks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +17,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { updateUserSchema, type UpdateUserType } from "@/schema/user";
+import { useUserStore } from "@/stores/user.store";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface UserProfileDetailsProps {
   email: string;
@@ -21,7 +31,81 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
   const { data: user, isLoading } = useUserQuery(decodeURIComponent(email));
   const { data: userImage } = useUserImageQuery(user?.clerkId);
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState<Partial<User> | null>(null);
+  const { userId: currentUserId } = useUserStore();
+  const [managedStaff, setManagedStaff] = useState(user?.User ?? []);
+  const queryClient = useQueryClient();
+  
+  // Fetch manager data if user has a manager
+  const { data: manager } = useUserQuery(
+    user?.managerId || "",
+    user?.managerId ? undefined : [],
+    {
+      User: true,
+    }
+  );
+  
+  // Fetch staff members managed by this user
+  useEffect(() => {
+    if (user) {
+      setManagedStaff(user.User || []);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isEditing) {
+      form.setValue("firstName", user?.firstName || "");
+      form.setValue("lastName", user?.lastName || "");
+      form.setValue("phone", user?.phone || "");
+      form.setValue("role", user?.role as Role || "STUDENT");
+      form.setValue("college", user?.college as College || "OTHER");
+      form.setValue("courses", user?.courses || "");
+      form.setValue("isStaff", user?.isStaff || false);
+      form.setValue("isAdmin", user?.isAdmin || false);
+    }
+  }, [user, isEditing]);
+
+  
+  const form = useForm<UpdateUserType>({
+    resolver: zodResolver(updateUserSchema),
+    mode: "onBlur",
+    defaultValues: {
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
+      phone: user?.phone ?? "",
+      role: user?.role as Role,
+      college: user?.college as College,
+      courses: user?.courses ?? "",
+      imageUrl: user?.imageUrl ?? undefined,
+      isStaff: user?.isStaff ?? false,
+      isAdmin: user?.isAdmin ?? false
+    }
+  });
+
+  const mutation = useMutation({
+    mutationFn: async (data: UpdateUserType) => {
+      if (!user || !currentUserId) throw new Error("Missing required data");
+      
+      const result = await updateUserDetails({
+        userId: currentUserId,
+        targetUserId: user.id,
+        data
+      });
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("User details updated successfully");
+      setIsEditing(false);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    }
+  });
 
   if (isLoading) {
     return <UserProfileSkeleton />;
@@ -37,214 +121,355 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
     );
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement update user functionality
-    console.log('Update user:', formData);
-    setIsEditing(false);
-  };
-
-  const handleCollegeChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      college: value as College
-    }));
-  };
-
-  const handleRoleChange = (value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      role: value as Role
-    }));
+  const handleSubmit = (data: UpdateUserType) => {
+    mutation.mutate(data);
   };
 
   return (
     <Card className="group overflow-hidden">
       <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-600 to-blue-500 text-white">
-        <CardTitle className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 self-start">
-            <FaUserShield className="size-5" />
-            Profile Information
-          </div>
-          <p className="text-sm font-normal text-blue-100">
-            Manage user basic information and roles
-          </p>
-        </CardTitle>
-        {!isEditing && (
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={() => {
-              setFormData(user);
-              setIsEditing(true);
-            }}
-            className="text-white hover:bg-blue-700/20"
-          >
-            <FaEdit className="mr-2 size-4" />
-            Edit Profile
-          </Button>
-        )}
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="flex gap-6">
-          <div className="flex flex-col items-center gap-2">
-            <div className="relative size-32">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="size-16 overflow-hidden rounded-full border-4 border-white/20 bg-white/10">
               {userImage ? (
                 <Image
                   src={userImage}
-                  alt={`${user.firstName}'s profile picture`}
+                  alt={`${user.firstName} ${user.lastName}`}
                   fill
-                  className="rounded-full object-cover ring-2 ring-blue-600 ring-offset-2"
+                  className="rounded-full border border-white object-cover"
                 />
               ) : (
-                <div className="flex size-full items-center justify-center rounded-full bg-blue-50 ring-2 ring-blue-600 ring-offset-2">
-                  <FaUser className="size-12 text-blue-600" />
+                <div className="flex size-full items-center justify-center text-2xl font-bold">
+                  {user.firstName?.[0]}
+                  {user.lastName?.[0]}
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-600">
-              <FaUserShield className="size-4" />
-              {Role[user.role]}
+          </div>
+          <div>
+            <CardTitle className="text-xl">
+              {user.firstName} {user.lastName}
+            </CardTitle>
+            <div className="mt-1 flex items-center gap-2 text-sm text-blue-100">
+              <FaEnvelope className="size-3" />
+              <span>{user.email}</span>
             </div>
           </div>
-
+        </div>
+        
+        <div>
           {isEditing ? (
-            <form onSubmit={handleSubmit} className="flex-1 space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    value={formData?.firstName || ""}
-                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    value={formData?.lastName || ""}
-                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData?.email || ""}
-                    disabled
-                    className="bg-gray-50"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="college">College</Label>
-                  <Select
-                    value={formData?.college || ""}
-                    onValueChange={handleCollegeChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select college" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(College).map((college) => (
-                        <SelectItem key={college} value={college}>
-                          {college}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={formData?.role || ""}
-                    onValueChange={handleRoleChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.values(Role).map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {role}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button type="submit" className="bg-blue-600 text-neutral-2 hover:bg-blue-700">
-                  <FaSave className="mr-2 text-neutral-2"/>
-                  Save Changes
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  onClick={() => {
-                    setFormData(null);
-                    setIsEditing(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              onClick={form.handleSubmit(handleSubmit)}
+              disabled={mutation.isPending}
+            >
+              <FaSave className="mr-2 size-4" />
+              {mutation.isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
           ) : (
-            <div className="flex-1">
-              <dl className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <dt className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                    <FaUser className="size-4 text-blue-600" />
-                    First Name
-                  </dt>
-                  <dd className="text-gray-900">{user.firstName}</dd>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                    <FaUser className="size-4 text-blue-600" />
-                    Last Name
-                  </dt>
-                  <dd className="text-gray-900">{user.lastName}</dd>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                    <FaEnvelope className="size-4 text-blue-600" />
-                    Email
-                  </dt>
-                  <dd className="text-gray-900">{user.email}</dd>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                    <FaGraduationCap className="size-4 text-blue-600" />
-                    College
-                  </dt>
-                  <dd className="text-gray-900">{user.college || "Not specified"}</dd>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                    <FaCalendarAlt className="size-4 text-blue-600" />
-                    Member Since
-                  </dt>
-                  <dd className="text-gray-900">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-2 text-sm font-medium text-gray-500">
-                    <FaCircle className={`size-4 ${user.isDeleted ? 'text-red-600' : 'text-green-600'}`} />
-                    Status
-                  </dt>
-                  <dd className={`font-medium ${user.isDeleted ? 'text-red-600' : 'text-green-600'}`}>
-                    {user.isDeleted ? "Deactivated" : "Active"}
-                  </dd>
-                </div>
-              </dl>
-            </div>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+              onClick={() => setIsEditing(true)}
+            >
+              <FaEdit className="mr-2 size-4" />
+              Edit Profile
+            </Button>
           )}
         </div>
+      </CardHeader>
+      
+      <CardContent className="p-6">
+        {isEditing ? (
+          <form className="space-y-6">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input 
+                  id="firstName"
+                  placeholder="First Name"
+                  {...form.register("firstName")}
+                />
+                {form.formState.errors.firstName && (
+                  <p className="text-sm text-red-500">{form.formState.errors.firstName.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input 
+                  id="lastName"
+                  placeholder="Last Name"
+                  {...form.register("lastName")}
+                />
+                {form.formState.errors.lastName && (
+                  <p className="text-sm text-red-500">{form.formState.errors.lastName.message}</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input 
+                id="phone"
+                placeholder="Phone Number"
+                {...form.register("phone")}
+              />
+              {form.formState.errors.phone && (
+                <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
+              )}
+            </div>
+            
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select 
+                  value={form.watch("role")} 
+                  onValueChange={(value) => form.setValue("role", value as Role)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="STUDENT">Student</SelectItem>
+                    <SelectItem value="STAFF_FACULTY">Staff/Faculty</SelectItem>
+                    <SelectItem value="PLAYER">Player</SelectItem>
+                    <SelectItem value="ALUMNI">Alumni</SelectItem>
+                    <SelectItem value="OTHERS">Others</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.role && (
+                  <p className="text-sm text-red-500">{form.formState.errors.role.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="college">College</Label>
+                <Select 
+                  value={form.watch("college")} 
+                  onValueChange={(value) => form.setValue("college", value as College)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select College" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(College).map((college) => (
+                      <SelectItem key={college} value={college}>
+                        {college}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.college && (
+                  <p className="text-sm text-red-500">{form.formState.errors.college.message}</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="courses">Courses/Programs</Label>
+              <Input 
+                id="courses"
+                placeholder="Courses/Programs"
+                {...form.register("courses")}
+              />
+              {form.formState.errors.courses && (
+                <p className="text-sm text-red-500">{form.formState.errors.courses.message}</p>
+              )}
+            </div>
+            
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isStaff"
+                  checked={form.watch("isStaff")}
+                  onChange={(e) => form.setValue("isStaff", e.target.checked)}
+                  className="size-4 rounded border-gray-300"
+                />
+                <Label htmlFor="isStaff">Staff Member</Label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="isAdmin"
+                  checked={form.watch("isAdmin")}
+                  onChange={(e) => form.setValue("isAdmin", e.target.checked)}
+                  className="size-4 rounded border-gray-300"
+                />
+                <Label htmlFor="isAdmin">Administrator</Label>
+              </div>
+            </div>
+          </form>
+        ) : (
+          <div className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-gray-500">Personal Information</h3>
+                <div className="space-y-4 rounded-lg border bg-gray-50/50 p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">First Name</p>
+                      <p className="font-medium text-gray-800">{user.firstName}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Last Name</p>
+                      <p className="font-medium text-gray-800">{user.lastName}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Phone Number</p>
+                    <p className="font-medium text-gray-800">{user.phone || "Not provided"}</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Member Since</p>
+                    <p className="font-medium text-gray-800">
+                      {new Date(user.createdAt).toLocaleDateString("en-US", {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric"
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="mb-3 text-sm font-medium text-gray-500">Profile Information</h3>
+                <div className="space-y-4 rounded-lg border bg-gray-50/50 p-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">Role</p>
+                      <Badge variant="secondary" className="mt-1 bg-blue-100 text-blue-700">
+                        {user.role}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-xs font-medium text-gray-500">College</p>
+                      <Badge variant="secondary" className="mt-1 bg-purple-100 text-purple-700">
+                        {user.college}
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Courses/Programs</p>
+                    <p className="font-medium text-gray-800">{user.courses || "Not specified"}</p>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    {user.isStaff && (
+                      <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                        <FaUserShield className="mr-1 size-3" />
+                        Staff Member
+                      </Badge>
+                    )}
+                    
+                    {user.isAdmin && (
+                      <Badge variant="outline" className="border-purple-200 bg-purple-50 text-purple-700">
+                        <FaUser className="mr-1 size-3" />
+                        Administrator
+                      </Badge>
+                    )}
+                    
+                    <Badge variant="outline" className={`border-${user.isDeleted ? 'red' : 'green'}-200 bg-${user.isDeleted ? 'red' : 'green'}-50 text-${user.isDeleted ? 'red' : 'green'}-700`}>
+                      <FaCircle className={`text- mr-1 size-2${user.isDeleted ? 'red' : 'green'}-500`} />
+                      {user.isDeleted ? 'Inactive' : 'Active'}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Management Information Section */}
+            {(manager || (managedStaff && managedStaff.length > 0)) && (
+              <>
+                <Separator className="my-6" />
+                
+                <div>
+                  <h3 className="mb-3 flex items-center gap-2 text-sm font-medium text-primary-600">
+                    <FaUserShield className="size-4" />
+                    Management Information
+                  </h3>
+                  
+                  <div className="grid gap-6 md:grid-cols-2">
+                    {/* Manager Information */}
+                    {manager && (
+                      <div>
+                        <h4 className="mb-3 text-xs font-medium text-gray-500">Reporting To</h4>
+                        <div className="rounded-lg border bg-blue-50/50 p-4">
+                          <div className="flex items-center gap-4">
+                            <Avatar className="size-12 border-2 border-white shadow-sm">
+                              <AvatarFallback className="bg-blue-600 text-lg text-white">
+                                {manager.firstName?.[0]}
+                                {manager.lastName?.[0]}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {manager.firstName} {manager.lastName}
+                              </p>
+                              <p className="text-sm text-gray-500">{manager.email}</p>
+                              <Badge className="mt-1 bg-blue-100 text-blue-700">
+                                <FaUserShield className="mr-1 size-3" />
+                                Manager
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Staff Members User Manages */}
+                    {managedStaff && managedStaff.length > 0 && (
+                      <div>
+                        <h4 className="mb-3 text-xs font-medium text-gray-500">
+                          Staff Members ({managedStaff.length})
+                        </h4>
+                        <div className="rounded-lg border bg-gray-50/50 p-4">
+                          <div className="space-y-3 overflow-hidden">
+                            {managedStaff.slice(0, 3).map((staff) => (
+                              <div key={staff.id} className="flex items-center gap-3">
+                                <Avatar className="size-10 border shadow-sm">
+                                  <AvatarFallback className="bg-blue-600 text-white">
+                                    {staff.firstName?.[0]}
+                                    {staff.lastName?.[0]}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {staff.firstName} {staff.lastName}
+                                  </p>
+                                  <p className="text-xs text-gray-500">{staff.email}</p>
+                                </div>
+                              </div>
+                            ))}
+                            
+                            {managedStaff.length > 3 && (
+                              <div className="mt-2 text-center">
+                                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                                  <FaUsers className="mr-1 size-3" />
+                                  {managedStaff.length - 3} more staff {managedStaff.length - 3 === 1 ? 'member' : 'members'}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -253,24 +478,34 @@ export function UserProfileDetails({ email }: UserProfileDetailsProps) {
 function UserProfileSkeleton() {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-600 to-blue-500">
-        <Skeleton className="h-8 w-48 bg-white/20" />
-        <Skeleton className="h-9 w-28 bg-white/20" />
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="flex gap-6">
-          <div className="flex flex-col items-center gap-2">
-            <Skeleton className="size-32 rounded-full" />
-            <Skeleton className="h-6 w-24" />
+      <CardHeader className="flex flex-row items-center justify-between bg-gradient-to-r from-blue-600 to-blue-500 pb-6">
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-16 rounded-full bg-white/20" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-32 bg-white/20" />
+            <Skeleton className="h-4 w-48 bg-white/20" />
           </div>
-          <div className="flex-1">
-            <div className="grid gap-4 md:grid-cols-2">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i}>
-                  <Skeleton className="mb-1 h-5 w-24" />
-                  <Skeleton className="h-6 w-full" />
-                </div>
-              ))}
+        </div>
+        <Skeleton className="h-10 w-28 rounded-md bg-white/20" />
+      </CardHeader>
+      
+      <CardContent className="p-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-32" />
+            <div className="space-y-4 rounded-lg border p-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-32" />
+            <div className="space-y-4 rounded-lg border p-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
             </div>
           </div>
         </div>

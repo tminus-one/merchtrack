@@ -5,6 +5,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { FaCartPlus } from "react-icons/fa";
 
 import { SignInButton } from "@clerk/nextjs";
+import { toast } from "sonner";
 import ProductRecommendations from "./product-recommendations";
 import UserReview from "./user-review";
 import ProductReviews from "./product-reviews";
@@ -21,7 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import useToast from "@/hooks/use-toast";
 
 
-interface ProductListingProps {
+type ProductListingProps = {
   product: ExtendedProduct;
   slug: string;
 }
@@ -32,7 +33,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
   const [selectedVariant, setSelectedVariant] = useState<ExtendedProductVariant | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [refreshReviews, setRefreshReviews] = useState(false);
-  const toast = useToast;
+  const toaster = useToast;
 
   useEffect(() => {
     if (product?.variants?.length > 0) {
@@ -53,15 +54,17 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
 
   const handleAddToCart = () => {
     if (!user) {
-      return toast({
-        type: 'error',
-        title: "Sign in required",
-        message: "Please sign in to add items to your cart",
+      return toast.error("You need to sign in add to cart.", {
+        description: "Please sign in to add products to your cart.",
+        action: 
+        <Button>
+          <SignInButton mode="modal" forceRedirectUrl={`/products/${product.slug}`} />
+        </Button>,
       });
     }
 
     if (!selectedVariant) {
-      return toast({
+      return toaster({
         type: 'error',
         title: "Variant required",
         message: "Please select a variant before adding to cart",
@@ -81,7 +84,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
       }
     });
 
-    toast({
+    toaster({
       title: 'Success',
       message: 'Added to cart!',
       type: 'success',

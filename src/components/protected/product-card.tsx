@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Tag, Star, ShoppingCart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { SignInButton } from "@clerk/nextjs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,13 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
 
   const handleProductAction = () => {
     if (!user) {
-      return toast.error("You need to sign in to view product details.");
+      return toast.error("You need to sign in add to cart.", {
+        description: "Please sign in to add products to your cart.",
+        action: 
+        <Button>
+          <SignInButton mode="modal" forceRedirectUrl={`/products/${product.slug}`} />
+        </Button>,
+      });
     }
     router.push(`/products/${product.slug}`);
   };

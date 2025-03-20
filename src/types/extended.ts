@@ -14,6 +14,7 @@ export type ExtendedProduct = Product & {
 export type GetObjectByTParams<T extends string> = {
   userId: string;
   limitFields?: string[];
+  include?: Record<string, boolean | string | string[] | object>;
 } & {
   [K in T]: string;
 };

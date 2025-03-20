@@ -3,6 +3,7 @@ import { getClerkUserImageUrl, getClerkUserPublicData, getUser, getUsers } from 
 import { useResourceByIdQuery, useResourceQuery } from "@/hooks/index.hooks";
 import { QueryParams } from "@/types/common";
 
+
 /**
  * Fetches a list of users with configurable filtering and pagination.
  *
@@ -52,13 +53,13 @@ export function useUsersQuery(params: QueryParams = {}) {
  * @param limitFields - An optional array specifying which fields to include in the result; defaults to an empty array.
  * @returns The resource query result object for the specified user.
  */
-export function useUserQuery(userId: string, limitFields: string[] = []) {
+export function useUserQuery(userId: string, limitFields: string[] = [], include = {}) {
   return useResourceByIdQuery({
     resource: "users",
     fetcher: (userId: string, id: string, params: QueryParams) => 
       getUser({ userId, userLookupId: id, limitFields: params.limitFields }),
     identifier: userId,
-    params: { limitFields }
+    params: { limitFields, include }
   });
 }
 
@@ -106,3 +107,22 @@ export function useClerkUserImageUrl(userId: string | null) {
     enabled: !!userId
   });
 }
+
+/**
+ * Fetches a list of staff members who can be assigned as managers.
+ * This hook filters users to only include staff members and excludes deleted accounts.
+ */
+export function useStaffMembersQuery(params: QueryParams = {}) {
+  const queryParams = {
+    ...params,
+    where: {
+      isDeleted: false,
+      isStaff: true,
+      ...params.where
+    }
+  };
+
+  return useUsersQuery(queryParams);
+}
+
+

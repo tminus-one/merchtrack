@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { FaSearch, FaUserShield, FaUserCircle } from "react-icons/fa";
+import { FaSearch, FaUserShield } from "react-icons/fa";
 import { Shield } from "lucide-react";
 import { useDebounce } from "use-debounce";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useUserQuery } from "@/hooks/users.hooks";
+import { useStaffMembersQuery, useUserQuery } from "@/hooks/users.hooks";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { assignManager } from "@/app/admin/users/[email]/_actions";
 
 interface UserManagerDialogProps {
   open: boolean;
@@ -26,23 +28,49 @@ export function UserManagerDialog({
   currentManagerId
 }: UserManagerDialogProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [debouncedSearch] = useDebounce(searchTerm, 500);
-  const { data: currentManager, isLoading: isLoadingManager } = useUserQuery(
+  const { data: currentManager } = useUserQuery(
     currentManagerId || "",
     currentManagerId ? undefined : ["id", "firstName", "lastName", "email"]
   );
 
+  // Fetch staff members with search filter
+  const { data: staffData, isLoading: isLoadingStaff } = useStaffMembersQuery({
+    where: debouncedSearch ? {
+      OR: [
+        { firstName: { contains: debouncedSearch, mode: 'insensitive' } },
+        { lastName: { contains: debouncedSearch, mode: 'insensitive' } },
+        { email: { contains: debouncedSearch, mode: 'insensitive' } }
+      ]
+    } : undefined
+  });
+
   const handleAssignManager = async (managerId: string) => {
-    // TODO: Implement assign manager functionality
-    console.log('Assign manager:', { userId, managerId });
-    onOpenChange(false);
+    try {
+      const result = await assignManager({ userId, managerId });
+      if (result.success) {
+        toast.success(result.message);
+        onOpenChange(false);
+      } else {
+        toast.error(result.message);
+      }
+    } catch {
+      toast.error("Failed to assign manager");
+    }
   };
 
   const handleRemoveManager = async () => {
-    // TODO: Implement remove manager functionality
-    console.log('Remove manager:', userId);
-    onOpenChange(false);
+    try {
+      const result = await assignManager({ userId, managerId: "" }); // Empty string to remove manager
+      if (result.success) {
+        toast.success("Manager removed successfully");
+        onOpenChange(false);
+      } else {
+        toast.error(result.message);
+      }
+    } catch {
+      toast.error("Failed to remove manager");
+    }
   };
 
   return (
@@ -109,43 +137,52 @@ export function UserManagerDialog({
           </div>
 
           <ScrollArea className="h-[300px] rounded-md border p-4">
-            {isLoadingManager ? (
+            {isLoadingStaff ? (
               <ManagerListSkeleton />
             ) : (
               <div className="space-y-3">
-                {/* TODO: Replace with actual staff member search results */}
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Card key={i} className="transition-colors hover:bg-gray-50">
+                {staffData?.data?.map((staff) => (
+                  <Card key={staff.id} className="transition-colors hover:bg-gray-50">
                     <div className="p-3">
                       <div className="flex items-center gap-4">
                         <Avatar className="border shadow-sm">
-                          <AvatarImage src="" />
                           <AvatarFallback className="bg-blue-600 text-white">
-                            <FaUserCircle className="size-5" />
+                            {staff?.firstName?.[0]}
+                            {staff?.lastName?.[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 space-y-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-gray-900">Staff Member {i + 1}</p>
+                            <p className="font-medium text-gray-900">
+                              {staff.firstName} {staff.lastName}
+                            </p>
                             <Badge variant="secondary" className="bg-blue-50 text-blue-700">
                               <FaUserShield className="mr-1 size-3" />
                               Staff
                             </Badge>
                           </div>
-                          <p className="text-sm text-gray-500">staff{i + 1}@example.com</p>
+                          <p className="text-sm text-gray-500">{staff.email}</p>
                         </div>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleAssignManager(`staff-${i + 1}`)}
+                          onClick={() => handleAssignManager(staff.id)}
                           className="shrink-0"
+                          disabled={staff.id === currentManagerId}
                         >
-                          Assign
+                          {staff.id === currentManagerId ? 'Current' : 'Assign'}
                         </Button>
                       </div>
                     </div>
                   </Card>
                 ))}
+                
+                {staffData?.data?.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                    <FaUserShield className="mb-2 size-8" />
+                    <p>No staff members found</p>
+                  </div>
+                )}
               </div>
             )}
           </ScrollArea>
