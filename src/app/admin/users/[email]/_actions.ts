@@ -114,6 +114,9 @@ export async function assignManager({ userId, managerId }: AssignManagerParams):
     return { success: false, message: "Permission denied." };
   }
 
+  if (userId === managerId) {
+    return { success: false, message: "User cannot be assigned as their own manager." };
+  }
 
   try {
     // Verify both users exist and manager is a staff member
@@ -150,6 +153,10 @@ export async function assignManager({ userId, managerId }: AssignManagerParams):
 
     if (!currentUser?.isAdmin) {
       return { success: false, message: "Only admins can assign a manager." };
+    }
+
+    if (user.managerId === managerId) {
+      return { success: false, message: "User is already assigned to this manager." };
     }
 
     // Update the user's manager

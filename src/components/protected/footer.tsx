@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Mail, Phone, MapPin } from 'lucide-react';
 
 export default function ProtectedFooter() {
   const currentYear = new Date().getFullYear();
@@ -28,17 +28,9 @@ export default function ProtectedFooter() {
               Simplify your inventory, boost your sales, and delight your customers.
             </p>
             <div className="flex space-x-4 pt-2">
-              <Link href="#" className="transition-colors hover:text-blue-400">
+              <Link referrerPolicy='no-referrer' href="https://www.facebook.com/GoldinBlue" className="transition-colors hover:text-blue-400">
                 <Facebook size={20} />
                 <span className="sr-only">Facebook</span>
-              </Link>
-              <Link href="#" className="transition-colors hover:text-blue-400">
-                <Instagram size={20} />
-                <span className="sr-only">Instagram</span>
-              </Link>
-              <Link href="#" className="transition-colors hover:text-blue-400">
-                <Twitter size={20} />
-                <span className="sr-only">Twitter</span>
               </Link>
             </div>
           </div>
@@ -53,14 +45,14 @@ export default function ProtectedFooter() {
               <Link href="/products" className="text-sm text-gray-300 transition-colors hover:text-white">
                 Browse Products
               </Link>
-              <Link href="/my-orders" className="text-sm text-gray-300 transition-colors hover:text-white">
+              <Link href="/my-account/orders" className="text-sm text-gray-300 transition-colors hover:text-white">
                 My Orders
               </Link>
               <Link href="/track-order" className="text-sm text-gray-300 transition-colors hover:text-white">
                 Track Order
               </Link>
-              <Link href="/transaction-history" className="text-sm text-gray-300 transition-colors hover:text-white">
-                Transaction History
+              <Link href="/my-account/tickets" className="text-sm text-gray-300 transition-colors hover:text-white">
+                Contact Support
               </Link>
             </div>
           </div>
@@ -96,16 +88,16 @@ export default function ProtectedFooter() {
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-300">
                 <Phone size={16} />
-                <a href="tel:+18005551234" className="transition-colors hover:text-white">
-                  +1 (800) 555-1234
+                <a href="tel:+639936167562" className="transition-colors hover:text-white">
+                  +63 (993) 616-7562
                 </a>
               </div>
               <div className="flex items-start gap-2 text-sm text-gray-300">
                 <MapPin size={16} className="mt-1 shrink-0" />
                 <address className="not-italic">
-                  123 Commerce Way<br />
-                  Suite 100<br />
-                  San Francisco, CA 94103
+                  Ateneo de Naga University<br />
+                  Bagumbayan Sur, Naga City 4400<br />
+                  Camarines Sur, Philippines
                 </address>
               </div>
             </div>
@@ -124,7 +116,7 @@ export default function ProtectedFooter() {
               <Link href="/terms-of-service" className="text-xs text-gray-400 transition-colors hover:text-white">
                 Terms of Service
               </Link>
-              <Link href="/sitemap" className="text-xs text-gray-400 transition-colors hover:text-white">
+              <Link href="/sitemap.xml" className="text-xs text-gray-400 transition-colors hover:text-white">
                 Sitemap
               </Link>
             </div>

@@ -96,13 +96,7 @@ You can control cookie settings through your browser preferences.`
     },
     {
       title: "Contact Us",
-      content: `If you have questions about this Privacy Policy, please contact us at:
-
-MerchTrack
-Email: privacy@merchtrack.tech
-Address: 123 Tech Avenue, Innovation District
-City: San Francisco, CA 94105
-United States`
+      content: `If you have questions about this Privacy Policy, please contact us at:`
     }
   ]
 };

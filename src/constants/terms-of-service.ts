@@ -50,7 +50,6 @@ export const TERMS_OF_SERVICE_CONTENT = {
       title: "Payment Terms",
       content: `• All fees are exclusive of applicable taxes unless stated otherwise
 • Payments are processed through secure third-party providers
-• Subscription fees are billed in advance on a recurring basis
 • You are responsible for all charges incurred under your account
 • We reserve the right to modify pricing with 30 days notice
 • Refunds are subject to our refund policy
@@ -99,11 +98,7 @@ export const TERMS_OF_SERVICE_CONTENT = {
     },
     {
       title: "Contact Information",
-      content: `For questions about these Terms of Service, please contact us at:
-
-MerchTrack
-Email: legal@merchtrack.tech
-Address: Ateneo de Naga University, Bagumbayan Sur, Naga City, Philippines`
+      content: `For questions about these Terms of Service, please contact us at:`
     }
   ]
 };
