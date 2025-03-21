@@ -194,6 +194,9 @@ function PrivacyPolicyBody() {
                   </span>
                   {PRIVACY_POLICY_CONTENT.sections[10].title}
                 </h2>
+                <div className="mb-8 whitespace-pre-line text-gray-700">
+                  {PRIVACY_POLICY_CONTENT.sections[10].content}
+                </div>
                 <div className="space-y-4 rounded-lg bg-white p-6">
                   <div className="flex items-center space-x-3">
                     <Mail className="size-5 text-primary" />

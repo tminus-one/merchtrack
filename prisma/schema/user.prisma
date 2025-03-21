@@ -9,7 +9,7 @@ model User {
   managerId      String?
   imageUrl       String?
   email          String           @unique
-  phone          String           @unique @default("nan")
+  phone          String           @default("nan")
   courses        String           @default("nan")
   isStaff        Boolean          @default(false)
   isAdmin        Boolean          @default(false)
