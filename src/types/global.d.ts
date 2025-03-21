@@ -11,4 +11,8 @@ declare global {
       data: User;
     }
   }
+  interface UserPublicMetadata {
+    isOnboardingCompleted?: boolean;
+    data: User;
+  }
 }
