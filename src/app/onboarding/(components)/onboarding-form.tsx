@@ -40,7 +40,15 @@ export default function OnboardingForm() {
 
   const { mutate, isPending, failureReason} = useMutation({
     mutationFn: (formData: OnboardingFormType) => completeOnboarding(formData),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (!data.success) {
+        return useToast({
+          type: 'error',
+          message: data.message ?? 'Failed to complete onboarding',
+          title: 'Error in Completing Onboarding'
+        });
+      }
+
       useToast({
         type: 'success',
         message: 'Welcome aboard!',
