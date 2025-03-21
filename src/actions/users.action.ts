@@ -1,6 +1,6 @@
 'use server';
 
-import { clerkClient, type User } from "@clerk/nextjs/server";
+import { type User } from "@clerk/nextjs/server";
 import { User as PrismaUser, UserPermission, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { getCached, setCached } from "@/lib/redis";
@@ -11,9 +11,11 @@ import prisma from "@/lib/db";
 import { GetObjectByTParams } from "@/types/extended";
 import { ExtendedUser } from "@/types/users";
 import { processActionReturnData } from "@/utils";
+import clerk from "@/lib/clerk";
 
 export const getClerkUserPublicData = async (userId: string): Promise<ActionsReturnType<User>> => {
-  const user = await (await clerkClient()).users.getUser(userId);
+  const clerkClient = await clerk;
+  const user = await clerkClient.users.getUser(userId);
 
   if (!user) {
     return {
@@ -33,7 +35,8 @@ export const getClerkUserImageUrl = async (userId: string): Promise<ActionsRetur
 
     const userImage = await getCached<string>(`user:${userId}:image`);
     if (!userImage) {
-      const user = await (await clerkClient()).users.getUser(userId);
+      const clerkClient = await clerk;
+      const user = await clerkClient.users.getUser(userId);
       await setCached(`user:${userId}:image`, user?.imageUrl, 60 * 30);
 
       return {

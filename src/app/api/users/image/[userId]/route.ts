@@ -1,6 +1,7 @@
-import { clerkClient } from '@clerk/nextjs/server';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getCached, setCached } from '@/lib/redis';
+import clerk from '@/lib/clerk';
 
 
 export async function GET(
@@ -11,8 +12,11 @@ export async function GET(
     const { userId } = await params;
     const userImage = await getCached<string>(`user:${userId}:image`);
 
+    
+
     if (!userImage) {
-      const user = await (await clerkClient()).users.getUser(userId);
+      const clerkClient = await clerk;
+      const user = await clerkClient.users.getUser(userId);
       await setCached(`user:${userId}:image`, user?.imageUrl, 60 * 30);
 
       return NextResponse.json({

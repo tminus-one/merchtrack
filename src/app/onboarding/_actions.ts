@@ -1,10 +1,11 @@
 'use server';
 
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { User } from '@prisma/client';
 import { OnboardingForm, OnboardingFormSchema } from '@/schema/user';
 import { AuthenticationError, PrismaError, ValidationError } from '@/types/errors';
 import prisma from '@/lib/db';
+import clerk from '@/lib/clerk';
 
 export const completeOnboarding = async (formData: OnboardingForm): Promise<ActionsReturnType<User>> => {
   const { userId } = await auth();
@@ -40,7 +41,8 @@ export const completeOnboarding = async (formData: OnboardingForm): Promise<Acti
       }
     });
 
-    const clerkUpdate = await (await clerkClient()).users.updateUser(userId, {
+    const clerkClient = await clerk;
+    const clerkUpdate = await clerkClient.users.updateUser(userId, {
       publicMetadata: {
         isOnboardingCompleted: true,
         data: result,

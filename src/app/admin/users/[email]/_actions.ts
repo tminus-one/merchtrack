@@ -6,6 +6,7 @@ import prisma from "@/lib/db";
 import { verifyPermission } from "@/utils";
 import { ResetUserPasswordType, UpdateUserType } from "@/schema/user";
 import { createLog } from "@/actions/logs.actions";
+import clerk from "@/lib/clerk";
 
 type ResetPasswordForUserParams = {
   userId: string;
@@ -50,17 +51,6 @@ export async function updateUserDetails({ userId, targetUserId, data }: UpdateUs
   try {
     const existingUser = await prisma.user.findUnique({
       where: { id: targetUserId },
-      select: {
-        firstName: true,
-        lastName: true,
-        email: true,
-        phone: true,
-        role: true,
-        college: true,
-        courses: true,
-        isStaff: true,
-        isAdmin: true,
-      }
     });
 
     if (!existingUser) {
@@ -80,9 +70,17 @@ export async function updateUserDetails({ userId, targetUserId, data }: UpdateUs
     }
 
     // Update user
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: targetUserId },
       data
+    });
+
+    // Update Clerk user metadata
+    const clerkClient = await clerk;
+    await clerkClient.users.updateUser(existingUser.clerkId, {
+      publicMetadata: {
+        data: updatedUser,
+      }
     });
 
     // Log the changes
