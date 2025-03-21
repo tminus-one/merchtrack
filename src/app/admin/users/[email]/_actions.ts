@@ -80,6 +80,7 @@ export async function updateUserDetails({ userId, targetUserId, data }: UpdateUs
     await clerkClient.users.updateUser(existingUser.clerkId, {
       publicMetadata: {
         data: updatedUser,
+        isOnboardingCompleted: true,
       }
     });
 
@@ -137,11 +138,7 @@ export async function assignManager({ userId, managerId }: AssignManagerParams):
       return { success: false, message: "User not found." };
     }
 
-    if (!manager) {
-      return { success: false, message: "Manager not found." };
-    }
-
-    if (!manager.isStaff) {
+    if (!manager?.isStaff) {
       return { success: false, message: "Selected user must be a staff member to be assigned as manager." };
     }
 
@@ -162,8 +159,6 @@ export async function assignManager({ userId, managerId }: AssignManagerParams):
       where: { id: userId },
       data: { managerId }
     });
-
-    
 
     // Create a log entry
     await createLog({
