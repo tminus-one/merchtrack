@@ -173,7 +173,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
         initial="hidden"
         animate="visible"
         variants={fadeIn}
-        className="mx-auto my-10 mt-20 flex max-w-7xl flex-1 flex-col items-stretch gap-16 rounded-lg p-6 md:flex-row"
+        className="mx-auto mt-8 flex max-w-7xl flex-1 flex-col items-stretch gap-16 rounded-lg p-6 md:flex-row"
       >
         {/* Left Column - Image with fade in animation */}
         <motion.div 

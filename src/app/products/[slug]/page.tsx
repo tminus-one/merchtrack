@@ -81,7 +81,7 @@ export default async function ProductPage({ params }: Readonly<Props>) {
   return (
     <>
       <BackgroundAnimation />
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="mx-auto max-w-7xl p-4">
         <ProductListing slug={slug} product={product} />
       </div>
     </>

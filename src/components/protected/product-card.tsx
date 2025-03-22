@@ -73,7 +73,7 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
                 <Badge 
                   key={tag}
                   variant="secondary"
-                  className="bg-primary/80 backdrop-blur-sm"
+                  className="hidden bg-primary/80 backdrop-blur-sm md:flex"
                 >
                   <Tag className="mr-1 size-3" />
                   {tag}
@@ -84,7 +84,7 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
               <Badge variant="destructive">Out of Stock</Badge>
             )}
             {isPreorder && (
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+              <Badge variant="secondary" className="hidden bg-blue-100 text-blue-800 md:flex">
                 Pre-order
               </Badge>
             )}
