@@ -16,9 +16,9 @@ export const Thumb: React.FC<PropType> = (props) => {
   return (
     <div
       className={cn(
-        "flex-none cursor-pointer overflow-hidden rounded-lg transition-all duration-200 hover:opacity-90",
+        "flex-none cursor-pointer overflow-hidden rounded-lg border-primary-300 transition-all duration-200 hover:opacity-90",
         "relative w-[28%] md:w-24 aspect-[3/2]",
-        selected ? "ring-2 ring-primary" : "ring-1 ring-gray-200",
+        selected ? "ring ring-primary " : "border",
       )}
       onClick={onClick}
       aria-label={selected ? "Current slide" : "Go to slide"}

@@ -27,7 +27,7 @@ const fadeIn = {
   hidden: { opacity: 0 },
   visible: { 
     opacity: 1,
-    transition: { duration: 0.5 }
+    transition: { duration: 0.3 }
   }
 };
 
@@ -37,7 +37,7 @@ const productVariants = {
     opacity: 1,
     y: 0,
     transition: { 
-      duration: 0.5,
+      duration: 0.3,
       delay: custom * 0.1,
       type: "spring",
       stiffness: 100
@@ -327,7 +327,6 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 15 }}
                       className="z-10"
                     >
                       <div className="absolute right-0 top-0 size-0 border-r-[24px] border-t-[24px]

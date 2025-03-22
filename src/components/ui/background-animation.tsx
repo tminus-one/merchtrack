@@ -8,12 +8,12 @@ const BackgroundAnimation = () => {
   // Create refs for parent elements to enable relative positioning
   const containerRef = useRef<HTMLDivElement>(null);
   const [documentHeight, setDocumentHeight] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Memoize the updateHeight function to prevent recreating it on each render
   const updateHeight = useCallback(() => {
     const height = Math.max(
       document.body.scrollHeight,
-      //   document.documentElement.scrollHeight,
       document.body.offsetHeight,
       document.documentElement.offsetHeight,
       document.body.clientHeight,
@@ -22,13 +22,24 @@ const BackgroundAnimation = () => {
     setDocumentHeight(height);
   }, []);
 
-  // Update document height on window resize - optimized with empty dependency array
+  // Check if device is mobile
+  const checkIfMobile = useCallback(() => {
+    setIsMobile(window.innerWidth < 768);
+  }, []);
+
+  // Update document height and check device type on mount and resize
   useEffect(() => {
-    // Initial height calculation
+    // Initial calculations
     updateHeight();
+    checkIfMobile();
 
     // Update on resize
-    window.addEventListener('resize', updateHeight);
+    const handleResize = () => {
+      updateHeight();
+      checkIfMobile();
+    };
+    
+    window.addEventListener('resize', handleResize);
     
     // Set up mutation observer to detect DOM changes that affect height
     const observer = new MutationObserver(() => {
@@ -47,11 +58,16 @@ const BackgroundAnimation = () => {
 
     // Clean up all listeners on unmount
     return () => {
-      window.removeEventListener('resize', updateHeight);
+      window.removeEventListener('resize', handleResize);
       observer.disconnect();
       clearTimeout(timer);
     };
   }, []); // Empty dependency array - runs once on mount
+
+  // If mobile, return an empty div instead of the animation
+  if (isMobile) {
+    return null;
+  }
 
   // Animation elements with their properties - Enhanced for more visibility
   const animatedElements = [
@@ -253,8 +269,10 @@ const addAnimationStyles = () => {
         }
         33% {
           transform: translate(30px, -50px) scale(1.1);
+        }
         66% {
           transform: translate(-20px, 20px) scale(0.9);
+        }
         100% {
           transform: translate(0px, 0px) scale(1);
         }
