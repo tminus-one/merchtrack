@@ -7,9 +7,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   devIndicators: {
-    appIsrStatus: true, 
-    buildActivity: true, 
-    buildActivityPosition: 'bottom-left', 
+    position: 'bottom-left', 
   },
   images: {
     remotePatterns: [
@@ -60,7 +58,7 @@ export default withSentryConfig(nextConfig, {
 // For all available options, see:
 // https://github.com/getsentry/sentry-webpack-plugin#options
 
-  org: "ateneo-de-naga-university",
+  org: "merchtrack-devteam",
   project: "merchtrack",
   sourcemaps: {
     deleteSourcemapsAfterUpload: true,
@@ -85,6 +83,9 @@ export default withSentryConfig(nextConfig, {
   // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
   // side errors will fail.
   tunnelRoute: "/monitoring",
+  telemetry: true,
+  
+
 
   // Hides source maps from generated client bundles
   hideSourceMaps: true,
