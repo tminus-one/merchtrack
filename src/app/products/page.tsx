@@ -9,6 +9,11 @@ import ProductSearchHandler from "@/components/protected/product-search-handler"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
+export const metadata = {
+  title: "Merch & Products | MerchTrack",
+  description: "Browse our collection of university merchandise and products.",
+};
+
 export default async function ProductsPage() {
   const { userId } = await auth();
   const categoriesResult = await getCategories();
@@ -54,13 +59,11 @@ export default async function ProductsPage() {
       </div>
 
       {/* Desktop filters */}
-      {userId && (
-        <div className="hidden lg:block">
-          <Suspense fallback={<div>Loading filters...</div>}>
-            <ProductSearchHandler categories={categories as Category[]} />
-          </Suspense>
-        </div>
-      )}
+      <div className="hidden lg:block">
+        <Suspense fallback={<div>Loading filters...</div>}>
+          <ProductSearchHandler categories={categories as Category[]} />
+        </Suspense>
+      </div>
 
       {/* Products grid */}
       <div className="mt-6">

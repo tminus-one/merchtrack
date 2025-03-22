@@ -9,6 +9,7 @@ interface ProductPaginationProps {
   currentPage: number;
   pageSize: number;
   totalItems: number;
+  parentId?: string;
 }
 
 export default function ProductPagination({
@@ -16,6 +17,7 @@ export default function ProductPagination({
   currentPage,
   pageSize,
   totalItems,
+  parentId = '#',
 }: Readonly<ProductPaginationProps>) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -24,6 +26,26 @@ export default function ProductPagination({
     const params = new URLSearchParams(searchParams.toString());
     params.set("page", page.toString());
     router.push(`/products?${params.toString()}`);
+
+    // Scroll to the component with the id and center it on screen
+    if (parentId) {
+      // Use setTimeout to ensure the DOM has updated after the router navigation
+      setTimeout(() => {
+        const element = document.getElementById(parentId);
+        if (element) {
+          // Calculate position to center element in viewport
+          const elementRect = element.getBoundingClientRect();
+          const absoluteElementTop = elementRect.top + window.scrollY;
+          const middle = absoluteElementTop - (window.innerHeight / 2) + (elementRect.height / 2);
+          
+          // Perform the smooth scroll to the calculated position
+          window.scrollTo({
+            top: middle,
+            behavior: 'smooth'
+          });
+        }
+      }, 100); // Small delay to ensure route change has completed
+    }
   };
 
   // Calculate the range of items being displayed

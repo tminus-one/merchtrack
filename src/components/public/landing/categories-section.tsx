@@ -61,10 +61,10 @@ const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Link href={category.href}>
-                <Card className="hover:bg-muted h-full overflow-hidden transition-colors">
+              <Link href={`/products?categories=${category.id}`}>
+                <Card className="hover:bg-muted h-full overflow-hidden rounded-md shadow-sm transition-colors">
                   <CardContent className="p-6">
-                    <div className="relative mb-4 aspect-square overflow-hidden rounded-lg">
+                    <div className="relative mb-4 aspect-square overflow-hidden rounded-md">
                       <Image
                         src={category.image}
                         alt={category.name}
@@ -72,11 +72,11 @@ const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
                         className="object-cover transition-transform hover:scale-105"
                       />
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="mb-2 flex items-center gap-2">
                       <FolderIcon className="size-5 text-primary" />
-                      <h3 className="mb-2 text-xl font-semibold">{category.name}</h3>
+                      <h3 className="text-base font-bold text-primary">{category.name}</h3>
                     </div>
-                    <p className="text-muted-foreground">{category.description || `Browse our ${category.name} collection`}</p>
+                    <p className="text-sm text-neutral-7">{category.description || `Browse our ${category.name} collection`}</p>
                   </CardContent>
                 </Card>
               </Link>

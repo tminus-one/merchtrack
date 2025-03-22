@@ -29,6 +29,7 @@ export function useProductsQuery(params: QueryParams = {}) {
   const { where, include, orderBy, take = 12, skip, page, limit } = params;
   
   return useResourceQuery({
+    needId: false,
     resource: "products",
     fetcher: (userId: string, params: QueryParams) => getProducts(userId, params),
     params: {

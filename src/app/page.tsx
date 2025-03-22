@@ -10,6 +10,7 @@ import SmoothScrollLayout from "@/components/public/smooth-scroll-layout";
 import Footer from "@/components/protected/footer";
 import { getFeaturedProducts, getCategories } from "@/actions/landing.actions";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import BackgroundAnimation from "@/components/ui/background-animation";
 
 // Set revalidation time to 15 minutes
 export const revalidate = 900;
@@ -45,22 +46,25 @@ export default async function Home() {
   ]);
 
   return (
-    <SmoothScrollLayout>
-      <main className="relative w-full font-inter">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6">
-          <HeaderLP />
-          <HeroSection />
-          <Suspense fallback={<LoadingSpinner />}>
-            <CategoriesSection categories={categories} />
-          </Suspense>
-          <Suspense fallback={<LoadingSpinner />}>
-            <FeaturedProducts products={featuredProducts} />
-          </Suspense>
-          <UniversityMerchSection />
-          <CallToAction />
-        </div>
-      </main>
-      <Footer />
-    </SmoothScrollLayout>
+    <>
+      <BackgroundAnimation />
+      <SmoothScrollLayout>
+        <main className="relative w-full font-inter">
+          <div className="mx-auto max-w-4xl px-4 sm:px-6">
+            <HeaderLP />
+            <HeroSection />
+            <Suspense fallback={<LoadingSpinner />}>
+              <CategoriesSection categories={categories} />
+            </Suspense>
+            <Suspense fallback={<LoadingSpinner />}>
+              <FeaturedProducts products={featuredProducts} />
+            </Suspense>
+            <UniversityMerchSection />
+            <CallToAction />
+          </div>
+        </main>
+        <Footer />
+      </SmoothScrollLayout>
+    </>
   );
 }

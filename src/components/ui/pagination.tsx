@@ -14,6 +14,7 @@ type PaginationProps = {
   hasNextPage: boolean;
   hasPrevPage: boolean;
   className?: string;
+  scrollToId?: string;
 } & Omit<HTMLAttributes<HTMLDivElement>, 'onChange'>;
 
 export function Pagination({
@@ -23,10 +24,39 @@ export function Pagination({
   hasNextPage,
   hasPrevPage,
   className = "",
+  scrollToId = "#",
   ...props
 }: Readonly<PaginationProps>) {
   const goToPage = (newPage: number) => {
     if (newPage >= 1 && newPage <= total) {
+      if (scrollToId) {
+        // First update the page state
+        onChange(newPage);
+        
+        // Then wait for React to finish rendering with the updated state
+        setTimeout(() => {
+          // Use requestAnimationFrame to ensure we're in the next paint cycle
+          requestAnimationFrame(() => {
+            const element = document.getElementById(scrollToId);
+            if (element) {
+              // Recalculate position after the DOM has updated
+              const elementRect = element.getBoundingClientRect();
+              const absoluteElementTop = elementRect.top + window.scrollY;
+              const middle = absoluteElementTop - (window.innerHeight / 2) + (elementRect.height / 2);
+              
+              window.scrollTo({
+                top: middle,
+                behavior: 'smooth'
+              });
+            }
+          });
+        }, 150); // Delay to ensure content has loaded
+        
+        // Return early to prevent the onChange call below
+        return;
+      }
+      
+      // Only call onChange if we're not scrolling
       onChange(newPage);
     }
   };

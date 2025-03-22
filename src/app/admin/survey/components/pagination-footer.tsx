@@ -7,6 +7,7 @@ interface PaginationFooterProps {
   totalItems: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
+  scrollToId?: string;
 }
 
 export const PaginationFooter = memo(({
@@ -14,7 +15,8 @@ export const PaginationFooter = memo(({
   totalPages,
   totalItems,
   itemsPerPage,
-  onPageChange
+  onPageChange,
+  scrollToId = "#",
 }: PaginationFooterProps) => {
   if (totalPages <= 0) return null;
 
@@ -30,6 +32,7 @@ export const PaginationFooter = memo(({
         onChange={onPageChange}
         hasNextPage={currentPage < totalPages}
         hasPrevPage={currentPage > 1}
+        scrollToId={scrollToId}
       />
     </div>
   );

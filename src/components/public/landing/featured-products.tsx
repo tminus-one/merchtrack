@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import DOMPurify from "isomorphic-dompurify";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -57,7 +58,7 @@ const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className="group overflow-hidden">
+              <Card className="group overflow-hidden shadow-sm">
                 <CardHeader className="p-0">
                   <div className="relative aspect-square">
                     <Image
@@ -77,21 +78,21 @@ const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
                 </CardHeader>
                 <CardContent className="p-4">
                   <Link href={`/products/${product.slug}`}>
-                    <h3 className="truncate font-semibold transition-colors hover:text-primary">
+                    <h3 className="truncate font-bold text-primary transition-colors hover:text-primary">
                       {product.name}
                     </h3>
                   </Link>
-                  <p className="text-muted-foreground">
-                    ${product.price.toFixed(2)}
-                  </p>
+                  <p
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} 
+                    className="mt-2 line-clamp-2 text-sm text-neutral-7" />
                 </CardContent>
                 <CardFooter className="p-4 pt-0">
-                  <Button 
-                    className="group w-full text-neutral-2"
-                  >
-                    Add to Cart
-                    <ShoppingCart className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
+                  <Link href={`/products/${product.slug}`} className="w-full">
+                    <Button variant="outline" className="w-full border-primary text-primary">
+                      <ShoppingCart className="mr-2 size-4" />
+                      Add to Cart
+                    </Button>
+                  </Link>
                 </CardFooter>
               </Card>
             </motion.div>

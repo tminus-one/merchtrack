@@ -104,7 +104,7 @@ const HeroSection = () => {
                 <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/20 to-primary/40 opacity-75 blur"></div>
                 <div className="relative overflow-hidden rounded-lg">
                   <Image
-                    src="/img/carousel-image.png"
+                    src="/img/carousel-image.jpg"
                     alt="University Merchandise Collection"
                     fill
                     className="object-cover"

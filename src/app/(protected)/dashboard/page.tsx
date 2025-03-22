@@ -160,21 +160,6 @@ export default async function DashboardPage() {
         </Suspense>
       </div>
       
-      {/* Product search */}
-      <div className="mx-auto mt-12 max-w-6xl px-4">
-        <Card className="overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="size-5 text-primary" />
-              Quick Search
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProductSearchHandler categories={categories as Category[]} disableUrlUpdate={true} />
-          </CardContent>
-        </Card>
-      </div>
-      
       {/* Featured products */}
       <div className="mx-auto mt-12 max-w-6xl px-4">
         {(featuredProducts ?? []).length > 0 && (
@@ -191,6 +176,22 @@ export default async function DashboardPage() {
             />
           </Suspense>
         )}
+
+              
+        {/* Product search */}
+        <div className="mx-auto mt-12 max-w-6xl px-4">
+          <Card className="overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Search className="size-5 text-primary" />
+              Quick Search
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProductSearchHandler categories={categories as Category[]} disableUrlUpdate={true} />
+            </CardContent>
+          </Card>
+        </div>
         
         {/* Benefits section */}
         <div className="mt-16">

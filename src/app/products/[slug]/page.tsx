@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { getProductBySlug, getProducts } from '@/actions/products.actions';
 import ProductListing from "@/components/product/product-listing";
 
@@ -19,6 +20,8 @@ export async function generateStaticParams() {
     slug: product.slug,
   }));
 }
+
+const BackgroundAnimation = dynamic(() => import("@/components/ui/background-animation"));
 
 // Generate dynamic metadata for SEO
 export async function generateMetadata(
@@ -69,7 +72,6 @@ export default async function ProductPage({ params }: Readonly<Props>) {
   const { slug } = await params;
   const productResult = await getProductBySlug({ userId: '', slug });
   
-
   if (!productResult.success || !productResult.data) {
     return notFound();
   }
@@ -77,8 +79,11 @@ export default async function ProductPage({ params }: Readonly<Props>) {
   const product = productResult.data;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <ProductListing slug={slug} product={product} />
-    </div>
+    <>
+      <BackgroundAnimation />
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <ProductListing slug={slug} product={product} />
+      </div>
+    </>
   );
 }

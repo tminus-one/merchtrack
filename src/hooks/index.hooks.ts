@@ -8,6 +8,7 @@ interface ResourceQueryParams<T> {
   resource: string;
   fetcher: (userId: string, params: QueryParams) => Promise<ActionsReturnType<PaginatedResponse<T>>>;
   params?: QueryParams;
+  needId?: boolean;
 }
 
 /**
@@ -29,13 +30,14 @@ interface ResourceQueryParams<T> {
  *   - resource: The name of the resource to fetch.
  *   - fetcher: A function that fetches the resource data.
  *   - params: (Optional) Additional query parameters.
+ *   - needId: (Optional) A boolean indicating if the user ID is required for the query.
  * @returns The result object from `useQuery`, which includes the resource data or a fallback response on error.
  */
-export function useResourceQuery<T>({ resource, fetcher, params = {} }: ResourceQueryParams<T>) {
+export function useResourceQuery<T>({ resource, fetcher, params = {}, needId = true }: ResourceQueryParams<T>) {
   const { userId } = useUserStore();
   
   return useQuery({
-    enabled: !!userId,
+    enabled: needId ? !!userId : true,
     queryKey: [`${resource}:all`, params],
     staleTime: resource === "categories" ? Infinity : 0,
     gcTime: resource === "categories" ? 24 * 60 * 60 * 1000 : 5 * 60 * 1000,

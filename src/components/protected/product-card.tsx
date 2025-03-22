@@ -3,7 +3,7 @@ import DOMPurify from "isomorphic-dompurify";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Tag, Star, ShoppingCart } from "lucide-react";
+import { Tag, Star, ShoppingCart, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { SignInButton } from "@clerk/nextjs";
@@ -34,7 +34,7 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
       return toast.error("You need to sign in add to cart.", {
         description: "Please sign in to add products to your cart.",
         action: 
-        <Button>
+        <Button asChild>
           <SignInButton mode="modal" forceRedirectUrl={`/products/${product.slug}`} />
         </Button>,
       });
@@ -128,10 +128,10 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
           </div>
 
           {/* Quick Actions */}
-          <div className="pt-2">
+          <div className="flex items-center justify-between gap-2 pt-2">
             <Button
               className={cn(
-                "w-full gap-2 transition-colors",
+                "w-3/4 gap-2 transition-colors",
                 !inStock && !isPreorder && "cursor-not-allowed opacity-50"
               )}
               onClick={handleProductAction}
@@ -139,6 +139,15 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
             >
               <ShoppingCart className="size-4" />
               {isPreorder ? "Pre-order Now" : "Add to Cart"}
+            </Button>
+            <Button
+              variant="outline"
+              className="hidden lg:flex"
+            >
+              <Eye className="size-4" />
+              <Link href={`/products/${product.slug}`} className="flex w-full items-center justify-center gap-2">
+                View
+              </Link>
             </Button>
           </div>
         </div>

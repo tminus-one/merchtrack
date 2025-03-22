@@ -11,12 +11,12 @@ import ProductCard from "@/components/protected/product-card";
 
 export default function ProductRecommendations() {
   const [page, setPage] = React.useState(1);
-  const ITEMS_PER_PAGE = 6;
+  const ITEMS_PER_PAGE = 8;
   
   const { data: recommendedProducts, isLoading } = useProductsQuery({
     skip: (page - 1) * ITEMS_PER_PAGE,
     take: ITEMS_PER_PAGE, 
-    limit: 6,
+    limit: ITEMS_PER_PAGE,
     orderBy: {
       createdAt: "desc",
     },
@@ -39,8 +39,8 @@ export default function ProductRecommendations() {
   return (
     <Card className="border-none shadow-none">
       <CardContent className="pt-6">
-        <h3 className="mb-4 text-xl font-semibold">Recommended Products</h3>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+        <h3 id="recommended-products" className="mb-4 text-xl font-semibold">Recommended Products</h3>
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
           {recommendedProducts?.data?.map((product: ExtendedProduct) => (
             <ProductCard
               key={product.id}
@@ -55,6 +55,7 @@ export default function ProductRecommendations() {
           totalItems={totalItems} 
           itemsPerPage={ITEMS_PER_PAGE}
           onPageChange={handlePageChange}
+          scrollToId="recommended-products"
         />
       </CardContent>
     </Card>

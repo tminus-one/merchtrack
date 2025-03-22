@@ -48,7 +48,7 @@ export default function ProductReviews({ slug }: Readonly<ProductReviewsProps>) 
       {reviews.length === 0 ? (
         <p>No reviews yet. Be the first to review this product!</p>
       ) : (
-        <div className="space-y-6">
+        <div id="reviews" className="space-y-6">
           {reviews.map((review) => (
             <div key={review.id} className="border-b pb-4 last:border-b-0">
               <div className="mb-2 flex items-center justify-between">

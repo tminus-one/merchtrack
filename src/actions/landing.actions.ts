@@ -12,6 +12,7 @@ export type FeaturedProduct = {
   image: string[];
   badge?: string;
   slug: string;
+  description: string;
 };
 
 export type CategoryWithProducts = {
@@ -44,6 +45,7 @@ export const getFeaturedProducts = cache(async (): Promise<FeaturedProduct[]> =>
           take: 1,
         },
         tags: true,
+        description: true,
       },
     });
 
@@ -54,6 +56,7 @@ export const getFeaturedProducts = cache(async (): Promise<FeaturedProduct[]> =>
       image: product.imageUrl,
       badge: product.tags?.[0] || 'Featured',
       slug: product.slug,
+      description: product.description || 'No description available',
     }));
   } catch (error) {
     console.error('Error fetching featured products:', error);

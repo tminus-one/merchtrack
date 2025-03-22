@@ -7,8 +7,8 @@ export default function ProductRecommendationSkeleton() {
     <Card className="border-none shadow-none">
       <CardContent className="pt-6">
         <Skeleton className="mb-4 h-8 w-56" />
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
+        <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, index) => (
             <div key={index} className="cursor-pointer">
               <div className="relative mb-2 aspect-square overflow-hidden rounded-md">
                 <Skeleton className="size-full" />

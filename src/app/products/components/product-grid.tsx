@@ -137,7 +137,7 @@ export default function ProductGrid() {
 
   return (
     <>
-      <div ref={parent} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div ref={parent} id="product-grid" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {sortedProducts.map((product, index) => (
           <ProductCard 
             key={product.id} 
@@ -152,6 +152,7 @@ export default function ProductGrid() {
         totalPages={totalPages}
         pageSize={ITEMS_PER_PAGE}
         totalItems={totalItems || 0}
+        parentId="product-slug-tabs"
       />
     </>
   );
