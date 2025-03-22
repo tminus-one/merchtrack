@@ -2,11 +2,10 @@
 
 import { OrderPaymentStatus, Payment, PaymentSite, PaymentStatus, PaymentMethod, Prisma, OrderStatus } from "@prisma/client";
 import prisma from "@/lib/db";
-import { getCached, setCached } from "@/lib/redis";
 import { QueryParams, PaginatedResponse } from "@/types/common";
 import { GetObjectByTParams } from "@/types/extended";
 import { createLog } from '@/actions/logs.actions';
-import { sendPaymentStatusEmail } from "@/lib/email-service";
+import { sendOrderStatusEmail, sendPaymentStatusEmail } from "@/lib/email-service";
 import { calculatePagination, processActionReturnData, verifyPermission } from "@/utils";
 
 
@@ -46,15 +45,15 @@ export async function getPayments(
   const isAuthorized = await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      payments: { canRead: true },
     }
   });
 
   const { skip, take, page } = calculatePagination(params);
 
   try {
-    let payments: Payment[] | null = await getCached(`payments:${page}:${take}`);
-    let total = await getCached('payments:total');
+    let payments: Payment[] | null = null;
+    let total = null;
 
     if (!payments || !total) {
       [payments, total] = await prisma.$transaction([
@@ -70,9 +69,6 @@ export async function getPayments(
         }),
         prisma.payment.count({ where: { isDeleted: false } })
       ]);
-      
-      await setCached(`payments:${page}:${take}`, payments);
-      await setCached('payments:total', total);
     }
 
     const lastPage = Math.ceil(total as number / take);
@@ -123,7 +119,7 @@ export async function getPaymentById({ userId, paymentId, limitFields }: GetObje
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      payments: { canRead: true },
     }
   })) {
     return {
@@ -132,7 +128,7 @@ export async function getPaymentById({ userId, paymentId, limitFields }: GetObje
     };
   }
 
-  let payment: Payment | null = await getCached<Payment>(`payments:${paymentId}`);
+  let payment: Payment | null = null;
   try {
     if (!payment) {
       payment = await prisma.payment.findFirst({
@@ -144,8 +140,6 @@ export async function getPaymentById({ userId, paymentId, limitFields }: GetObje
           user: true,
         }
       });
-
-      await setCached(`payments:${paymentId}`, payment);
     }
   } catch (error) {
     return {
@@ -203,7 +197,7 @@ export async function getPaymentsByUser({ userId, customerId, limitFields }: Get
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      payments: { canRead: true },
     }
   })) {
     return {
@@ -212,7 +206,7 @@ export async function getPaymentsByUser({ userId, customerId, limitFields }: Get
     };
   }
 
-  let payments: Payment[] | null = await getCached<Payment[]>(`payments:user:${customerId}`);
+  let payments: Payment[] | null = null;
   try {
     if (!payments) {
       payments = await prisma.payment.findMany({
@@ -225,7 +219,6 @@ export async function getPaymentsByUser({ userId, customerId, limitFields }: Get
           user: true,
         }
       });
-      await setCached(`payments:user:${customerId}`, payments);
     }
   } catch (error) {
     return {
@@ -273,7 +266,7 @@ export async function getPaymentsByOrderId({ userId, orderId, limitFields }: Get
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      payments: { canRead: true },
     }
   })) {
     return {
@@ -282,7 +275,7 @@ export async function getPaymentsByOrderId({ userId, orderId, limitFields }: Get
     };
   }
 
-  let payments: Payment[] | null = await getCached<Payment[]>(`payments:order:${orderId}`);
+  let payments: Payment[] | null = null;
   try {
     if (!payments) {
       payments = await prisma.payment.findMany({
@@ -295,7 +288,6 @@ export async function getPaymentsByOrderId({ userId, orderId, limitFields }: Get
           user: true,
         }
       });
-      await setCached(`payments:order:${orderId}`, payments);
     }
   } catch (error) {
     return {
@@ -481,21 +473,23 @@ export async function processPayment({
         });
       }
     } else {
-      // Log for offsite pending payment
-      await createLog({
-        userId: order.customerId,
-        createdById: userId,
-        reason: "Offsite Payment Submitted",
-        systemText: `Offsite payment of ₱${amount} submitted for order ${orderId} via ${paymentMethod}. Awaiting verification.`,
-        userText: `Your payment submission of ₱${amount} has been received and is awaiting verification by our team.`
-      });
+      await Promise.all([
+        sendPaymentStatusEmail({
+          orderNumber: orderId,
+          customerName: `${order.customer.firstName} ${order.customer.lastName}`,
+          customerEmail: order.customer.email,
+          amount,
+          status: 'submitted',
+        }),
+        createLog({
+          userId: order.customerId,
+          createdById: userId,
+          reason: "Offsite Payment Submitted",
+          systemText: `Offsite payment of ₱${amount} submitted for order ${orderId} via ${paymentMethod}. Awaiting verification.`,
+          userText: `Your payment submission of ₱${amount} has been received and is awaiting verification by our team.`
+        })
+      ]);
     }
-    
-    // Invalidate caches
-    await Promise.all([
-      setCached(`payments:order:${orderId}`, null),
-      setCached(`order:${orderId}`, null)
-    ]);
     
     return {
       success: true,
@@ -545,7 +539,7 @@ export async function refundPayment(
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      payments: { canRead: true, canUpdate: true },
     }
   })) {
     await createLog({
@@ -666,12 +660,6 @@ export async function refundPayment(
       refundReason: reason
     });
 
-    // Invalidate caches
-    await Promise.all([
-      setCached(`payments:order:${payment.orderId}`, null),
-      setCached(`order:${payment.orderId}`, null)
-    ]);
-
     return {
       success: true,
       data: processActionReturnData(refund) as Payment
@@ -733,7 +721,7 @@ export async function validatePayment(
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      payments: { canRead: true, canUpdate: true },
     }
   })) {
     await createLog({
@@ -792,28 +780,28 @@ export async function validatePayment(
       };
     }
 
-    // Check for duplicate verified transaction (with same transactionId)
-    const duplicateTransaction = await prisma.payment.findFirst({
-      where: {
-        transactionId: transactionDetails.transactionId,
-        paymentStatus: PaymentStatus.VERIFIED,
-        id: { not: paymentId } // Exclude the current payment we're validating
-      }
-    });
+    // // Check for duplicate verified transaction (with same transactionId)
+    // const duplicateTransaction = await prisma.payment.findFirst({
+    //   where: {
+    //     transactionId: transactionDetails.transactionId,
+    //     paymentStatus: PaymentStatus.VERIFIED,
+    //     id: { not: paymentId } // Exclude the current payment we're validating
+    //   }
+    // });
 
-    if (duplicateTransaction) {
-      await createLog({
-        userId: order.customerId,
-        createdById: userId,
-        reason: "Payment Validation Failed - Duplicate Transaction",
-        systemText: `Duplicate transaction ID ${transactionDetails.transactionId} detected for order ${orderId}`,
-        userText: "This transaction has already been processed."
-      });
-      return {
-        success: false,
-        message: "This transaction has already been processed."
-      };
-    }
+    // if (duplicateTransaction) {
+    //   await createLog({
+    //     userId: order.customerId,
+    //     createdById: userId,
+    //     reason: "Payment Validation Failed - Duplicate Transaction",
+    //     systemText: `Duplicate transaction ID ${transactionDetails.transactionId} detected for order ${orderId}`,
+    //     userText: "This transaction has already been processed."
+    //   });
+    //   return {
+    //     success: false,
+    //     message: "This transaction has already been processed."
+    //   };
+    // }
 
     const validatingEmployee = await prisma.user.findUnique({
       where: { id: userId }
@@ -857,21 +845,34 @@ export async function validatePayment(
     const isFullyPaid = totalPaid >= Number(order.totalAmount);
 
     if (isFullyPaid) {
-      await prisma.order.update({
+      const fullypaidOrder = await prisma.order.update({
         where: { id: orderId },
         data: {
           paymentStatus: OrderPaymentStatus.PAID,
           status: order.status === OrderStatus.PENDING ? OrderStatus.PROCESSING : order.status
         },
+        include: {
+          customer: true,
+          orderItems: {
+            include: {
+              variant: {
+                include: {
+                  product: true,
+                }
+              }
+            }
+          }
+        }
       });
 
 
-      await sendPaymentStatusEmail({
-        orderNumber: orderId,
-        customerName: `${order.customer.firstName} ${order.customer.lastName}`,
-        customerEmail: order.customer.email,
-        amount: Number(amount),
-        status: 'verified',
+      await sendOrderStatusEmail({
+        customerEmail: fullypaidOrder.customer.email,
+        customerName: `${fullypaidOrder.customer.firstName} ${fullypaidOrder.customer.lastName}`,
+        orderNumber: fullypaidOrder.id,
+        newStatus: fullypaidOrder.status,
+        // @ts-expect-error - data is enough already
+        order: fullypaidOrder
       });
     } else {
       await prisma.order.update({
@@ -899,12 +900,6 @@ export async function validatePayment(
       amount: Number(verifiedPayment.amount),
       status: 'verified',
     });
-
-    // Invalidate caches
-    await Promise.all([
-      setCached(`payments:order:${orderId}`, null),
-      setCached(`order:${orderId}`, null)
-    ]);
 
     return {
       success: true
@@ -956,7 +951,7 @@ export async function rejectPayment(
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      payments: { canRead: true, canUpdate: true },
     }
   })) {
     await createLog({
@@ -1042,12 +1037,6 @@ export async function rejectPayment(
       amount: Number(existingPayment.amount),
       status: 'declined'
     });
-
-    // Invalidate caches
-    await Promise.all([
-      setCached(`payments:order:${orderId}`, null),
-      setCached(`order:${orderId}`, null)
-    ]);
 
     return {
       success: true

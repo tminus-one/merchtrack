@@ -8,7 +8,6 @@ import { processActionReturnData, slugify } from "@/utils";
 import { CreateProductType } from "@/schema/products.schema";
 import { ExtendedProduct } from "@/types/extended";
 import { createLog } from "@/actions/logs.actions";
-import { invalidateCache } from "@/lib/redis";
 
 type CreateCategoryParams = {
     userId: string;
@@ -29,7 +28,7 @@ export async function createCategory(params: CreateCategoryParams): Promise<Acti
   const hasPermission = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canRead: true, canCreate: true },
     }
   });
 
@@ -108,7 +107,7 @@ export async function updateProduct(
   if (!await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true }
+      inventory: { canRead: true, canUpdate: true }
     }
   })) {
     return {
@@ -185,19 +184,6 @@ export async function updateProduct(
       throw new Error("Failed to update product");
     }
 
-    // Get total number of product pages
-    const totalProducts = await prisma.product.count();
-    const totalPages = Math.ceil(totalProducts / 12); // Assuming 10 products per page
-    
-    // Invalidate cache
-    const keysToInvalidate = [
-      `products:all`,
-      `product:${product.id}`,
-      `product:${product.slug}`,
-      'products:total',
-      ...Array.from({ length: totalPages }, (_, i) => `products:${i + 1}:*`)
-    ];
-    await invalidateCache(keysToInvalidate);
     
     await createLog({
       userId,
@@ -264,7 +250,7 @@ export async function adjustVariantInventory(
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canRead: true, canUpdate: true },
     }
   })) {
     await createLog({
@@ -326,13 +312,6 @@ export async function adjustVariantInventory(
       where: { id: variantId },
       data: { inventory: newInventory }
     });
-
-    // Invalidate cache for this product
-    await invalidateCache([
-      `products:all`,
-      `product:${productId}`,
-      `product:${variant.product.slug}`
-    ]);
 
     await createLog({
       userId,

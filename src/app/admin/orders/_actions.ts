@@ -39,7 +39,7 @@ export async function createOrder({ params }: { params: CreateOrderParams }): Pr
   if (!await verifyPermission({ 
     userId: params.userId,  
     permissions: {
-      dashboard: { canRead: true }
+      orders: { canRead: true, canCreate: true },
     }
   })) {
     return {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { FaPlus, FaMinus } from 'react-icons/fa';
 import { adjustVariantInventory } from '../../_actions';
@@ -12,12 +12,13 @@ import { useUserStore } from '@/stores/user.store';
 import useToast from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-interface InventoryAdjusterProps {
+type InventoryAdjusterProps = {
   productId: string;
   variantId: string;
   variantName: string;
   currentInventory: number;
   onSuccess?: (newInventory: number) => void;
+  slug: string;
 }
 
 export function InventoryAdjuster({
@@ -25,14 +26,17 @@ export function InventoryAdjuster({
   variantId,
   variantName,
   currentInventory,
-  onSuccess
+  onSuccess,
+  slug
 }: Readonly<InventoryAdjusterProps>) {
   const [adjustmentAmount, setAdjustmentAmount] = useState(1);
   const [reason, setReason] = useState('');
   const { userId } = useUserStore();
   const toast = useToast;
+  const queryClient = useQueryClient();
 
   const { mutate: adjustInventory, isPending } = useMutation({
+    mutationKey: [`products:${slug}`],
     mutationFn: async ({ adjustment }: { adjustment: number }) => {
       if (!userId) throw new Error("User ID is required");
       
@@ -63,6 +67,7 @@ export function InventoryAdjuster({
       
       // Reset reason field after successful update
       setReason('');
+      queryClient.invalidateQueries({ queryKey: [`products:${slug}`] });
     },
     onError: (error: Error) => {
       toast({

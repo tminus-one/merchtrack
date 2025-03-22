@@ -41,7 +41,8 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
   const router = useRouter();
   const toast = useToast;
   
-  const { data: product, isLoading } = useProductSlugQuery(slug);
+  
+  const { data: product, isLoading, refetch } = useProductSlugQuery(slug);
   
   const methods = useForm<UpdateProductType>({
     mode: 'onBlur',
@@ -72,7 +73,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
           id: variant.id,
           variantName: variant.variantName,
           price: Number(variant.price),
-          inventory: variant.inventory,
+          inventory: variant.inventory ?? 0,
           rolePricing: variant.rolePricing as {
             PLAYER?: number;
             STUDENT?: number;
@@ -97,7 +98,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
       }
       return response.data;
     },
-    mutationKey: ['products:all'],
+    mutationKey: ['products:all', `products:${slug}`],
     onSuccess: () => {
       router.refresh();
       toast({
@@ -106,6 +107,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
         title: "Success"
       });
       router.push('/admin/inventory');
+      refetch();
     },
     onError: (error: Error) => {
       toast({
@@ -125,6 +127,7 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
         message: "Product deleted successfully",
         title: "Success"
       });
+      refetch();
     },
     onError: (error: Error) => {
       useToast({
@@ -180,6 +183,8 @@ export default function UpdateProductContainer({ slug }: Readonly<UpdateProductC
         message: "Images updated successfully",
         title: "Success"
       });
+      refetch();
+      router.refresh();
     } catch (error) {
       toast({
         type: "error",

@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageAnimation from "@/components/public/page-animation";
 import PageTitle from "@/components/private/page-title";
 
+
 export const metadata: Metadata = {
   title: "Survey | MerchTrack",
   description: "Process and manage order payments",
@@ -12,8 +13,6 @@ export const metadata: Metadata = {
 
 
 export default function SurveyPage() {
-
-
   return (
     <PageAnimation>
       <div className="p-6">

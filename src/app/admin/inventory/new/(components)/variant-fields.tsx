@@ -85,7 +85,8 @@ export default function VariantFields() {
                 {...register(`variants.${index}.inventory`, {
                   valueAsNumber: true,
                   required: true,
-                  min: 0
+                  min: 0,
+                  value: 0
                 })}
                 placeholder="Stock quantity"
                 disabled

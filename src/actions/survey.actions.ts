@@ -5,7 +5,6 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/db";
 import { verifyPermission } from "@/utils/permissions";
 import { QueryParams, PaginatedResponse } from "@/types/common";
-import { getCached, setCached } from "@/lib/redis";
 import { calculatePagination, processActionReturnData } from "@/utils";
 import { GetObjectByTParams } from "@/types/extended";
 import { ExtendedCustomerSurvey } from "@/types/survey";
@@ -15,7 +14,7 @@ export async function getSurveyCategories(userId: string, params: QueryParams): 
   const isAuthorized = await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      reports: { canRead: true },
     }
   });
 
@@ -27,8 +26,8 @@ export async function getSurveyCategories(userId: string, params: QueryParams): 
   }
 
   try {
-    let categories: SurveyCategory[] | null = await getCached<SurveyCategory[]>("surveyCategories:all");
-    const total: number | null = await getCached<number>("surveyCategories:total");
+    let categories: SurveyCategory[] | null = null;
+    const total: number | null = null;
     if (!total || !categories) {
       categories = await prisma.surveyCategory.findMany({
         where: {
@@ -39,8 +38,6 @@ export async function getSurveyCategories(userId: string, params: QueryParams): 
           ...params.include
         }
       });
-      await setCached("surveyCategories:all", categories);
-      await setCached("surveyCategories:total", categories.length);
     }
 
     return {
@@ -68,7 +65,7 @@ export async function createSurveyCategory(params: {
   const isAuthorized = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canCreate: true },
+      reports: { canCreate: true },
     }
   });
 
@@ -117,7 +114,7 @@ export async function updateSurveyCategory(params: {
   const isAuthorized = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canUpdate: true },
+      reports: { canUpdate: true },
     }
   });
 
@@ -161,7 +158,7 @@ export async function deleteSurveyCategory(params: {
   const isAuthorized = await verifyPermission({
     userId: params.userId,
     permissions: {
-      dashboard: { canDelete: true },
+      reports: { canDelete: true },
     }
   });
 

@@ -3,7 +3,6 @@
 import { type User } from "@clerk/nextjs/server";
 import { User as PrismaUser, UserPermission, Role } from "@prisma/client";
 import { revalidatePath } from "next/cache";
-import { getCached, setCached } from "@/lib/redis";
 import { PaginatedResponse, QueryParams } from "@/types/common";
 import { verifyPermission } from "@/utils/permissions";
 import { calculatePagination } from "@/utils/query.utils";
@@ -12,6 +11,7 @@ import { GetObjectByTParams } from "@/types/extended";
 import { ExtendedUser } from "@/types/users";
 import { processActionReturnData } from "@/utils";
 import clerk from "@/lib/clerk";
+import { invalidateCache } from "@/lib/redis";
 
 export const getClerkUserPublicData = async (userId: string): Promise<ActionsReturnType<User>> => {
   const clerkClient = await clerk;
@@ -33,11 +33,10 @@ export const getClerkUserPublicData = async (userId: string): Promise<ActionsRet
 export const getClerkUserImageUrl = async (userId: string): Promise<ActionsReturnType<string>> => {
   try {
 
-    const userImage = await getCached<string>(`user:${userId}:image`);
+    const userImage = null;
     if (!userImage) {
       const clerkClient = await clerk;
       const user = await clerkClient.users.getUser(userId);
-      await setCached(`user:${userId}:image`, user?.imageUrl, 60 * 30);
 
       return {
         success: true,
@@ -111,11 +110,10 @@ export async function getUsers({userId, params}: GetUsersParams): Promise<Action
   }
   
   const { skip, take, page } = calculatePagination(params);
-  const cacheKey = `users:${page}:${take}:${JSON.stringify(params.where)}:${JSON.stringify(params.orderBy)}`;
 
   try {
-    let users: PrismaUser[] | null = await getCached(cacheKey);
-    let total: number | null = await getCached('users:total');
+    let users: PrismaUser[] | null = null;
+    let total: number | null = null;
 
     if (!users || !total) {
       [users, total] = await prisma.$transaction([
@@ -126,10 +124,6 @@ export async function getUsers({userId, params}: GetUsersParams): Promise<Action
           orderBy: params.orderBy,
         }),
         prisma.user.count()
-      ]);
-      Promise.all([
-        await setCached(cacheKey, users),
-        await setCached('users:total', total),
       ]);
     }
 
@@ -204,7 +198,7 @@ export async function getUser({userId, limitFields, userLookupId, include}: GetO
   }
   
   try {
-    let user: PrismaUser | null = await getCached(`user:${userLookupId}`);
+    let user: PrismaUser | null = null;
     if (!user) {
       user = await prisma.user.findFirst({
         where: { 
@@ -226,7 +220,6 @@ export async function getUser({userId, limitFields, userLookupId, include}: GetO
           ...include
         }
       });
-      await setCached(`user:${userLookupId}`, user);
     }
 
     if (!user) {
@@ -314,7 +307,6 @@ export async function updateUserRole({ userId, currentUserId, role }: UpdateUser
     });
 
     revalidatePath('/admin/users/[email]');
-    await setCached(`user:${updatedUser.email}`, null); // Invalidate cache
 
     return {
       success: true,
@@ -346,7 +338,6 @@ type UpdateUserPermissionsParams = {
  * @returns A promise that resolves to an object indicating success or failure. On success, the updated permissions are returned; on failure, an error message and details are provided.
  */
 export async function updateUserPermissions({ userId, currentUserId, permissions }: UpdateUserPermissionsParams): Promise<ActionsReturnType<UserPermission[]>> {
-  console.log('updateUserPermissions', userId, currentUserId, permissions);
   if (!await verifyPermission({
     userId: currentUserId,
     permissions: {
@@ -403,8 +394,7 @@ export async function updateUserPermissions({ userId, currentUserId, permissions
     });
 
     revalidatePath('/admin/users/[email]');
-    await setCached(`permissions:${userId}`, null); // Invalidate permissions cache
-
+    invalidateCache([`permissions:${userId}`]);
     return {
       success: true,
       data: updatedPermissions

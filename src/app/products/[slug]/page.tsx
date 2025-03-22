@@ -29,7 +29,7 @@ export async function generateMetadata(
   const categoryText = product.category ? `${product.category.name} - ` : '';
   
   return {
-    title: `${product.title} | ${categoryText}MerchTrack`,
+    title: `${product.title} | ${categoryText} MerchTrack`,
     description: product.description ?? `Buy ${product.title} at MerchTrack - Your one-stop solution for premium merchandise.`,
     keywords: [
       ...product.tags || [],
@@ -64,7 +64,7 @@ export default async function ProductPage({ params }: Readonly<Props>) {
   const product = productResult.data;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6">
+    <div className="mx-auto max-w-7xl px-4 py-6">
       <ProductListing slug={slug} product={product} />
     </div>
   );

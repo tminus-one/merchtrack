@@ -21,7 +21,7 @@ export async function createAnnouncement({
   const isAuthorized = await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      dashboard: { canRead: true, canCreate: true },
     }
   });
 
@@ -112,7 +112,7 @@ export async function updateAnnouncement({
   const isAuthorized = await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      dashboard: { canRead: true, canUpdate: true },
     }
   });
 
@@ -166,7 +166,7 @@ export async function deleteAnnouncement({
   const isAuthorized = await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      dashboard: { canRead: true, canDelete: true },
     }
   });
 

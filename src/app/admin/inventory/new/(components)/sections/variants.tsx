@@ -36,6 +36,7 @@ export function VariantsSection({ product }: Readonly<VariantsSectionProps>) {
               <InventoryAdjuster 
                 productId={product.id}
                 variantId={variant.id}
+                slug={product.slug}
                 variantName={variant.variantName}
                 currentInventory={variant.inventory}
                 onSuccess={(newInventory) => {

@@ -21,7 +21,7 @@ interface PaymentStatusEmailProps {
   orderNumber: string;
   customerName: string;
   amount: number;
-  status: 'verified' | 'refunded' | 'declined';
+  status: 'verified' | 'refunded' | 'declined' | 'submitted';
   refundReason?: string;
   refundDetails?: {
     remainingBalance?: number;
@@ -46,6 +46,8 @@ export const PaymentStatusEmail = ({
       return `A refund of ${formatPrice(amount)} for order #${orderNumber} has been processed.`;
     case 'declined':
       return `Your payment of ${formatPrice(amount)} for order #${orderNumber} has been declined.`;
+    case 'submitted':
+      return `Your payment for order #${orderNumber} of amount ${formatPrice(amount)} is currently being processed. You will receive a confirmation once it is verified.`;
     default:
       return "";
     }
@@ -59,6 +61,8 @@ export const PaymentStatusEmail = ({
       return '💰 Payment Refunded';
     case 'declined':
       return '❌ Payment Declined';
+    case 'submitted':
+      return '🕒 Payment Submitted';
     default:
       return '';
     }

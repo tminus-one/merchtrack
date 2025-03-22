@@ -26,8 +26,16 @@ export default redis;
 if (NODE_ENV !== 'production') {globalThis.redisGlobal = redis;}
 
 export const getCached = async <T>(key: string): Promise<T | null> => {
-  if (NODE_ENV === 'development' || NODE_ENV === 'production') return null;
+  if (NODE_ENV === 'development') return null;
   const cachedData = await redis.get(key);
+  // if (!cachedData) console.log({
+  //   message: 'Cache miss',
+  //   key,
+  // });
+  // else console.log({
+  //   message: 'Cache hit',
+  //   key,
+  // });  
   return cachedData ? JSON.parse(cachedData) : null;
 };
 
@@ -48,16 +56,25 @@ const expirationLengths: Record<ExpirationLength, number> = {
   '1mo': 2592000,
 };
 
-export const setCached = async <T>(key: string, data: T, expirationInSeconds: number | ExpirationLength = 3600) => {
-  if (NODE_ENV === 'development' || NODE_ENV === 'production') return null;
+export const setCached = <T>(key: string, data: T, expirationInSeconds: number | ExpirationLength = 3600) => {
+  if (NODE_ENV === 'development' ) return null;
   const duration = typeof expirationInSeconds === 'number' 
     ? expirationInSeconds 
     : expirationLengths[expirationInSeconds];
-  await redis.set(key, JSON.stringify(data), 'EX', duration);
+  redis.set(key, JSON.stringify(data), 'EX', duration);
+  // console.log({
+  //   message: 'Cache set',
+  //   key,
+  //   duration,
+  // });
 };
 
-export const invalidateCache = async (keys: string[]) => {
+export const invalidateCache = (keys: string[]) => {
   if (keys.length > 0) {
-    await redis.del(keys);
+    redis.del(keys);
+    // console.log({
+    //   keys,
+    //   message: 'Cache invalidated',
+    // });
   }
 };

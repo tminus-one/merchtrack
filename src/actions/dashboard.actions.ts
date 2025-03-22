@@ -1,8 +1,36 @@
 'use server';
 import prisma from "@/lib/db";
+import { getCached, setCached } from "@/lib/redis";
 
-export async function getDashboardStats() {
+type DashboardReturnType = {
+    users: {
+      total: number;
+      change: string;
+    };
+    sales: {
+      total: number;
+      change: string;
+    };
+    products: {
+      total: number;
+      change: string;
+    };
+    system: {
+      status: string;
+      subtext: string;
+    };
+}
+
+export async function getDashboardStats(): Promise<ActionsReturnType<DashboardReturnType>> {
   try {
+    // Check if cached data exists
+    const cachedData = await getCached<DashboardReturnType>('dashboard-stats');
+    if (cachedData) {
+      return {
+        success: true,
+        data: cachedData
+      };
+    }
     const [
       totalUsers,
       totalSales,
@@ -98,26 +126,29 @@ export async function getDashboardStats() {
     const systemHealth = errorRate < 5 ? 'Healthy' : errorRate < 15 ? 'Degraded' : 'Critical';
     const uptimeChange = errorRate < 5 ? '99.9% uptime' : errorRate < 15 ? '99% uptime' : '95% uptime';
 
+    const dashboardStats: DashboardReturnType = {
+      users: {
+        total: totalUsers,
+        change: userChange
+      },
+      sales: {
+        total: currentSales,
+        change: salesChange
+      },
+      products: {
+        total: activeProducts,
+        change: productsChange
+      },
+      system: {
+        status: systemHealth,
+        subtext: uptimeChange
+      }
+    };
+    setCached('dashboard-stats', dashboardStats, "5m");
+
     return {
       success: true,
-      data: {
-        users: {
-          total: totalUsers,
-          change: userChange
-        },
-        sales: {
-          total: currentSales,
-          change: salesChange
-        },
-        products: {
-          total: activeProducts,
-          change: productsChange
-        },
-        system: {
-          status: systemHealth,
-          subtext: uptimeChange
-        }
-      }
+      data: dashboardStats
     };
   } catch (error) {
     return {

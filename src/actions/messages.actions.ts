@@ -2,7 +2,6 @@
 
 import { Message } from "@prisma/client";
 import prisma from "@/lib/db";
-import { getCached, setCached } from "@/lib/redis";
 import { QueryParams, PaginatedResponse } from "@/types/common";
 import { ExtendedMessage } from "@/types/messages";
 import { GetObjectByTParams } from "@/types/extended";
@@ -24,7 +23,7 @@ export const getMessage = async (params: GetObjectByTParams<"messageId">): Promi
   }
 
   try {
-    let message: Message | null = await getCached<Message>(`messages:${params.messageId}`);
+    let message: Message | null = null;
     if (!message) {
       message = await prisma.message.findFirst({
         where: {
@@ -50,7 +49,6 @@ export const getMessage = async (params: GetObjectByTParams<"messageId">): Promi
           message: "Message not found."
         };
       }
-      await setCached(`messages:${params.messageId}`, message);
     };
 
     return {
@@ -87,9 +85,8 @@ export const getMessages = async (
   const { skip, take, page } = calculatePagination(params);
 
   try {
-    const cacheKey = `messages:${page}:${take}:${userId}:${JSON.stringify(params.where)}`;
-    let messages: Message[] | null = await getCached(cacheKey);
-    let total = await getCached(`messages:total:${userId}:${JSON.stringify(params.where)}`);
+    let messages: Message[] | null = null;
+    let total = null;
 
     if (!messages || !total) {
       [messages, total] = await prisma.$transaction([
@@ -119,9 +116,6 @@ export const getMessages = async (
           } 
         })
       ]);
-
-      await setCached(cacheKey, messages);
-      await setCached(`messages:total:${userId}:${JSON.stringify(params.where)}`, total);
     }
 
     const lastPage = Math.ceil(total as number / take);

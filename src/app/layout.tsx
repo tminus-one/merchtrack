@@ -62,12 +62,13 @@ export default function RootLayout({
         `}
         </style>
       </head>
-      <ClerkProvider 
+      <ClerkProvider
+        supportEmail='support@merchtrack.tech' 
         appearance={{
           layout: {
             logoImageUrl: '/img/merch-track-logo.png',
             logoLinkUrl: '/',
-            termsPageUrl: '/terms-and-service',
+            termsPageUrl: '/terms-of-service',
             privacyPageUrl: '/privacy-policy'
           },
           variables: {
@@ -80,7 +81,7 @@ export default function RootLayout({
             formButtonSecondary: "bg-white relative border-0 text-sm",
             footerActionText: " text-md",
             footerActionLink: "text-primary hover:text-primary hover:brightness-95 font-semibold text-md",
-            buttonPrimary: "bg-primary-500 border-0 shadow-0 relative hover:bg-primary-400 transition-all text-sm",
+            buttonPrimary: "bg-primary-500 relative border-0 shadow-0 relative hover:bg-primary-400 transition-all text-sm",
           },
         }}>
         <body

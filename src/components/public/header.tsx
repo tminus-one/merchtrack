@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 import { SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -12,6 +13,7 @@ const HeaderLP = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
   const { isSignedIn } = useUser();
+  const pathname = usePathname();
   
   const headerBackground = useTransform(
     scrollY,
@@ -47,7 +49,7 @@ const HeaderLP = () => {
         isScrolled ? "py-4" : "py-6"
       )}
     >
-      <div className="mx-auto max-w-[800px] px-4 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <nav className="flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -56,13 +58,13 @@ const HeaderLP = () => {
           >
             <Link href="/" className="flex items-center gap-2">
               <Image
-                src="/img/logo.svg"
+                src="/img/logo.png"
                 alt="MerchTrack Logo"
                 width={32}
                 height={32}
                 className="size-8"
               />
-              <span className="text-xl font-bold">MerchTrack</span>
+              <span className="text-xl font-bold text-primary">MerchTrack</span>
             </Link>
           </motion.div>
 
@@ -73,7 +75,7 @@ const HeaderLP = () => {
             className="flex items-center gap-4"
           >
             <div className="mr-4 hidden items-center gap-6 sm:flex">
-              {["Products", "About", "Contact"].map((item) => (
+              {["Products", "About", "Contact", "FAQs"].map((item) => (
                 <motion.div
                   key={item}
                   whileHover={{ y: -2 }}
@@ -81,7 +83,11 @@ const HeaderLP = () => {
                 >
                   <Link
                     href={`/${item.toLowerCase()}`}
-                    className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
+                    className={cn("text-sm font-semibold text-neutral-7 transition-colors hover:text-neutral-8",
+                      pathname === `/${item.toLowerCase()}`
+                        ? "text-primary"
+                        : "text-neutral-7"
+                    )}
                   >
                     {item}
                   </Link>

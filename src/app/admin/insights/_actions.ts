@@ -282,6 +282,7 @@ export async function getInsights(
       userId,
       permissions: {
         dashboard: { canRead: true },
+        reports: { canRead: true },
       }
     });
 

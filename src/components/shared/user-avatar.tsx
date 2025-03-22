@@ -58,7 +58,7 @@ export default function UserAvatar({
         <AvatarImage 
           src={imageUrl} 
           alt={altText}
-          className="rounded-full border border-gray-300 bg-primary object-cover"
+          className="rounded-full border border-gray-300 bg-neutral-2 object-cover"
         />
       )}
       <AvatarFallback 

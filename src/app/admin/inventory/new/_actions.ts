@@ -2,7 +2,6 @@
 
 import { Prisma } from "@prisma/client";
 import prisma from "@/lib/db";
-import { setCached } from "@/lib/redis";
 import { generateUniqueSlug } from "@/utils/slug.utils";
 import { createProductSchema, type CreateProductType } from "@/schema/products.schema";
 import { verifyPermission } from "@/utils/permissions";
@@ -50,7 +49,7 @@ export async function createProduct(
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canRead: true, canCreate: true },
     }
   })) {
     await createLog({
@@ -114,16 +113,6 @@ export async function createProduct(
       }
     });
 
-    await Promise.all([
-      setCached(`products:all`, null),
-      setCached(`product:${product.id}`, product),
-      setCached(`product:${product.slug}`, product),
-      setCached('products:total', null),
-      ...Array.from({ length: 10 }, (_, i) =>
-        setCached(`products:${i + 1}:*`, null)
-      )
-    ]);
-
     await createLog({
       userId,
       createdById: userId,
@@ -170,7 +159,7 @@ export async function uploadImages(userId: string, formData: FormData): Promise<
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canRead: true, canUpdate: true, canCreate: true },
     }
   })) {
     return {

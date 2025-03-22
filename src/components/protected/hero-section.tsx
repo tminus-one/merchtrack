@@ -51,7 +51,7 @@ export default function HeroSection({ slides = DEFAULT_SLIDES }: HeroSectionProp
   }, [slides.length]);
 
   return (
-    <section className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm">
+    <section className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm">
       <div className="container mx-auto px-4 py-12 md:py-16">
         {slides.map((slide, index) => (
           <div

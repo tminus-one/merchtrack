@@ -72,7 +72,7 @@ export async function updateProduct(
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canRead: true, canUpdate: true },
     }
   })) {
     await createLog({
@@ -219,7 +219,7 @@ export async function deleteProductById(
   if (!await verifyPermission({
     userId: userId,
     permissions: {
-      dashboard: { canRead: true },
+      inventory: { canRead: true, canDelete: true },
     }
   })) {
     await createLog({

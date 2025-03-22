@@ -15,19 +15,20 @@ export const completeOnboarding = async (formData: OnboardingForm): Promise<Acti
     const { success, data } = OnboardingFormSchema.safeParse(formData);
     if (!success) throw new ValidationError('Server Error: Invalid form data received');
 
-    const existingUser = await prisma.user.findFirst({
-      where: { clerkId: userId }
-    });
-
-    if (existingUser) {
-      return {
-        success: false,
-        message: 'User already exists',
-      };
-    }
-
-    const result = await prisma.user.create({
-      data: {
+    const result = await prisma.user.upsert({
+      where: { clerkId: userId },
+      update: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        role: data.role,
+        college: data.college,
+        courses: data.courses,
+        isOnboarded: true,
+        imageUrl: data.imageUrl,
+      },
+      create: {
         clerkId: userId,
         firstName: data.firstName,
         lastName: data.lastName,

@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db";
 import { ExtendedOrder } from "@/types/orders";
-import { getCached, setCached } from "@/lib/redis";
 import { QueryParams, PaginatedResponse } from "@/types/common";
 import { GetObjectByTParams } from "@/types/extended";
 import { createOrderSchema, CreateOrderType } from "@/schema/orders.schema";
@@ -55,10 +54,8 @@ export async function getOrders(
 
   const { skip, take, page } = calculatePagination(params);
 
-  // Create cache key that includes the where conditions
-  const cacheKey = `orders:${page}:${take}:${JSON.stringify(params)}`;
-  let orders: ExtendedOrder[] | null = await getCached(cacheKey);
-  let total = await getCached(`orders:total:${JSON.stringify(params)}`);
+  let orders: ExtendedOrder[] | null = null;
+  let total = null;
 
   if (!orders || !total) {
     // @ts-expect-error - Prisma types are incorrect
@@ -86,9 +83,6 @@ export async function getOrders(
       }),
       prisma.order.count({ where: params.where })
     ]);
-
-    await setCached(cacheKey, orders);
-    await setCached(`orders:total:${JSON.stringify(params)}`, total);
   }
 
 
@@ -163,7 +157,7 @@ export async function getOrderById({ userId, orderId, limitFields }: GetObjectBy
       }
     });
 
-    let order = await getCached(`order:${orderId}`);
+    let order = null;
     if (!order) {
       order = await prisma.order.findUnique({
         where: isAuthorized ? { id: orderId } : { id: orderId, customerId: userId },
@@ -190,8 +184,6 @@ export async function getOrderById({ userId, orderId, limitFields }: GetObjectBy
           message: "Order not found"
         };
       }
-
-      await setCached(`order:${orderId}`, order);
     }
 
     return {
@@ -305,14 +297,6 @@ export async function createOrder(userId: string, data: CreateOrderType): Promis
       customerName: `${order.customer.firstName} ${order.customer.lastName}`,
       customerEmail: order.customer.email
     });
-
-    // Invalidate cache
-    await Promise.all([
-      setCached(`order:${order.id}`, order),
-      getCached('orders:total').then(total => 
-        setCached('orders:total', (typeof total === 'number' ? total : 0) + 1)
-      )
-    ]);
 
     revalidatePath('/admin/orders');
     
@@ -430,6 +414,7 @@ export async function getPendingPaymentOrders(
   const isAuthorized = await verifyPermission({
     userId,
     permissions: {
+      orders: { canRead: true },
       dashboard: { canRead: true },
     }
   });
@@ -442,11 +427,10 @@ export async function getPendingPaymentOrders(
   }
 
   const { skip, take, page } = calculatePagination(params);
-  const cacheKey = `pending-payment-orders:${page}:${take}`;
 
   try {
-    let orders = await getCached(cacheKey);
-    let total = await getCached('pending-payment-orders:total');
+    let orders = null;
+    let total = null;
 
     if (!orders || !total) {
       [orders, total] = await prisma.$transaction([
@@ -497,11 +481,6 @@ export async function getPendingPaymentOrders(
             }
           }
         })
-      ]);
-
-      await Promise.all([
-        setCached(cacheKey, orders),
-        setCached('pending-payment-orders:total', total)
       ]);
     }
 

@@ -17,7 +17,7 @@ export async function GET(
     if (!userImage) {
       const clerkClient = await clerk;
       const user = await clerkClient.users.getUser(userId);
-      await setCached(`user:${userId}:image`, user?.imageUrl, 60 * 30);
+      setCached(`user:${userId}:image`, user?.imageUrl, '5m');
 
       return NextResponse.json({
         success: true,

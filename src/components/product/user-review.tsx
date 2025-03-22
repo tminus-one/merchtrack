@@ -106,10 +106,10 @@ export default function UserReview({ userId, productId, onReviewSubmitted }: Use
   // Show existing review if user has one and not editing
   if (userReview && !isEditing) {
     return (
-      <div className="mb-8 rounded-lg border p-4">
+      <div className="mb-8 rounded-md border border-primary-200 p-4">
         <div className="mb-2 flex items-center justify-between">
           <div>
-            <h3 className="font-medium">Your Review</h3>
+            <h3 className="font-semibold text-primary">Your Review</h3>
             <div className="mt-1 flex items-center">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
@@ -134,6 +134,12 @@ export default function UserReview({ userId, productId, onReviewSubmitted }: Use
           </Button>
         </div>
         <p className="text-gray-700">{userReview.comment}</p>
+        <p className="mb-2 mt-4 flex items-center rounded-md border border-yellow-500 bg-yellow-50/25 px-4 py-2 text-sm text-yellow-600">
+          <Star size={16} className="mr-1 inline fill-yellow-400" /> 
+          Your review helps us improve our products and services.
+          Thank you for your feedback!
+        </p>
+        <p className="text-xs text-gray-500">Updated: {prettyFormatDate(userReview.updatedAt)}</p>
       </div>
     );
   }

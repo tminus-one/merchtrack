@@ -4,7 +4,6 @@ import { Message } from "@prisma/client";
 import { render } from "@react-email/components";
 import prisma from "@/lib/db";
 import { verifyPermission } from "@/utils/permissions";
-import { invalidateCache } from "@/lib/redis";
 import { sendEmail } from "@/lib/mailgun";
 import ReplyEmailTemplate from "@/app/admin/messages/(components)/email-template";
 import { CreateMessageType, createMessageSchema } from "@/schema/messages";
@@ -20,7 +19,7 @@ export const replyToMessage = async ({userId, messageId, reply}: ReplyToMessageP
   const authResult = await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      messages: { canRead: true, canCreate: true },
     },
     logDetails: {
       actionDescription: "Reply to message",
@@ -71,7 +70,6 @@ export const replyToMessage = async ({userId, messageId, reply}: ReplyToMessageP
     }
   });
 
-  await invalidateCache(['messages:all', `messages:${messageId}`]);
   await sendEmail({
     to: messageToUpdate.email,
     subject: `Re: ${messageToUpdate.subject}`,
@@ -164,11 +162,6 @@ export const createMessage = async (params: CreateMessageParams): Promise<Action
       })),
       from: 'MerchTrack Support'
     });
-
-
-    
-    // Invalidate cache
-    await invalidateCache(['messages:all']);
     
     return {
       success: true,

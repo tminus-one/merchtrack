@@ -6,10 +6,6 @@ import PageAnimation from "@/components/public/page-animation";
 export const metadata: Metadata = {  
   title: 'User Management - MerchTrack',  
   description: 'View and manage all users, filter by role and college, and manage user access.',  
-  openGraph: {
-    title: 'User Management - MerchTrack',
-    description: 'View and manage all users, filter by role and college, and manage user access.',
-  }
 };  
 
 export default function UsersPage() {

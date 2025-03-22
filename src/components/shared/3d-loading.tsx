@@ -4,14 +4,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Package, ShoppingBag, Sparkles } from "lucide-react";
 
-const Loading = () => {
+const Loading3D = () => {
   return (
     <AnimatePresence mode="wait">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.3 }}
         className="fixed inset-0 z-50 flex h-screen w-screen items-center justify-center bg-white/80 backdrop-blur-sm"
       >
         <div className="relative flex max-w-md flex-col items-center justify-center rounded-xl bg-white p-8 shadow-2xl">
@@ -74,9 +74,7 @@ const Loading = () => {
 
           {/* Loading text */}
           <motion.h2
-            initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
             className="mb-2 text-xl font-bold text-primary"
           >
             Loading your merchandise...
@@ -85,7 +83,7 @@ const Loading = () => {
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.15 }}
             className="text-muted-foreground mb-6 text-center text-sm"
           >
             We&apos;re preparing something special for you!
@@ -150,4 +148,4 @@ const Loading = () => {
   );
 };
 
-export default Loading;
+export default Loading3D;

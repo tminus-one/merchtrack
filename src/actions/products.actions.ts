@@ -3,7 +3,6 @@
 import { Product } from "@prisma/client";
 
 import prisma from "@/lib/db";
-import { getCached, setCached } from "@/lib/redis";
 import { QueryParams, PaginatedResponse } from "@/types/common";
 import { ExtendedProduct, ExtendedReview, GetObjectByTParams } from "@/types/extended";
 import { processActionReturnData, calculatePagination, verifyPermission } from "@/utils";
@@ -54,11 +53,10 @@ export async function getProducts(
 ): Promise<ActionsReturnType<PaginatedResponse<ExtendedProduct[]>>> {
 
   const { skip, take, page } = calculatePagination(params);
-  const cacheKey = `products:${page}:${take}:${JSON.stringify(params.where)}:${JSON.stringify(params.orderBy)}`;
 
   try {
-    let products: Product[] | null = await getCached(cacheKey);
-    let total: number | null = await getCached('products:total');
+    let products: Product[] | null = null;
+    let total: number | null = null;
 
     if (!products || !total) {
       [products, total] = await prisma.$transaction([
@@ -110,11 +108,6 @@ export async function getProducts(
           take,
         }),
         prisma.product.count({ where: params.where })
-      ]);
-      
-      Promise.all([
-        await setCached(cacheKey, products),
-        await setCached('products:total', total)
       ]);
     }
 
@@ -172,7 +165,7 @@ export async function getProductById({ userId, limitFields, productId }: GetObje
   }
 
   try {
-    let product: Product | null = await getCached(`product:${productId}`);
+    let product: Product | null = null;
     if (!product) {
       product = await prisma.product.findUnique({
         where: { id: productId },
@@ -183,7 +176,6 @@ export async function getProductById({ userId, limitFields, productId }: GetObje
           variants: true
         }
       });
-      await setCached(`product:${productId}`, product);
     }
 
     if (!product) {
@@ -240,7 +232,7 @@ export async function getProductById({ userId, limitFields, productId }: GetObje
 export async function getProductBySlug({ limitFields, slug }: GetObjectByTParams<"slug">): Promise<ActionsReturnType<ExtendedProduct>> {
 
   try {
-    let product: Product | null = await getCached(`product:${slug}`);
+    let product: Product | null = null;
     if (!product) {
       product = await prisma.product.findUnique({
         where: { slug },
@@ -286,7 +278,6 @@ export async function getProductBySlug({ limitFields, slug }: GetObjectByTParams
           }
         },
       });
-      await setCached(`product:${slug}`, product);
     }
 
     if (!product) {
@@ -310,8 +301,7 @@ export async function getProductBySlug({ limitFields, slug }: GetObjectByTParams
 
 export async function getProductReviewsBySlug({ limitFields, slug }: GetObjectByTParams<"slug">): Promise<ActionsReturnType<ExtendedReview[]>> {
   try {
-    const cacheKey = `product:${slug}:reviews`;
-    let reviews = await getCached(cacheKey);
+    let reviews = null;
 
     // If no cache, fetch reviews directly from database
     if (!reviews) {
@@ -343,9 +333,8 @@ export async function getProductReviewsBySlug({ limitFields, slug }: GetObjectBy
           message: "Product not found."
         };
       }
-
-      reviews = product.reviews;
-      await setCached(cacheKey, reviews);
+      // Need to use our utility to ensure the correct type is returned
+      reviews = product.reviews as ExtendedReview[];
     }
 
     return {

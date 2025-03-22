@@ -1,11 +1,8 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { PaymentMethod, PaymentSite } from '@prisma/client';
-import { toast } from 'sonner';
 import { useOrderQuery } from '@/hooks/orders.hooks';
 import { useUserStore } from '@/stores/user.store';
 import { processPayment } from '@/actions/payments.actions';
@@ -35,6 +32,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Role } from '@/types/Misc';
+import useToast from '@/hooks/use-toast';
 
 interface PaymentDialogProps {
   open: boolean;
@@ -67,6 +65,7 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<PaymentSite>('ONSITE');
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const toast = useToast;
   
   const { data: orderData, isLoading } = useOrderQuery(orderId ?? '');
   
@@ -118,18 +117,30 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
 
   const onSubmit = async (data: PaymentFormValues) => {
     if (!userId || !orderId || !order) {
-      toast.error('Unable to process payment. Please try again.');
+      toast({
+        type: "error",
+        title: 'Payment submission failed',
+        message: 'Unable to process payment. Please try again later.',
+      });
       return;
     }
 
     // Validate payment amount
     if (data.paymentType === 'DOWNPAYMENT' && (!data.customAmount || data.customAmount <= 0)) {
-      toast.error('Please enter a valid payment amount.');
+      toast({
+        type: "error",
+        title: 'Invalid payment amount',
+        message: 'Please enter a valid downpayment amount.',
+      });
       return;
     }
 
     if (data.paymentType === 'DOWNPAYMENT' && data.customAmount && data.customAmount > remainingAmount) {
-      toast.error(`Payment amount cannot exceed ${formatCurrency(remainingAmount)}.`);
+      toast({
+        type: "error",
+        title: 'Invalid payment amount',
+        message: `Downpayment amount cannot exceed the remaining balance of ${formatCurrency(remainingAmount)}.`,
+      });
       return;
     }
 
@@ -137,7 +148,11 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
     const finalAmount = data.paymentType === 'FULL' ? remainingAmount : (data.customAmount ?? 0);
     
     if (finalAmount <= 0) {
-      toast.error('Payment amount must be greater than zero.');
+      toast({
+        type: "error",
+        title: 'Invalid payment amount',
+        message: 'Payment amount must be greater than zero.',
+      });
       return;
     }
 
@@ -159,12 +174,26 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
       
       if (result.success) {
         onPaymentComplete();
+        toast({
+          type: "success",
+          title: 'Payment submitted successfully!',
+          message: 'Your payment is being processed. Please wait for confirmation. You will be notified via email once verified.',
+          duration: 5,
+        });
       } else {
-        toast.error(result.message ?? 'Failed to process payment');
+        toast({
+          type: "error",
+          title: 'Payment submission failed',
+          message: result.message || 'Please try again later.',
+        });
       }
     } catch (error) {
       console.error('Payment error:', error);
-      toast.error('An error occurred while processing your payment');
+      toast({
+        type: "error",
+        title: 'Payment submission failed',
+        message: 'An error occurred while processing your payment. Please try again later.',
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -177,13 +206,13 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
         Please visit our store at the following location to complete your payment:
       </p>
       <div className="mt-2 rounded-md bg-gray-50 p-3 text-sm">
-        <p className="font-medium">MerchTrack Payment Center</p>
-        <p>SSC-A, 3rd Floor, Room 301</p>
-        <p>Building, University Campus</p>
-        <p>Operating Hours: Mon-Fri, 9am-4pm</p>
+        <p className="font-medium">PIXELS Office / Gold in Blue</p>
+        <p>Santos Building, 3rd Floor Hallway</p>
+        <p>Ateneo de Naga University Campus</p>
+        <p>Operating Hours: Mon-Fri, 9am-5pm</p>
       </div>
       <p className="mt-2 text-sm text-gray-500">
-        <span className="font-medium">Note:</span> Please bring your order ID when making an on-site payment.
+        <span className="font-medium">Note:</span> Please bring your ID when making an on-site payment.
       </p>
     </Card>
   );
@@ -192,9 +221,9 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
     <Card className="mb-4 p-4">
       <h3 className="mb-2 font-medium">Bank Transfer Details</h3>
       <div className="rounded-md bg-gray-50 p-3 text-sm">
-        <p><span className="font-medium">Bank:</span> ABC Bank</p>
+        <p><span className="font-medium">Bank:</span>[To be added...]</p>
         <p><span className="font-medium">Account Name:</span> MerchTrack Merchandise</p>
-        <p><span className="font-medium">Account Number:</span> 1234-5678-9012-3456</p>
+        <p><span className="font-medium">Account Number:</span>[To be added...]</p>
         <p><span className="font-medium">Reference Format:</span> [Your Order ID]</p>
       </div>
       <div className="mt-3 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
@@ -208,8 +237,8 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
     <Card className="mb-4 p-4">
       <h3 className="mb-2 font-medium">GCash Details</h3>
       <div className="rounded-md bg-gray-50 p-3 text-sm">
-        <p><span className="font-medium">GCash Number:</span> 0917-123-4567</p>
-        <p><span className="font-medium">Account Name:</span> MerchTrack</p>
+        <p><span className="font-medium">GCash Number:</span>[To be added...]</p>
+        <p><span className="font-medium">Account Name:</span>Gold In Blue</p>
         <p><span className="font-medium">Reference Format:</span> [Your Order ID]</p>
       </div>
     </Card>
@@ -219,8 +248,8 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
     <Card className="mb-4 bg-neutral-2 p-4">
       <h3 className="mb-2 font-medium">Maya Details</h3>
       <div className="rounded-md bg-gray-50 p-3 text-sm">
-        <p><span className="font-medium">Maya Number:</span> 0918-765-4321</p>
-        <p><span className="font-medium">Account Name:</span> MerchTrack</p>
+        <p><span className="font-medium">Maya Number:</span>[To be added...]</p>
+        <p><span className="font-medium">Account Name:</span> Gold In Blue </p>
         <p><span className="font-medium">Reference Format:</span> [Your Order ID]</p>
       </div>
     </Card>

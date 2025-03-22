@@ -32,7 +32,7 @@ type NotesFormValues = z.infer<typeof notesSchema>;
 export function OffsitePayment({ payments, isLoading, onVerify, onReject }: Readonly<OffsitePaymentProps>) {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [dialogType, setDialogType] = useState<"verify" | "reject" | null>(null);
-  const { invalidateQueries } = useQueryClient();
+  const queryClient = useQueryClient();
 
   const form = useForm<NotesFormValues>({
     resolver: zodResolver(notesSchema),
@@ -48,10 +48,10 @@ export function OffsitePayment({ payments, isLoading, onVerify, onReject }: Read
     },
     onSuccess: () => {
       handleCloseDialog();
-      invalidateQueries({queryKey: ['payments:all', 'orders:all']});
+      queryClient.invalidateQueries({queryKey: ['payments:all', 'orders:all']});
     },
     onError: () => {
-      invalidateQueries({queryKey: ['payments:all', 'orders:all']});
+      queryClient.invalidateQueries({queryKey: ['payments:all', 'orders:all']});
     }
   });
 
@@ -62,7 +62,7 @@ export function OffsitePayment({ payments, isLoading, onVerify, onReject }: Read
     },
     onSuccess: () => {
       handleCloseDialog();
-      invalidateQueries({ queryKey: ['payments:all', 'orders:all'] });
+      queryClient.invalidateQueries({ queryKey: ['payments:all', 'orders:all'] });
     },
   });
 

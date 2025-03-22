@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { UserButton } from '@clerk/nextjs';
+import { ClerkLoaded, UserButton, useSession } from '@clerk/nextjs';
 import { Search, ShoppingCart, Menu, X } from 'lucide-react';
 import { FaUserShield } from "react-icons/fa";
 import { Badge } from '@/components/ui/badge';
@@ -12,22 +12,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useCartStore } from '@/stores/cart.store';
-import { useUserStore } from '@/stores/user.store';
 
 
 export default function ProtectedHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { cartItems , setCartOpen } = useCartStore();
-  const { user } = useUserStore();
+  const { session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
 
-  const [isAdminStaff, setIsAdminStaff] = useState(user?.isAdmin || user?.isStaff);
-
-  useEffect(() => {
-    setIsAdminStaff(user?.isAdmin || user?.isStaff);
-  }, [user]);
+  const userMetadata = session?.user?.publicMetadata;
+  const isAdminStaff = userMetadata?.data?.isAdmin || userMetadata?.data?.isStaff;
 
   const navItems = [
     { name: 'Home', href: '/dashboard' },
@@ -48,7 +44,7 @@ export default function ProtectedHeader() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white shadow-sm">
-      <div className="mx-auto flex h-16  items-center justify-between px-4 md:px-6">
+      <div className="mx-auto flex h-16  max-w-7xl items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
           {/* Mobile menu button */}
           <button
@@ -68,7 +64,7 @@ export default function ProtectedHeader() {
               height={40}
               className="h-8 w-auto"
             />
-            <span className="hidden text-xl font-bold md:inline-block">MerchTrack</span>
+            <span className="hidden text-xl font-bold text-primary md:inline-block">MerchTrack</span>
           </Link>
         </div>
 
@@ -120,18 +116,23 @@ export default function ProtectedHeader() {
             )}
             <span className="sr-only">Shopping Cart</span>
           </Button>
-          
-          <UserButton appearance={{ 
-            elements: {
-              userButtonAvatarBox: "size-8",
-              userButtonPopoverCard: "bg-blue-100", 
-              userButtonPopoverActionButton: "text-neutral-600",
-            }
-          }} >
-            <UserButton.MenuItems>
-              {isAdminStaff && <UserButton.Action labelIcon={<FaUserShield className='size-4'/>} label="Switch To Admin View" onClick={() => router.push("/admin")} />}
-            </UserButton.MenuItems>
-          </UserButton>
+          <div>
+
+          </div>
+          <ClerkLoaded>
+            <UserButton
+              appearance={{ 
+                elements: {
+                  userButtonAvatarBox: "size-10",
+                  userButtonPopoverCard: "bg-blue-100", 
+                  userButtonPopoverActionButton: "text-neutral-700",
+                }
+              }} >
+              <UserButton.MenuItems>
+                {isAdminStaff && <UserButton.Action labelIcon={<FaUserShield className='size-4'/>} label="Switch To Admin View" onClick={() => router.push("/admin")} />}
+              </UserButton.MenuItems>
+            </UserButton>
+          </ClerkLoaded>
         </div>
       </div>
 

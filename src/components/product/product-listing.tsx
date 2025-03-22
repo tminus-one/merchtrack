@@ -102,7 +102,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
 
   return (
     <>
-      <div className="mx-auto my-10 mt-20 flex max-w-5xl flex-1 flex-col items-stretch gap-16 rounded-lg bg-white p-6 md:flex-row">
+      <div className="mx-auto my-10 mt-20 flex max-w-7xl flex-1 flex-col items-stretch gap-16 rounded-lg bg-white p-6 md:flex-row">
         {/* Left Column - Image */}
         <div className="flex w-full md:w-1/2">
           <EmblaCarousel slides={product?.imageUrl ?? []} />
@@ -123,7 +123,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                     Special pricing for {pricingDetails.appliedRole.toLowerCase().replace('_', ' ')}
                   </p>
                 )}
-                {!!pricingDetails.price && (
+                {(!!pricingDetails.price && pricingDetails.formattedPrice !== pricingDetails.originalPrice )&& (
                   <p className="text-sm text-gray-500 line-through">
                     Original price: {pricingDetails.originalPrice}
                   </p>
@@ -173,11 +173,11 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                         {variantPricing.formattedPrice}
                       </span>
                       
-                      {variant.inventory && variant.inventory > 0 && variant.inventory <= 5 && product.inventoryType === 'STOCK' && (
+                      {(variant.inventory && variant.inventory > 0 && variant.inventory <= 5 && product.inventoryType === 'STOCK') ? (
                         <span className="mt-1 text-xs font-medium text-amber-500">
                           Only {variant.inventory} left
                         </span>
-                      )}
+                      ) : null}
                     </div>
                   </Button>
                   
@@ -191,12 +191,12 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                   
                   {isSelected && (
                     <>
-                      <div className="absolute right-0 top-0 size-0 border-r-[24px] 
-                        border-t-[24px] border-r-transparent 
-                        border-t-primary shadow-lg">
+                      <div className="absolute right-0 top-0 size-0 border-r-[24px] border-t-[24px]
+                        border-r-transparent border-t-primary 
+                        bg-primary-400 shadow-lg">
                       </div>
                       <div className="absolute right-1 top-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="size-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="size-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
@@ -209,6 +209,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
 
           <h3 className="mt-6 text-lg font-bold">Quantity</h3>
           <div className="mt-2">
+
             <div className="flex items-center gap-4">
               <QuantitySelector 
                 value={quantity}
@@ -218,21 +219,21 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                   ? Math.min(10, selectedVariant.inventory)
                   : (product.inventoryType === 'STOCK' ? 10 : 20)}
               />
-              {selectedVariant && selectedVariant.inventory && selectedVariant.inventory > 10 && (
-                <span className="text-sm text-gray-500">
-                  (Max: 10 per order)
-                </span>
-              )}
               {selectedVariant && product.inventoryType === 'STOCK' && (
-                <span className="text-sm text-gray-500">
+                <span className="text-sm font-medium text-gray-800">
                   {selectedVariant.inventory > 10 
-                    ? `${selectedVariant.inventory} in stock`
+                    ? `In stock`
                     : selectedVariant.inventory > 1 
                       ? `Only ${selectedVariant.inventory} in stock` 
                       : `Last one in stock!`}
                 </span>
               )}
             </div>
+            {(selectedVariant && selectedVariant.inventory && selectedVariant.inventory > 10 ) ? (
+              <span className="text-xs text-gray-500">
+                  (Max: 10 per order)
+              </span>
+            ) : null}
           </div>
           
           <div className="mt-6 flex">
@@ -256,7 +257,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
       </div>
 
       {/* Reviews and Recommendations */}
-      <div className="mx-auto mt-16 w-full max-w-5xl">
+      <div className="mx-auto mt-16 w-full max-w-7xl">
         <Tabs defaultValue="reviews" className="w-full">
           <TabsList className="mb-6">
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
@@ -265,7 +266,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
           
           <TabsContent value="reviews">
             <Card className="border-none shadow-none">
-              <CardContent className="pt-6">
+              <CardContent className="mx-auto max-w-4xl pt-6">
                 {/* User Review Form or Existing Review */}
                 {user ? (
                   <UserReview 
@@ -282,7 +283,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                   </div>
                 )}
                 
-                <h3 className="mb-4 text-xl font-semibold">Customer Reviews</h3>
+                <h3 className="mb-4 text-xl font-semibold text-primary">Reviews</h3>
                 <ProductReviews slug={slug} key={refreshReviews ? 'refresh' : 'initial'} />
               </CardContent>
             </Card>

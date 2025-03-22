@@ -15,7 +15,7 @@ export const sendPaymentReminders = async ({ userId, orderIds, dueDate }: SendPa
   const authResult = await verifyPermission({
     userId,
     permissions: {
-      dashboard: { canRead: true },
+      messages: { canRead: true, canCreate: true },
     },
     logDetails: {
       actionDescription: "Send payment reminders",

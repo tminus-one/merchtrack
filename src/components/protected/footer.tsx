@@ -9,7 +9,7 @@ export default function ProtectedFooter() {
   
   return (
     <footer className="bg-gradient-to-r from-slate-900 to-blue-900 text-white">
-      <div className="mx-auto max-w-4xl px-4 py-10">
+      <div className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Company Info */}
           <div className="flex flex-col space-y-4">
@@ -28,9 +28,9 @@ export default function ProtectedFooter() {
               Simplify your inventory, boost your sales, and delight your customers.
             </p>
             <div className="flex space-x-4 pt-2">
-              <Link referrerPolicy='no-referrer' href="https://www.facebook.com/GoldinBlue" className="transition-colors hover:text-blue-400">
-                <Facebook size={20} />
-                <span className="sr-only">Facebook</span>
+              <Link target='_blank' referrerPolicy='no-referrer' href="https://www.facebook.com/GoldinBlue" className="flex items-center rounded-md border border-neutral-3 px-2 py-1 text-neutral-3 transition-colors hover:border-primary hover:text-primary">
+                <Facebook size={20} className='mr-1' />
+                <span className="text-sm">Gold In Blue</span>
               </Link>
             </div>
           </div>
@@ -81,23 +81,22 @@ export default function ProtectedFooter() {
             <h3 className="text-lg font-bold">Contact Us</h3>
             <div className="grid grid-cols-1 gap-3">
               <div className="flex items-center gap-2 text-sm text-gray-300">
-                <Mail size={16} />
-                <a href="mailto:support@merchtrack.com" className="transition-colors hover:text-white">
+                <Mail size={16} className="shrink-0" />
+                <Link href="mailto:support@merchtrack.com" className="transition-colors hover:text-white">
                   support@merchtrack.com
-                </a>
+                </Link>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-300">
-                <Phone size={16} />
-                <a href="tel:+639936167562" className="transition-colors hover:text-white">
+                <Phone size={16} className="shrink-0" />
+                <Link href="tel:+639936167562" className="transition-colors hover:text-white">
                   +63 (993) 616-7562
-                </a>
+                </Link>
               </div>
               <div className="flex items-start gap-2 text-sm text-gray-300">
                 <MapPin size={16} className="mt-1 shrink-0" />
                 <address className="not-italic">
                   Ateneo de Naga University<br />
                   Bagumbayan Sur, Naga City 4400<br />
-                  Camarines Sur, Philippines
                 </address>
               </div>
             </div>

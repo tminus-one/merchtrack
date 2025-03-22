@@ -1,7 +1,6 @@
 'use server';
 
 import prisma from "@/lib/db";
-import { getCached, setCached } from "@/lib/redis";
 import { PaginatedResponse, QueryParams } from "@/types/common";
 import { ExtendedLogs } from "@/types/logs";
 import { verifyPermission } from "@/utils/permissions";
@@ -54,9 +53,6 @@ export async function createLog({
         userText
       }
     });
-    
-    // Invalidate all logs cache since we use dynamic cache keys
-    await setCached('logs:*', null);
 
     return {
       success: true,
@@ -124,9 +120,8 @@ export async function getLogs({userId, params = {} }: GetLogsParams): Promise<Ac
     const skip = Math.max(0, params.skip ?? 0);
     const page = Math.floor(skip / take) + 1;
     
-    const cacheKey = `logs:${JSON.stringify(params)}`;
-    let logs: ExtendedLogs[] | null = await getCached(cacheKey);
-    let total: number | null = await getCached(`${cacheKey}:total`);
+    let logs: ExtendedLogs[] | null = null;
+    let total: number | null = null;
   
     if (!logs) {
       const [rawLogs, count] = await prisma.$transaction([
@@ -159,11 +154,6 @@ export async function getLogs({userId, params = {} }: GetLogsParams): Promise<Ac
 
       logs = rawLogs as ExtendedLogs[];
       total = count;
-
-      await Promise.all([
-        setCached(cacheKey, logs),
-        setCached(`${cacheKey}:total`, total),
-      ]);
     }
 
     const lastPage = Math.ceil((total as number) / take);

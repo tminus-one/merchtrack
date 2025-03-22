@@ -1,35 +1,14 @@
-import dynamic from 'next/dynamic';
-import { redirect } from 'next/navigation';
 import type { FC } from 'react';
-import { verifyPermission } from '@/utils/permissions';
-import { getSessionData, getUserId } from '@/lib/auth';
 import PageAnimation from '@/components/public/page-animation';
 import PageTitle from '@/components/private/page-title';
+import NewProductContainer from '@/app/admin/inventory/new/(components)/new-product-container';
 
 export const metadata = {
   title: 'Create Product | Admin Dashboard',
   description: 'View and manage products'
 };  
 
-const PermissionDenied = dynamic(() => import('@/components/private/permission-denied'));
-const NewProductContainer = dynamic(() => import('./(components)/new-product-container'));
-
-const Page: FC = async () => {
-  const { metadata } = await getSessionData();
-  const userId = getUserId(metadata);
-    
-  if (!userId) {
-    return redirect('/sign-in');
-  }
-  
-  if (!await verifyPermission({
-    userId,
-    permissions: {
-      dashboard: { canRead: true },
-    }
-  })) {
-    return <PermissionDenied />;
-  }
+const Page: FC = () => {
   return (
     <PageAnimation>
       <div className="p-6">

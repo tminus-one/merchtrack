@@ -7,6 +7,7 @@ import { prettyFormatDate } from "@/utils/format";
 import { getProductReviewsBySlug } from "@/actions/products.actions";
 import ProductReviewsSkeleton from "@/components/product/product-reviews-skeleton";
 import { useUserStore } from "@/stores/user.store";
+import UserAvatar from "@/components/shared/user-avatar";
 
 interface ProductReviewsProps {
   slug: string;
@@ -52,7 +53,15 @@ export default function ProductReviews({ slug }: Readonly<ProductReviewsProps>) 
             <div key={review.id} className="border-b pb-4 last:border-b-0">
               <div className="mb-2 flex items-center justify-between">
                 <div className="flex items-center">
-                  <p className="mr-3 font-medium">{review.user.firstName} {review.user.lastName}</p>
+                  <UserAvatar 
+                    userId={review.user.clerkId}
+                    firstName={review.user.firstName!}
+                    lastName={review.user.lastName!}
+                    email={review.user.email!}
+                    className="mr-2"
+                    size="sm"
+                  />
+                  <p className="mr-3 text-sm font-semibold">{review.user.firstName} {review.user.lastName}</p>
                   <div className="flex">
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
@@ -65,9 +74,9 @@ export default function ProductReviews({ slug }: Readonly<ProductReviewsProps>) 
                     ))}
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">{prettyFormatDate(review.createdAt)}</p>
+                <p className="text-xs text-gray-500">{prettyFormatDate(review.createdAt)}</p>
               </div>
-              <p className="text-gray-700">{review.comment}</p>
+              <p className="text-sm text-gray-700">{review.comment}</p>
             </div>
           ))}
         </div>

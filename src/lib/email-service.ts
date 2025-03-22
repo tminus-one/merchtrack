@@ -28,7 +28,7 @@ interface PaymentStatusEmailParams {
   customerName: string;
   customerEmail: string;
   amount: number;
-  status: 'verified' | 'refunded' | 'declined';
+  status: 'verified' | 'refunded' | 'declined' | 'submitted';
   refundReason?: string;
   refundDetails?: {
     remainingBalance?: number;
@@ -82,6 +82,8 @@ export const sendPaymentStatusEmail = async (params: PaymentStatusEmailParams) =
       return `Payment Refunded - #${params.orderNumber}`;
     case 'declined':
       return `Payment Declined - #${params.orderNumber}`;
+    case 'submitted':
+      return `Payment Submitted - #${params.orderNumber}`;
     default:
       return '';
     }

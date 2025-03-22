@@ -3,9 +3,7 @@ import Link from "next/link";
 import { RiArrowGoBackFill } from "react-icons/ri";
 import { OrderDetails } from "./order-details";
 import { getUserId, getSessionData } from "@/lib/auth";
-import { verifyPermission } from "@/utils/permissions";
 import PageAnimation from "@/components/public/page-animation";
-import PermissionDenied from "@/components/private/permission-denied";
 import "@/components/ui/alert-dialog";
 import PageTitle from "@/components/private/page-title";
 import { Button } from "@/components/ui/button";
@@ -28,16 +26,6 @@ export default async function OrderDetailPage({ params }: Readonly<Props>) {
   
   if (!userId) {
     return redirect('/sign-in');
-  }
-
-  if (!await verifyPermission({
-    userId,
-    permissions: {
-      dashboard: { canRead: true },
-      orders: { canUpdate: true }
-    }
-  })) {
-    return <PermissionDenied />;
   }
 
   const { orderId } = await params;
