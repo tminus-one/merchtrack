@@ -51,7 +51,7 @@ export default function ProductReviews({ slug }: Readonly<ProductReviewsProps>) 
         <div id="reviews" className="space-y-6">
           {reviews.map((review) => (
             <div key={review.id} className="border-b pb-4 last:border-b-0">
-              <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2 flex flex-col md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center">
                   <UserAvatar 
                     userId={review.user.clerkId}
@@ -74,7 +74,7 @@ export default function ProductReviews({ slug }: Readonly<ProductReviewsProps>) 
                     ))}
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">{prettyFormatDate(review.createdAt)}</p>
+                <p className="mt-1 text-xs text-gray-500 md:mt-0">{prettyFormatDate(review.createdAt)}</p>
               </div>
               <p className="text-sm text-gray-700">{review.comment}</p>
             </div>
