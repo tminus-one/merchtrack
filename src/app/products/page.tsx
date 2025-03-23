@@ -22,7 +22,7 @@ export default async function ProductsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Products</h1>
+        <h1 className="text-3xl font-bold text-primary">Products</h1>
         
         {!userId && (
           <SignInButton mode="modal">

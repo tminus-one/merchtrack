@@ -9,12 +9,14 @@ import { CreateProductType } from "@/schema/products.schema";
 import { ExtendedProduct } from "@/types/extended";
 import { createLog } from "@/actions/logs.actions";
 
-type CreateCategoryParams = {
+type CategoryParams = {
     userId: string;
     name: string;
+    description?: string;
+    id?: string;
 };
 
-export async function createCategory(params: CreateCategoryParams): Promise<ActionsReturnType<Category>> {
+export async function createCategory(params: CategoryParams): Promise<ActionsReturnType<Category>> {
   const result = createNewCategorySchema.safeParse(params);
   if (!result.success) {
     return {
@@ -23,7 +25,7 @@ export async function createCategory(params: CreateCategoryParams): Promise<Acti
     };
   }
 
-  const { name } = result.data;
+  const { name, description } = result.data;
 
   const hasPermission = await verifyPermission({
     userId: params.userId,
@@ -42,8 +44,17 @@ export async function createCategory(params: CreateCategoryParams): Promise<Acti
   try {
     const category = await prisma.category.create({
       data: {
-        name
+        name,
+        description
       }
+    });
+
+    await createLog({
+      userId: params.userId,
+      createdById: params.userId,
+      reason: "Category Created Successfully",
+      systemText: `Created new category "${name}" (ID: ${category.id})`,
+      userText: `Category "${name}" has been created successfully.`
     });
     
     return { 
@@ -52,6 +63,102 @@ export async function createCategory(params: CreateCategoryParams): Promise<Acti
     };
   } catch {
     return { success: false, message: 'An error occurred while creating the category' };
+  }
+}
+
+export async function updateCategory(params: CategoryParams): Promise<ActionsReturnType<Category>> {
+  if (!params.id) {
+    return {
+      success: false,
+      message: "Category ID is required"
+    };
+  }
+
+  const result = createNewCategorySchema.safeParse(params);
+  if (!result.success) {
+    return {
+      success: false,
+      message: result.error.issues[0].message
+    };
+  }
+
+  const hasPermission = await verifyPermission({
+    userId: params.userId,
+    permissions: {
+      inventory: { canRead: true, canUpdate: true },
+    }
+  });
+
+  if (!hasPermission) {
+    return { 
+      success: false,
+      message: 'Permission denied'
+    };
+  }
+
+  try {
+    const category = await prisma.category.update({
+      where: { id: params.id },
+      data: {
+        name: params.name,
+        description: params.description
+      }
+    });
+
+    await createLog({
+      userId: params.userId,
+      createdById: params.userId,
+      reason: "Category Updated Successfully",
+      systemText: `Updated category "${params.name}" (ID: ${category.id})`,
+      userText: `Category "${params.name}" has been updated successfully.`
+    });
+
+    return { 
+      success: true, 
+      data: processActionReturnData(category) as Category
+    };
+  } catch {
+    return { success: false, message: 'An error occurred while updating the category' };
+  }
+}
+
+export async function deleteCategory(params: { userId: string; id: string }): Promise<ActionsReturnType<Category>> {
+  const hasPermission = await verifyPermission({
+    userId: params.userId,
+    permissions: {
+      inventory: { canRead: true, canDelete: true },
+    }
+  });
+
+  if (!hasPermission) {
+    return { 
+      success: false,
+      message: 'Permission denied'
+    };
+  }
+
+  try {
+    const category = await prisma.category.update({
+      where: { id: params.id },
+      data: {
+        isDeleted: true
+      }
+    });
+
+    await createLog({
+      userId: params.userId,
+      createdById: params.userId,
+      reason: "Category Deleted Successfully",
+      systemText: `Deleted category (ID: ${category.id})`,
+      userText: "Category has been deleted successfully."
+    });
+
+    return { 
+      success: true, 
+      data: processActionReturnData(category) as Category
+    };
+  } catch {
+    return { success: false, message: 'An error occurred while deleting the category' };
   }
 }
 

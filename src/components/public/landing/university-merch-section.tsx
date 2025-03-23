@@ -70,7 +70,7 @@ const UniversityMerchSection = () => {
               <h2 className="text-3xl font-bold tracking-tight text-primary sm:text-4xl">
                 University Merchandise Designed for the Modern Student
               </h2>
-              <p className="text-muted-foreground mt-6 text-lg">
+              <p className="text-muted-foreground mt-6 text-sm">
                 We understand the importance of quality, design, and representing your university with pride. Our merchandise is crafted to exceed your expectations.
               </p>
 
@@ -90,7 +90,7 @@ const UniversityMerchSection = () => {
                       </div>
                       <p className="ml-16 text-lg font-semibold">{feature.title}</p>
                     </dt>
-                    <dd className="text-muted-foreground ml-16 mt-2 text-base">
+                    <dd className="ml-16 mt-2 text-sm text-neutral-7">
                       {feature.description}
                     </dd>
                   </motion.div>

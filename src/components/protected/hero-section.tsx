@@ -51,7 +51,7 @@ export default function HeroSection({ slides = DEFAULT_SLIDES }: HeroSectionProp
   }, [slides.length]);
 
   return (
-    <section className="relative mx-auto max-w-5xl overflow-hidden rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 shadow-sm">
+    <section className="relative mx-auto max-w-5xl overflow-hidden rounded-lg bg-primary-100/50 shadow-sm">
       <div className="container mx-auto px-4 py-12 md:py-16">
         {slides.map((slide, index) => (
           <div
@@ -65,7 +65,7 @@ export default function HeroSection({ slides = DEFAULT_SLIDES }: HeroSectionProp
               <h1 className="text-3xl font-bold tracking-tight text-gray-900 md:text-4xl lg:text-5xl">
                 {slide.title}
               </h1>
-              <p className="max-w-xl text-base text-gray-600 md:text-lg">
+              <p className="max-w-xl text-sm text-neutral-7 md:text-base">
                 {slide.description}
               </p>
               <div className="flex gap-4">
@@ -75,7 +75,7 @@ export default function HeroSection({ slides = DEFAULT_SLIDES }: HeroSectionProp
                     <ChevronRight className="ml-2 size-5" />
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" asChild>
+                <Button size="lg"  className='bg-white hover:bg-neutral-2' variant="outline" asChild>
                   <Link href="/my-account">My Account</Link>
                 </Button>
               </div>

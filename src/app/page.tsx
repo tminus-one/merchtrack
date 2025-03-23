@@ -50,7 +50,7 @@ export default async function Home() {
       <BackgroundAnimation />
       <SmoothScrollLayout>
         <main className="relative w-full font-inter">
-          <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <HeaderLP />
             <HeroSection />
             <Suspense fallback={<LoadingSpinner />}>

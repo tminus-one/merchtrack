@@ -99,7 +99,7 @@ const HeaderLP = () => {
               {!isSignedIn && (
                 <>
                   <SignInButton mode="modal" fallbackRedirectUrl='/dashboard'>
-                    <Button variant="outline" size="sm" className="font-semibold">
+                    <Button variant="outline" size="sm" className="bg-neutral-2 font-semibold">
                       Sign In
                     </Button>
                   </SignInButton>
