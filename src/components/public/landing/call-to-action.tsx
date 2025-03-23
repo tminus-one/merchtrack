@@ -42,7 +42,7 @@ const CallToAction = () => {
           <h2 className="text-4xl font-bold tracking-tight text-primary md:text-5xl">
             Ready to Get Started?
           </h2>
-          <p className="text-muted-foreground max-w-2xl text-xl">
+          <p className="text-muted-foreground max-w-2xl text-base">
             Join thousands of students and alumni who trust us for their university merchandise needs.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-4">

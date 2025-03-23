@@ -6,6 +6,7 @@ import { FaCartPlus } from "react-icons/fa";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { SignInButton } from "@clerk/nextjs";
 import { toast } from "sonner";
+import { Tag } from "lucide-react";
 import ProductRecommendations from "./product-recommendations";
 import UserReview from "./user-review";
 import ProductReviews from "./product-reviews";
@@ -173,7 +174,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
         initial="hidden"
         animate="visible"
         variants={fadeIn}
-        className="mx-auto mt-8 flex max-w-7xl flex-1 flex-col items-stretch gap-16 rounded-lg p-6 md:flex-row"
+        className="mx-auto flex max-w-7xl flex-1 flex-col items-stretch gap-16 rounded-lg p-6 md:flex-row"
       >
         {/* Left Column - Image with fade in animation */}
         <motion.div 
@@ -197,6 +198,13 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
           variants={staggerContainer}
           className="flex flex-1 flex-col gap-4 text-left md:px-6"
         >
+          <motion.h2 
+            variants={productVariants} 
+            custom={0}
+            className="m-0 -mb-2 w-max rounded-md bg-primary p-0 px-3 text-sm font-semibold text-white"
+          >
+            {product?.category.name}
+          </motion.h2>
           <motion.h1 
             variants={productVariants} 
             custom={0}
@@ -244,9 +252,12 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
               <p className="text-sm" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}></p>
               <div className="mt-4 flex flex-wrap gap-1">
                 {product?.tags?.map((tag, index) => (
-                  <span key={index} className="mr-2 inline-flex items-center rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                    {tag}
-                  </span>
+                  <div key={index} className="mr-1 inline-flex items-center rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                    <Tag className="mr-1 size-3" />
+                    <span>
+                      {tag}
+                    </span>
+                  </div>
                 ))}
               </div>
             </motion.div>
@@ -292,7 +303,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                     onClick={() => !isOutOfStock && setSelectedVariant(variant)}
                     disabled={isOutOfStock}
                     className={cn(
-                      "h-auto w-full min-w-[120px] border-2 rounded-lg px-4 py-3 transition-all duration-300 ease-in-out",
+                      "h-auto w-full min-w-[120px] border-2 rounded-lg transition-all duration-300 ease-in-out",
                       isSelected 
                         ? "shadow-md ring-2 ring-primary border-primary-300 ring-offset-1 bg-primary-100 hover:bg-primary-100" 
                         : "hover:border-primary/60 hover:shadow-sm",
@@ -303,7 +314,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                   >
                     <div className="flex flex-col items-center gap-1">
                       <span className="font-medium text-neutral-7">{variant.variantName}</span>
-                      <span className={`text-sm font-bold text-primary`}>
+                      <span className={`text-xs font-bold text-primary`}>
                         {variantPricing.formattedPrice}
                       </span>
                       

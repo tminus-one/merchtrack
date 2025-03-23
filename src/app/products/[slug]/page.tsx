@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getProductBySlug, getProducts } from '@/actions/products.actions';
 import ProductListing from "@/components/product/product-listing";
+import { CustomBreadcrumb } from '@/components/ui/custom-breadcrumbs';
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -82,6 +83,9 @@ export default async function ProductPage({ params }: Readonly<Props>) {
     <>
       <BackgroundAnimation />
       <div className="mx-auto max-w-7xl p-4">
+        <div className='ml-6'>
+          <CustomBreadcrumb />
+        </div>
         <ProductListing slug={slug} product={product} />
       </div>
     </>
