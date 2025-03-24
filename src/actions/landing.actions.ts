@@ -56,7 +56,7 @@ export const getFeaturedProducts = cache(async (): Promise<FeaturedProduct[]> =>
       image: product.imageUrl,
       badge: product.tags?.[0] || 'Featured',
       slug: product.slug,
-      description: product.description || 'No description available',
+      description: product.description ?? `Checkout ${product.title} at our store and grab yours now.`,
     }));
   } catch (error) {
     console.error('Error fetching featured products:', error);

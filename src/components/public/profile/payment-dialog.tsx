@@ -60,6 +60,145 @@ const paymentFormSchema = z.object({
 
 type PaymentFormValues = z.infer<typeof paymentFormSchema>;
 
+// Payment details constants
+const PAYMENT_DETAILS = {
+  ONSITE: {
+    title: "On-site Payment Location",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z" />
+        <path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4" />
+        <path d="M12 14h.01" />
+      </svg>
+    ),
+    details: [
+      { label: "Office", value: "PIXELS Office / Gold in Blue" },
+      { label: "Location", value: "Santos Building, 3rd Floor Hallway" },
+      { label: "Campus", value: "Ateneo de Naga University Campus" },
+      { label: "Hours", value: "Mon-Fri, 9am-5pm" }
+    ],
+    note: {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      ),
+      title: "Important:",
+      message: "Payment locations may vary. Please check with our Facebook Page for the latest updates. "
+    },
+    colorClasses: {
+      border: "border-primary/20",
+      bg: "bg-primary",
+      noteBg: "bg-primary/10",
+      noteText: "text-primary"
+    }
+  },
+  BANK_TRANSFER: {
+    title: "Bank Transfer Details",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="8" width="18" height="12" rx="2" />
+        <rect x="7" y="4" width="10" height="4" rx="1" />
+        <line x1="12" y1="12" x2="12" y2="16" />
+        <line x1="8" y1="16" x2="16" y2="16" />
+      </svg>
+    ),
+    details: [
+      { label: "Bank", value: "Bank of the Philippine Islands (BPI)" },
+      { label: "Account Name", value: "Deanna Jolie Ramos" },
+      { label: "Account Number", value: "0639478226" },
+      { label: "Reference Format", value: "[Your Order ID]" }
+    ],
+    note: {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+      ),
+      title: "Important:",
+      message: "Please include your Order ID in the payment reference to help us identify your payment. After payment, email your screenshot to payments@merchtrack.tech with your Order ID as the subject."
+    },
+    colorClasses: {
+      border: "border-rose-100",
+      bg: "bg-rose-600",
+      noteBg: "bg-rose-50",
+      noteText: "text-rose-700"
+    }
+  },
+  GCASH: {
+    title: "GCash Details",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="4" width="20" height="16" rx="2" />
+        <path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+        <path d="M12 12v4" />
+        <path d="M8 16h8" />
+      </svg>
+    ),
+    details: [
+      { label: "GCash Number", value: "09936167562" },
+      { label: "Account Name", value: "Deanna Jolie Ramos" },
+      { label: "Reference Format", value: "[Your Order ID]" }
+    ],
+    note: {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      ),
+      title: "Processing Time:",
+      message: "Please include your Order ID in the payment reference to help us identify your payment. After payment, email your screenshot to payments@merchtrack.tech with your Order ID as the subject."
+    },
+    colorClasses: {
+      border: "border-blue-100",
+      bg: "bg-blue-600",
+      noteBg: "bg-blue-50",
+      noteText: "text-blue-700"
+    }
+  },
+  MAYA: {
+    title: "Maya Details",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3.34 4.86A2 2 0 0 1 5 4h14a2 2 0 0 1 1.64.86c.17.25.26.55.26.86v12.28A2 2 0 0 1 19 20H5a2 2 0 0 1-1.66-.86c-.16-.26-.25-.56-.24-.87V5.71c0-.3.1-.6.25-.86Z" />
+        <path d="M16 8.99H8" />
+        <path d="M16 4v6" />
+        <path d="M12 4v6" />
+        <path d="M8 4v6" />
+        <path d="M8 18h8" />
+      </svg>
+    ),
+    details: [
+      { label: "Maya Number", value: "[To be added...]" },
+      { label: "Account Name", value: "[To be added...]" },
+      { label: "Reference Format", value: "[Your Order ID]" }
+    ],
+    note: {
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" className="mr-2 mt-0.5 size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M2 9V5c0-1.1.9-2 2-2h16a2 2 0 0 1 2 2v4" />
+          <path d="M2 13v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2v-6" />
+          <path d="M2 9h20" />
+          <path d="M2 13h20" />
+        </svg>
+      ),
+      title: "Verification Process:",
+      message: "Maya Payments are not available at this time. Please stay tuned for further announcements. Kindly use other payment methods for now."
+    },
+    colorClasses: {
+      border: "border-green-100",
+      bg: "bg-green-600",
+      noteBg: "bg-green-50",
+      noteText: "text-green-700"
+    }
+  }
+};
+
 export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }: Readonly<PaymentDialogProps>) {
   const { userId } = useUserStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -184,7 +323,7 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
         toast({
           type: "error",
           title: 'Payment submission failed',
-          message: result.message || 'Please try again later.',
+          message: result.message ?? 'Please try again later.',
         });
       }
     } catch (error) {
@@ -199,61 +338,49 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
     }
   };
 
-  const renderOnsiteInstructions = () => (
-    <Card className="mb-4 p-4">
-      <h3 className="mb-2 font-medium">On-site Payment Instructions</h3>
-      <p className="text-sm text-gray-700">
-        Please visit our store at the following location to complete your payment:
-      </p>
-      <div className="mt-2 rounded-md bg-gray-50 p-3 text-sm">
-        <p className="font-medium">PIXELS Office / Gold in Blue</p>
-        <p>Santos Building, 3rd Floor Hallway</p>
-        <p>Ateneo de Naga University Campus</p>
-        <p>Operating Hours: Mon-Fri, 9am-5pm</p>
-      </div>
-      <p className="mt-2 text-sm text-gray-500">
-        <span className="font-medium">Note:</span> Please bring your ID when making an on-site payment.
-      </p>
-    </Card>
-  );
+  const renderPaymentDetails = (paymentMethod: 'ONSITE' | 'BANK_TRANSFER' | 'GCASH' | 'MAYA') => {
+    const details = PAYMENT_DETAILS[paymentMethod];
+    return (
+      <Card className={`mb-4 overflow-hidden border ${details.colorClasses.border}`}>
+        <div className={`${details.colorClasses.bg} p-3`}>
+          <h3 className="flex items-center font-medium text-white">
+            {details.icon}
+            {details.title}
+          </h3>
+        </div>
+        <div className="p-4">
+          <div className="overflow-hidden rounded-lg border">
+            <table className="min-w-full divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {details.details.map((detail, index) => (
+                  <tr key={index}>
+                    <td className="whitespace-nowrap bg-gray-50 px-4 py-3 text-sm font-medium text-gray-900">
+                      {detail.label}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {detail.value}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className={`mt-3 flex items-start rounded-md ${details.colorClasses.noteBg} p-3 text-sm ${details.colorClasses.noteText}`}>
+            {details.note.icon}
+            <div>
+              <p className="font-medium">{details.note.title}</p>
+              <p>{details.note.message}</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+    );
+  };
 
-  const renderBankDetails = () => (
-    <Card className="mb-4 p-4">
-      <h3 className="mb-2 font-medium">Bank Transfer Details</h3>
-      <div className="rounded-md bg-gray-50 p-3 text-sm">
-        <p><span className="font-medium">Bank:</span>[To be added...]</p>
-        <p><span className="font-medium">Account Name:</span> MerchTrack Merchandise</p>
-        <p><span className="font-medium">Account Number:</span>[To be added...]</p>
-        <p><span className="font-medium">Reference Format:</span> [Your Order ID]</p>
-      </div>
-      <div className="mt-3 rounded-md bg-blue-50 p-3 text-sm text-blue-700">
-        <p className="font-medium">Important:</p>
-        <p>Please include your Order ID in the payment reference to help us identify your payment.</p>
-      </div>
-    </Card>
-  );
-
-  const renderGCashDetails = () => (
-    <Card className="mb-4 p-4">
-      <h3 className="mb-2 font-medium">GCash Details</h3>
-      <div className="rounded-md bg-gray-50 p-3 text-sm">
-        <p><span className="font-medium">GCash Number:</span>[To be added...]</p>
-        <p><span className="font-medium">Account Name:</span>Gold In Blue</p>
-        <p><span className="font-medium">Reference Format:</span> [Your Order ID]</p>
-      </div>
-    </Card>
-  );
-
-  const renderMayaDetails = () => (
-    <Card className="mb-4 bg-neutral-2 p-4">
-      <h3 className="mb-2 font-medium">Maya Details</h3>
-      <div className="rounded-md bg-gray-50 p-3 text-sm">
-        <p><span className="font-medium">Maya Number:</span>[To be added...]</p>
-        <p><span className="font-medium">Account Name:</span> Gold In Blue </p>
-        <p><span className="font-medium">Reference Format:</span> [Your Order ID]</p>
-      </div>
-    </Card>
-  );
+  const renderBankDetails = () => renderPaymentDetails('BANK_TRANSFER');
+  const renderGCashDetails = () => renderPaymentDetails('GCASH');
+  const renderMayaDetails = () => renderPaymentDetails('MAYA');
 
   const getPaymentMethodDetails = (method: PaymentMethod) => {
     switch (method) {
@@ -268,11 +395,13 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
     }
   };
 
+  const renderOnsiteInstructions = () => renderPaymentDetails('ONSITE');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto bg-neutral-2 sm:max-w-[600px]">
         <DialogHeader className='bg-neutral-2'>
-          <DialogTitle>Complete Your Payment</DialogTitle>
+          <DialogTitle className='font-bold text-primary'>Complete Your Payment</DialogTitle>
           <DialogDescription>
             Provide payment details for your order. After submission, our team will verify your payment.
           </DialogDescription>
@@ -290,10 +419,10 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
         ) : (
           <>
             {/* Order Summary */}
-            <div className="mb-4 rounded-lg bg-gray-50 p-4">
+            <div className="mb-4 rounded-lg border border-primary/75 bg-primary-100 p-4">
               <div className="flex justify-between">
-                <span className="font-medium">Order ID:</span>
-                <span>{orderId}</span>
+                <span className="font-medium text-neutral-7">Order ID:</span>
+                <span className='font-semibold text-primary'>{orderId}</span>
               </div>
               <div className="mt-1 flex justify-between">
                 <span className="font-medium">Total Amount:</span>

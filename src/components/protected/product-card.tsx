@@ -51,9 +51,9 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
         transition: { delay: index * 0.1 }
       }}
       whileHover={{ y: -5 }}
-      className="group relative"
+      className="group relative h-full"
     >
-      <Card className="overflow-hidden transition-shadow hover:shadow-lg">
+      <Card className="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-lg">
         {/* Product Image */}
         <Link href={`/products/${product.slug}`} className="relative block">
           <div className="relative aspect-square overflow-hidden">
@@ -92,14 +92,14 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
         </Link>
 
         {/* Product Details */}
-        <div className="space-y-3 p-4">
+        <div className="flex h-full flex-col space-y-3 p-4">
           <div className="space-y-1">
-            <h3 className="line-clamp-2 font-semibold">
+            <h3 className="line-clamp-1 font-semibold">
               <Link href={`/products/${product.slug}`} className="hover:text-primary">
                 {product.title}
               </Link>
             </h3>
-            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description!) }} className="line-clamp-1 text-sm text-gray-500" />
+            <div dangerouslySetInnerHTML={{ __html: product.description ? DOMPurify.sanitize(product.description) : `Grab your ${product.title} today.` }} className="line-clamp-1 text-sm text-gray-500" />
           </div>
 
           <div className="flex items-center justify-between">
@@ -128,7 +128,7 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
           </div>
 
           {/* Quick Actions */}
-          <div className="flex items-center justify-between gap-2 pt-2">
+          <div className="mt-auto flex items-center justify-between gap-2 pt-2">
             <Button
               className={cn(
                 "w-full gap-2 transition-colors",

@@ -78,6 +78,7 @@ export async function updateOrderStatus(
         where: { id: orderId },
         data: {
           status: newStatus,
+          paymentStatus: newStatus === OrderStatus.CANCELLED ? OrderPaymentStatus.REFUNDED : existingOrder.paymentStatus,
           processedById: userId,
           customerNotes: `${existingOrder.customerNotes ?? ''}${existingOrder.customerNotes ? '\n' : ''}Status changed to ${newStatus}: ${reason}`,
         },
@@ -440,13 +441,15 @@ export async function refundPayment(
       if (totalPaidAmount > 0) {
         newPaymentStatus = OrderPaymentStatus.DOWNPAYMENT;
       }
+      if (order.status === OrderStatus.CANCELLED) {
+        newPaymentStatus = OrderPaymentStatus.REFUNDED;
+      }
 
       // Update order status
       await tx.order.update({
         where: { id: orderId },
         data: { 
           paymentStatus: newPaymentStatus,
-          status: OrderStatus.PROCESSING,
           processedById: userId,
           customerNotes: `${order.customerNotes ? order.customerNotes + '\n' : ''}Refund processed: ${formatCurrency(amount)} (${reason})`
         }

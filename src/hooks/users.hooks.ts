@@ -20,24 +20,12 @@ import { QueryParams } from "@/types/common";
  * @returns The resource query result for users.
  */
 export function useUsersQuery(params: QueryParams = {}) {
-  const { where, include, orderBy, take = 10, skip, page } = params;
 
   return useResourceQuery({
     resource: "users",
     fetcher: (userId: string, params: QueryParams) => getUsers({ userId, params }),
     params: {
-      where: {
-        isDeleted: false,
-        ...where
-      },
-      include: {
-        ...include,
-        permissions: true // Always include permissions for role management
-      },
-      orderBy: orderBy || { createdAt: 'desc' },
-      take,
-      skip,
-      page
+      ...params,
     }
   });
 }

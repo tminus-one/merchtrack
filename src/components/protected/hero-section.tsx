@@ -33,7 +33,7 @@ const DEFAULT_SLIDES: HeroSlide[] = [
     id: 2,
     title: "Track Your Orders Seamlessly",
     description: "Real-time updates on your purchases from shipment to delivery",
-    imageUrl: "/img/carousel-image.jpg",
+    imageUrl: "/img/carousel-image2.jpg",
     buttonText: "Track Orders",
     buttonLink: "/track-order"
   }

@@ -1,11 +1,12 @@
-import Footer from '@/components/protected/footer';
+import ProtectedFooter from "@/components/protected/footer";
+import ProtectedHeader from "@/components/protected/header";
 
 export default function RootLayout({ children }: { readonly children: React.ReactNode }) {
   return (
     <>
-      <div>{children}</div>
-      <Footer />
+      <ProtectedHeader />
+      <div className="min-h-screen">{children}</div>
+      <ProtectedFooter />
     </>
-    
   );
 }

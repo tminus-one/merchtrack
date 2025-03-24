@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Role } from "@prisma/client";
 import { useDebounce } from 'use-debounce';
 import { useRouter } from "next/navigation";
 import { SearchBar } from "./search-bar";
 import { UserList } from "./user-list";
 import { useUsersQuery } from "@/hooks/users.hooks";
-import { PaginationNav } from "@/components/pagination-nav";
 import { QueryParams } from "@/types/common";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { College } from "@/types/Misc";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PaginationFooter } from "@/app/admin/survey/components/pagination-footer";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -31,7 +31,7 @@ function PaginationSkeleton() {
 }
 
 export function UserManagement() {
-  const COLLEGE_OPTIONS = Object.values(College);
+  const COLLEGE_OPTIONS = useMemo(() => Object.values(College), []);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch] = useDebounce(searchTerm, 1000);
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,6 +47,7 @@ export function UserManagement() {
 
   const queryParams = useMemo(() => {
     const params: QueryParams = {
+      limit: ITEMS_PER_PAGE,
       take: ITEMS_PER_PAGE,
       skip: (currentPage - 1) * ITEMS_PER_PAGE,
       page: currentPage,
@@ -86,16 +87,26 @@ export function UserManagement() {
     return params;
   }, [currentPage, debouncedSearch, sortBy, selectedRole, selectedCollege]);
 
-  const { data: usersData = { data: [], metadata: null }, isLoading } = useUsersQuery(queryParams);
+  const { data: usersData, isLoading } = useUsersQuery(queryParams);
+
+  useEffect(() => {
+    if (currentPage > (usersData?.metadata?.lastPage ?? 1)) {
+      setCurrentPage(1);
+    }
+  }, [currentPage, usersData]);
 
   const handleSearch = (query: string) => {
     setSearchTerm(query);
-    setCurrentPage(1);
   };
 
   const handleManageUser = (userId: string) => {
     router.push(`/admin/users/${userId}`);
   };
+
+  const handlePageChange = useCallback((page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
 
   return (
     <div className="w-full space-y-4">
@@ -160,16 +171,12 @@ export function UserManagement() {
       ) : (
         usersData?.metadata && usersData.metadata.total > 0 && (
           <div className="flex items-center justify-between px-2">
-            <div className="text-muted-foreground text-sm">
-              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-
-              {Math.min(currentPage * ITEMS_PER_PAGE, usersData.metadata.total)} of {usersData.metadata.total} entries
-            </div>
-            <PaginationNav
-              currentPage={currentPage}
+            <PaginationFooter 
+              currentPage={currentPage} 
               totalPages={usersData.metadata.lastPage}
-              totalItems={usersData.metadata.total}
-              onPageChange={setCurrentPage}
-              showTotalItems={false}
+              totalItems={usersData.metadata.total} 
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={handlePageChange}
             />
           </div>
         )

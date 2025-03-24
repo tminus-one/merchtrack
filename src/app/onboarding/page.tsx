@@ -1,40 +1,73 @@
-import Image from "next/image";
-import { redirect } from "next/navigation";
-import OnboardingForm from "./(components)/onboarding-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import OnboardingBackground from "@/app/onboarding/(components)/onboarding-background";
-import PageAnimation from "@/components/public/page-animation";
-import { getSessionData, isOnboardingCompleted } from "@/lib/auth";
+'use client';
 
-export default async function OnboardingPage() {
-  const { metadata } = await getSessionData();
-  if (isOnboardingCompleted(metadata)) {
-    return redirect('/dashboard');
+import { useEffect } from "react";
+import { useUser } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import Image from "next/image";
+import { ShieldCheck } from "lucide-react";
+
+import { Card, CardContent } from "@/components/ui/card";
+import OnboardingBackground from "@/app/onboarding/(components)/onboarding-background";
+import OnboardingForm from "@/app/onboarding/(components)/onboarding-form";
+
+export default function OnboardingPage() {
+  const { isSignedIn, user, isLoaded } = useUser();
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      redirect('/sign-in');
+    }
+
+    if (isLoaded && isSignedIn && user?.publicMetadata?.onboardingComplete) {
+      redirect('/dashboard');
+    }
+  }, [isLoaded, isSignedIn, user]);
+
+  if (!isLoaded) {
+    return null;
   }
+
   return (
-    <div className="to-secondary-500 relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-blue-400 via-primary-500 px-4 py-12 sm:px-6 lg:px-8">
-      <OnboardingBackground />
-      <PageAnimation className="min-w-[100vw]">
-        <Card className="mx-auto w-full max-w-lg bg-neutral-2 text-neutral-7 shadow-xl backdrop-blur-sm">
-          <CardHeader className="text-center">
-            <div className="relative mx-auto size-16 pb-4">
+    <div className="relative min-h-screen">
+      {/* Interactive Particle Background */}
+      <OnboardingBackground 
+        density={70}
+        connectionDistance={150}
+        particleSize={1.5}
+        speed={0.3}
+        interactive={true}
+      />
+      
+      <div className="container mx-auto px-4 py-10">
+        <div className="mx-auto max-w-md">
+          {/* Logo Header */}
+          <div className="mb-6 flex flex-col items-center justify-center rounded-md bg-neutral-2/80 py-4 text-center backdrop-blur-sm">
+            <div className="relative mb-2 size-16">
               <Image
                 src="/img/logo.png"
                 alt="MerchTrack Logo"
-                width={64}
-                height={64}
-                priority
-                className="w-auto"
+                fill
+                className="object-contain"
               />
             </div>
-            <CardTitle className="text-2xl font-medium">Welcome to <span className="font-bold tracking-tighter text-primary">MerchTrack!</span></CardTitle>
-            <CardDescription>Let&apos;s get you set up in just a few steps</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <OnboardingForm />
-          </CardContent>
-        </Card>
-      </PageAnimation>
+            <h1 className="text-2xl font-bold text-primary">Welcome to MerchTrack</h1>
+            <p className="text-sm text-gray-600">Please complete your profile to continue</p>
+          </div>
+
+          {/* Card with Form */}
+          <Card className="rounded-xl border-none bg-white/90 p-6 backdrop-blur-sm">
+            <CardContent className="p-0 pb-4 pt-2">
+              <OnboardingForm />
+              
+              {/* Security notice */}
+              <div className="mt-8 flex items-center justify-center gap-2 text-xs text-gray-500">
+                <ShieldCheck className="size-4 text-primary" />
+                <span>Your data is secure and private</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -103,7 +103,7 @@ export default function PromotionsBanner({ promotions = [] }: Readonly<Promotion
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
-              className={`size-2 rounded-full ${
+              className={`size-4 rounded-full ${
                 index === currentIndex ? 'bg-primary' : 'bg-gray-300'
               }`}
               aria-label={`Go to promotion ${index + 1}`}

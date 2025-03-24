@@ -1,62 +1,126 @@
+import { useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
+import { motion } from "framer-motion";
+import { School, BookOpen, Building2, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { OnboardingForm } from "@/schema/user";
+import { College } from "@/types/Misc";
 
 type CollegeAndCourseFormProps = {
   form: UseFormReturn<OnboardingForm>;
 }
 
-import { College } from "@/types/Misc";
-
 export default function CollegeAndCourseForm({ form }: Readonly<CollegeAndCourseFormProps>) {
+  const [focused, setFocused] = useState(false);
   const colleges = Object.values(College);
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="college" className="text-sm font-medium text-gray-800">
-          Select your college
-        </Label>
-        <Select
-          value={form.watch("college")}
-          onValueChange={(value) => form.setValue("college", value as College)}
-        >
-          <SelectTrigger className="mt-1">
-            <SelectValue placeholder="Select a college" />
-          </SelectTrigger>
-          <SelectContent className="bg-neutral-2">
-            {colleges.map((college) => (
-              <SelectItem className="cursor-pointer transition-colors hover:bg-primary-200" key={college} value={college}>
-                {college.replaceAll("_", " ")}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {form.formState.errors.college && (
-          <p className="text-sm text-red-500">
-            {form.formState.errors.college?.message as string}
-          </p>
-        )}
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="courses" className="text-sm font-medium text-gray-800">
-          Course
-        </Label>
-        <Input
-          id="courses"
-          {...form.register("courses")}
-          className="mt-1"
-          maxLength={100}
-          placeholder="e.g. BS Computer Science, BS Information Technology, etc."
+    <div className="space-y-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <FormField
+          control={form.control}
+          name="college"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-1.5 text-sm font-medium text-gray-800">
+                <Building2 className="size-4 text-primary" />
+                Select your college
+                <span className="text-red-500">*</span>
+              </FormLabel>
+              <div className="relative">
+                <Select
+                  value={field.value}
+                  onValueChange={(value) => field.onChange(value as College)}
+                >
+                  <FormControl>
+                    <SelectTrigger className={`transition-all duration-200 ${
+                      form.formState.errors.college
+                        ? "border-red-300"
+                        : "border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                    }`}>
+                      <SelectValue placeholder="Select a college" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="max-h-80 bg-neutral-2">
+                    {colleges.map((college) => (
+                      <SelectItem 
+                        key={college} 
+                        value={college}
+                        className="cursor-pointer transition-colors hover:bg-primary/10"
+                      >
+                        <div className="flex items-center gap-2">
+                          <School className="size-4 text-primary" />
+                          {college.replaceAll("_", " ")}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.college && (
+                  <AlertCircle className="absolute right-9 top-1/2 size-5 -translate-y-1/2 text-red-500" />
+                )}
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {form.formState.errors.courses && (
-          <p className="text-sm text-red-500">
-            {form.formState.errors.courses?.message as string}
-          </p>
-        )}
-      </div>
+      </motion.div>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.15 }}
+      >
+        <FormField
+          control={form.control}
+          name="courses"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="flex items-center gap-1.5 text-sm font-medium text-gray-800">
+                <BookOpen className="size-4 text-primary" />
+                Course
+                <span className="text-red-500">*</span>
+              </FormLabel>
+              <div className="relative">
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g. BS Computer Science, BS Information Technology"
+                    className={`transition-all duration-200 ${
+                      focused
+                        ? "border-primary/50 ring-1 ring-primary/20"
+                        : "border-gray-200"
+                    } ${
+                      form.formState.errors.courses
+                        ? "border-red-300 pr-10"
+                        : ""
+                    }`}
+                    maxLength={100}
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => {
+                      setFocused(false);
+                      field.onBlur();
+                    }}
+                  />
+                </FormControl>
+                {form.formState.errors.courses && (
+                  <AlertCircle className="absolute right-3 top-1/2 size-5 -translate-y-1/2 text-red-500" />
+                )}
+              </div>
+              <FormMessage />
+              <p className="mt-1 text-xs text-gray-500">
+                Enter your degree program or course of study. Input N/A if not applicable.
+              </p>
+            </FormItem>
+          )}
+        />
+      </motion.div>
     </div>
   );
 }

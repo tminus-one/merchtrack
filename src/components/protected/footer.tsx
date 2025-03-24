@@ -83,7 +83,7 @@ export default function ProtectedFooter() {
               <div className="flex items-center gap-2 text-sm text-gray-300">
                 <Mail size={16} className="shrink-0" />
                 <Link href="mailto:support@merchtrack.com" className="transition-colors hover:text-white">
-                  support@merchtrack.com
+                  support@merchtrack.tech
                 </Link>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-300">

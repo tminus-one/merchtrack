@@ -3,7 +3,7 @@
 import { toast } from 'sonner';
 import { FaStar } from "react-icons/fa";
 import { Package, ClipboardList, Search, CircleAlert } from 'lucide-react';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Payment } from '@prisma/client';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -27,6 +27,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { markOrderAsReceived } from "@/app/user/orders/_actions";
+import { ExtendedOrderItem } from '@/types/orders';
 
 const getOrderStatusStyle = (status: OrderStatus) => {
   switch (status) {
@@ -53,6 +54,14 @@ export function OrderHistory() {
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<'ALL' | OrderStatus>('ALL');
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [expandedOrders, setExpandedOrders] = useState<Record<string, boolean>>({});
+
+  const toggleOrderExpansion = (orderId: string) => {
+    setExpandedOrders(prev => ({
+      ...prev,
+      [orderId]: !prev[orderId]
+    }));
+  };
 
   const { data: ordersResponse, isLoading, refetch } = useOrdersQuery({
     where: {
@@ -224,16 +233,11 @@ export function OrderHistory() {
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                               {/* Order Info */}
                               <div className="flex items-start gap-3 sm:items-center">
-                                <button
-                                  type="button"
-                                  className="flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-primary/5 transition-colors group-hover:bg-primary/10 sm:size-14"
-                                  onClick={() => {
-                                    setSelectedOrderId(order.id);
-                                    setIsDetailsModalOpen(true);
-                                  }}
+                                <div
+                                  className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/5 transition-colors group-hover:bg-primary/10 sm:size-14"
                                 >
                                   <Package className="size-6 text-primary sm:size-7" />
-                                </button>
+                                </div>
                                 <div className="min-w-0 flex-1">
                                   <p className="font-medium">
                                     Order #{order.id.substring(0, 8)}
@@ -256,7 +260,30 @@ export function OrderHistory() {
                               </div>
 
                               {/* Action Buttons */}
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Button 
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-primary/20 hover:bg-primary/5"
+                                  onClick={() => toggleOrderExpansion(order.id)}
+                                >
+                                  {expandedOrders[order.id] ? (
+                                    <>
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="18 15 12 9 6 15" />
+                                      </svg>
+                                      Collapse
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="6 9 12 15 18 9" />
+                                      </svg>
+                                      Details
+                                    </>
+                                  )}
+                                </Button>
+                                
                                 {(order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') ? (
                                   <Button 
                                     variant="outline"
@@ -342,6 +369,66 @@ export function OrderHistory() {
                                 )}
                               </div>
                             </div>
+                            {expandedOrders[order.id] && (
+                              <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="mt-4 space-y-4 rounded-lg border bg-gray-50/50 p-4"
+                              >
+                                <div>
+                                  <h4 className="flex items-center text-sm font-medium text-gray-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="mr-1.5 size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M5 7 3 5l2-2" />
+                                      <path d="M9 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9" />
+                                      <path d="M5 19 3 17l2-2" />
+                                      <path d="M9 19H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h4" />
+                                    </svg>
+                                    Order Items
+                                  </h4>
+                                  <div className="mt-2 rounded-lg border bg-white p-3">
+                                    {order.orderItems.map((item) => (
+                                      <OrderItemRow key={item.id} item={item} />
+                                    ))}
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4 className="flex items-center text-sm font-medium text-gray-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="mr-1.5 size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <rect width="20" height="14" x="2" y="5" rx="2" />
+                                      <line x1="2" x2="22" y1="10" y2="10" />
+                                    </svg>
+                                    Payment History
+                                  </h4>
+                                  <div className="mt-2 rounded-lg border bg-white p-3">
+                                    {order.payments && order.payments.length > 0 ? (
+                                      order.payments.map((payment) => (
+                                        <PaymentHistoryRow key={payment.id} payment={payment} />
+                                      ))
+                                    ) : (
+                                      <p className="py-3 text-center text-sm text-gray-500">No payment records found</p>
+                                    )}
+                                  </div>
+                                </div>
+                                {/* {order.customerNotes && (
+                                  <div>
+                                    <h4 className="flex items-center text-sm font-medium text-gray-700">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="mr-1.5 size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H8Z" />
+                                        <path d="M17 3h-1a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-1Z" />
+                                        <path d="M8 16H7a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2H8Z" />
+                                        <path d="M17 16h-1a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-1a2 2 0 0 0-2-2h-1Z" />
+                                      </svg>
+                                      Order Notes
+                                    </h4>
+                                    <div className="mt-2 rounded-lg border bg-white p-3">
+                                      <p className="text-sm text-gray-600">{order.customerNotes}</p>
+                                    </div>
+                                  </div>
+                                )} */}
+                              </motion.div>
+                            )}
                           </div>
                         </motion.div>
                       ))}
@@ -368,5 +455,99 @@ export function OrderHistory() {
         />
       </div>
     </>
+  );
+}
+
+// Order item component for the expanded view
+function OrderItemRow({ item }: { item: ExtendedOrderItem }) {
+  return (
+    <div className="flex items-center gap-3 border-b border-gray-100 py-3 last:border-0">
+      <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-gray-100">
+        <Image
+          src={item.variant?.product?.imageUrl?.[0] || '/img/profile-placeholder-img.png'}
+          alt={item.variant?.product?.title || 'Product'}
+          fill
+          className="object-cover"
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium">{item.variant?.product?.title || 'Product'}</p>
+        <div className="flex items-center gap-2 text-sm text-gray-500">
+          <span>
+            {item.variant?.variantName}
+          </span>
+          <span>×{item.quantity}</span>
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="font-medium">{formatCurrency(Number(item.price))}</p>
+        <p className="text-sm text-gray-500">
+          {formatCurrency(Number(item.price) * item.quantity)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// Payment history component for the expanded view
+function PaymentHistoryRow({ payment }: { payment: Payment }) {
+  const getPaymentStatusBadge = (status: string) => {
+    switch (status) {
+    case 'REFUNDED': return <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">Refunded</Badge>;
+    case 'PENDING': return <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700">Pending</Badge>;
+    case 'VERIFIED': return <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700">Verified</Badge>;
+    case 'REJECTED': return <Badge variant="outline" className="border-red-200 bg-red-50 text-red-700">Rejected</Badge>;
+    default: return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between border-b border-gray-100 py-3 last:border-0">
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="font-medium">
+            {payment.paymentMethod === 'BANK_TRANSFER' && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 inline size-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="8" width="18" height="12" rx="2" />
+                <rect x="7" y="4" width="10" height="4" rx="1" />
+              </svg>
+            )}
+            {payment.paymentMethod === 'GCASH' && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 inline size-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" />
+              </svg>
+            )}
+            {payment.paymentMethod === 'MAYA' && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 inline size-4 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3.34 4.86A2 2 0 0 1 5 4h14a2 2 0 0 1 1.64.86c.17.25.26.55.26.86v12.28A2 2 0 0 1 19 20H5a2 2 0 0 1-1.66-.86c-.16-.26-.25-.56-.24-.87V5.71c0-.3.1-.6.25-.86Z" />
+                <path d="M16 8.99H8" />
+              </svg>
+            )}
+            {payment.paymentMethod === 'CASH' && (
+              <svg xmlns="http://www.w3.org/2000/svg" className="mr-1 inline size-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="20" height="12" x="2" y="6" rx="2" />
+                <circle cx="12" cy="12" r="2" />
+                <path d="M6 12h.01M18 12h.01" />
+              </svg>
+            )}
+            {payment.paymentMethod}
+          </span>
+          {getPaymentStatusBadge(payment.paymentStatus)}
+        </div>
+        <p className="text-sm text-gray-500">
+          {new Date(payment.createdAt).toLocaleDateString()} at {new Date(payment.createdAt).toLocaleTimeString()}
+        </p>
+        {payment.referenceNo && (
+          <p className="text-xs text-gray-500">Ref: {payment.referenceNo}</p>
+        )}
+      </div>
+      <div className="text-right">
+        <p className="font-medium text-primary">{formatCurrency(Number(payment.amount))}</p>
+        <p className="text-xs text-gray-500">
+          {payment.paymentSite === 'ONSITE' ? 'On-site' : 'Off-site'}
+        </p>
+      </div>
+    </div>
   );
 }
