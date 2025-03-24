@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { redirect } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
+import { default as NextLink } from "next/link";
 import PersonalInfoForm from "./personal-info-form";
 import RoleSelectionForm from "./role-selection-form";
 import CollegeAndCourseForm from "./college-form";
@@ -158,15 +159,13 @@ export default function OnboardingForm() {
               />
             </div>
             <h2 className="text-lg font-semibold">Setting up your account...</h2>
-            <p className="text-sm text-gray-500">You will be redirected to the dashboard in a few seconds.</p>
-            <p className="text-sm text-gray-500">If not, click the button below.</p>
-            <Button
-              variant="link"
-              className="mt-4 text-primary underline"
-              onClick={() => redirect("/dashboard")}
+            <p className="text-sm text-gray-500">You will be redirected to the dashboard in a few seconds. If not, click the button below.</p>
+            <NextLink
+              href="/dashboard"
+              className="mt-4 rounded-lg border border-primary bg-white/50 px-4 py-2 font-bold text-primary transition-colors hover:bg-primary-100"
             >
               Go to Dashboard
-            </Button>
+            </NextLink>
             <p className="mt-2 text-xs text-gray-500">If you encounter any issues, try to refresh the page. If problem persists, please contact support.</p>
             <p className="text-xs text-gray-500">Thank you for your patience!</p>
           </div>
