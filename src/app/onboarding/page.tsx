@@ -1,30 +1,22 @@
-'use client';
-
-import { useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 
+import { auth } from "@clerk/nextjs/server";
 import { Card, CardContent } from "@/components/ui/card";
 import OnboardingBackground from "@/app/onboarding/(components)/onboarding-background";
 import OnboardingForm from "@/app/onboarding/(components)/onboarding-form";
 
-export default function OnboardingPage() {
-  const { isSignedIn, user, isLoaded } = useUser();
+export default async function OnboardingPage() {
+  const { userId, sessionClaims } = await auth();
 
-  useEffect(() => {
-    if (isLoaded && !isSignedIn) {
-      redirect('/sign-in');
-    }
+  // Redirect if user is already onboarded
+  if (sessionClaims?.metadata.isOnboardingCompleted) {
+    redirect("/dashboard");
+  }
 
-    if (isLoaded && isSignedIn && user?.publicMetadata?.onboardingComplete) {
-      redirect('/dashboard');
-    }
-  }, [isLoaded, isSignedIn, user]);
-
-  if (!isLoaded) {
-    return null;
+  if (!userId) {
+    redirect("/sign-in");
   }
 
   return (
