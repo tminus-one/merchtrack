@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import prisma from "@/lib/db";
 import { invalidateCache } from "@/lib/redis";
 import { ExtendedTicket } from "@/types/tickets";
-import { processActionReturnData, verifyPermission } from "@/utils";
+import { calculatePagination, processActionReturnData, verifyPermission } from "@/utils";
 import { PaginatedResponse, QueryParams } from "@/types/common";
 import { GetObjectByTParams } from "@/types/extended";
 
@@ -282,6 +282,8 @@ export async function getTickets({userId, params = {}}: GetTicketsParams): Promi
     }
   });
 
+  const { skip, take, page } = calculatePagination(params);
+
   try {
     const tickets = await prisma.ticket.findMany({
       where: isAuthorized ? { ...params.where } : { createdById: userId },
@@ -308,12 +310,14 @@ export async function getTickets({userId, params = {}}: GetTicketsParams): Promi
         },
       },
       orderBy: params.orderBy,
-      skip: params.skip,
-      take: params.take,
+      skip,
+      take,
     });
 
-    const total = tickets.length;
-    const lastPage = Math.ceil(total / (params.take ?? 1));
+    const total = await prisma.ticket.count({
+      where: isAuthorized ? { ...params.where } : { createdById: userId },
+    });
+    const lastPage = Math.ceil(total / (take ?? 1));
 
     return {
       success: true,
@@ -321,11 +325,11 @@ export async function getTickets({userId, params = {}}: GetTicketsParams): Promi
       data: {
         data: processActionReturnData(tickets, params.limitFields) as ExtendedTicket[],
         metadata: {
-          page: params.page ?? 1,
+          page: page ?? 1,
           total: total,
           lastPage: lastPage,
-          hasNextPage: (params.page ?? 1) < lastPage,
-          hasPrevPage: (params.page ?? 1) > 1,
+          hasNextPage: (page ?? 1) < lastPage,
+          hasPrevPage: (page ?? 1) > 1,
         }
       },
     };
