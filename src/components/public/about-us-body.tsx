@@ -256,14 +256,6 @@ function AboutUsBody() {
                             <p className="text-sm text-neutral-7">
                               {lead.bio ?? "Leading our development team with expertise in full-stack development and a passion for creating elegant, user-friendly applications."}
                             </p>
-                            
-                            {/* <div className="flex flex-wrap gap-2">
-                              {['React', 'Node.js', 'TypeScript', 'AWS'].map((skill, index) => (
-                                <span key={index} className="bg-primary-50 rounded-full px-3 py-1 text-xs font-medium text-primary">
-                                  {skill}
-                                </span>
-                              ))}
-                            </div> */}
                           </div>
                         </div>
                       </HoverCardContent>
@@ -392,6 +384,147 @@ function AboutUsBody() {
                     </HoverCard>
                   </motion.div>
                 ))}
+              </div>
+            </motion.div>
+
+            {/* Contact Us Section - Enhanced with creative design */}
+            <motion.div 
+              className="relative z-10 mt-16"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              <div className="absolute -inset-1 -z-10 animate-pulse rounded-2xl bg-gradient-to-r from-primary-300 via-blue-300 to-purple-300 opacity-20 blur-xl"></div>
+              
+              <h2 className="mb-6 flex items-center text-2xl font-bold text-gray-800">
+                <span className="mr-4 flex size-12 items-center justify-center rounded-lg bg-gradient-to-br from-primary-100 to-primary-200 p-2 text-primary shadow-md">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label='Contact Icon'>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </span>
+                Business Solutions
+              </h2>
+              
+              <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-8 shadow-sm">
+                <div className="absolute bottom-0 right-0 opacity-10">
+                  <svg width="180" height="180" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 16V8.00002C21 6.34317 19.6569 5.00002 18 5.00002H6C4.34315 5.00002 3 6.34317 3 8.00002V16C3 17.6569 4.34315 19 6 19H18C19.6569 19 21 17.6569 21 16Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3 8L10.8906 13.2604C11.5624 13.7083 12.4376 13.7083 13.1094 13.2604L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                
+                <div className="flex flex-col items-start gap-8 md:flex-row">
+                  <div className="flex-1">
+                    <h3 className="mb-3 flex items-center text-xl font-bold text-gray-800">
+                      <span className="mr-2 text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </span>
+                      Enterprise Solutions
+                    </h3>
+                    <p className="mb-4 text-base text-gray-700">
+                      Looking to transform your business with a custom platform? Our team delivers enterprise-grade solutions 
+                      tailored to your unique requirements with the latest technology stack and best practices.
+                    </p>
+                    <ul className="mb-6 space-y-2">
+                      {[
+                        { icon: "💼", text: "Custom Business Platforms" },
+                        { icon: "🛒", text: "E-commerce Solutions" },
+                        { icon: "📊", text: "Analytics Dashboards" },
+                        { icon: "🔄", text: "Process Automation" }
+                      ].map((item, i) => (
+                        <motion.li 
+                          key={i}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 * i, duration: 0.5 }}
+                          className="flex items-center gap-2 text-sm text-gray-600"
+                        >
+                          <span className="bg-primary-50 flex size-6 items-center justify-center rounded-full text-primary">
+                            {item.icon}
+                          </span>
+                          {item.text}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="w-full flex-1">
+                    <div className="rounded-xl border border-blue-50 bg-white p-5 shadow-sm">
+                      <h4 className="mb-4 flex items-center text-lg font-semibold text-gray-800">
+                        <span className="mr-2 text-primary">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </span>
+                        Get in Touch
+                      </h4>
+                      <p className="mb-5 text-sm text-gray-600">
+                        Ready to discuss your project? Our team of experts is just an email away.
+                      </p>
+                      <a 
+                        href="mailto:business@merchtrack.tech" 
+                        className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-blue-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        business@merchtrack.tech
+                      </a>
+                      
+                      <div className="mt-6 border-t border-gray-100 pt-6">
+                        <p className="mb-2 text-xs font-medium text-gray-500">TRUSTED BY BUSINESSES WORLDWIDE</p>
+                        <div className="flex items-center justify-between opacity-70">
+                          {[1, 2, 3, 4].map((_, i) => (
+                            <div key={i} className="h-4 w-16 animate-pulse rounded-md bg-gray-200"></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <motion.div 
+                  className="mt-8 flex flex-col justify-center gap-4 sm:flex-row" 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  {[
+                    { 
+                      icon: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>,
+                      title: "Custom Development",
+                      desc: "Tailor-made solutions" 
+                    },
+                    { 
+                      icon: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>,
+                      title: "Fast Deployment",
+                      desc: "Quick time-to-market" 
+                    },
+                    { 
+                      icon: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>,
+                      title: "Secure & Reliable",
+                      desc: "Enterprise-grade security" 
+                    }
+                  ].map((item, i) => (
+                    <div key={i} className="flex flex-1 items-center gap-3 rounded-lg border border-blue-50 bg-white/60 p-4 backdrop-blur-sm">
+                      <div className="bg-primary-50 flex size-10 items-center justify-center rounded-full text-primary">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h5 className="font-medium text-gray-800">{item.title}</h5>
+                        <p className="text-xs text-gray-500">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
               </div>
             </motion.div>
           </div>

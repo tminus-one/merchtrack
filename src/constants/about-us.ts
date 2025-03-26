@@ -88,27 +88,27 @@ export const ABOUT_DEVELOPERS: Developer[] = [
     role: "Full-stack Developer",
     image: "/img/dev_jm.png",
     linkedin: "john-michael-coronel-293a0b30b",
-    bio: "Full-stack developer with expertise in database optimization and secure server architectures."
+    bio: "Passionate about web and game development. Experienced in building scalable applications using React and Node.js and Unity Game Engine in game development projects."
   },
   {
     name: "Kyla Ronquillo",
     role: "Full-stack Developer",
     image: "/img/dev_kyla.jpg",
     linkedin: "kylaronquillo",
-    bio: "Full-stack developer with a passion for creating beautiful, responsive interfaces using modern web technologies."
+    bio: "A Computer Science student with a strong passion for web development and data science and analytics. I love creating dynamic websites and finding insights in data. "
   },
   {
     name: "Reiven Lee",
     role: "Full-stack Developer",
     image: "/img/dev_reiven.png",
     linkedin: "reiven-lee",
-    bio: "Infrastructure and deployment specialist. Expert in containerization, CI/CD pipelines, and cloud platforms."
+    bio: "Passionate about development and cybersecurity. Experienced in building web applications and securing them against threats. Always eager to learn new technologies."
   },
   {
     name: "Miguel Andre Pajarillo",
     role: "Full-stack Developer",
     image: "/img/dev_miguel.jpg",
     linkedin: "miguel-andre-pajarillo-313a08229",
-    bio: "Versatile developer working across the stack. Specializes in TypeScript and modern JavaScript frameworks."
+    bio: "Versatile developer working across the stack and passionate about data science. Specializes in TypeScript and modern JavaScript frameworks."
   },
 ];
