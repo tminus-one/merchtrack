@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { ProductVariant } from '@prisma/client';
+import type { ProductVariant, Role } from '@prisma/client';
 
 export type CartItem = {
   variantId: string;
@@ -12,6 +12,9 @@ export type CartItem = {
       title: string;
       imageUrl: string[];
       inventoryType?: 'STOCK' | 'PREORDER';
+      postedBy?: {
+        college: Role;
+      };
     };
     rolePricing?: {
       price: number;
@@ -38,6 +41,7 @@ export const useCartStore = create(
       isCartOpen: false,
       addItem: (item) =>
         set((state) => {
+          console.log("cart item: ", item);
           const existingItem = state.cartItems.find((i) => i.variantId === item.variantId);
           if (existingItem) {
             return {

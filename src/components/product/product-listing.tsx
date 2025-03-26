@@ -7,6 +7,7 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import { SignInButton } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { Tag } from "lucide-react";
+import { Role } from "@prisma/client";
 import ProductRecommendations from "./product-recommendations";
 import UserReview from "./user-review";
 import ProductReviews from "./product-reviews";
@@ -148,6 +149,9 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
         product: {
           title: product.title,
           imageUrl: product.imageUrl,
+          postedBy: {
+            college: product.postedBy.college as Role
+          }
         }
       }
     });
