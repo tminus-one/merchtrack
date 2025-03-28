@@ -36,6 +36,7 @@ interface ExportItem {
     status: string;
     paymentStatus: string;
     payments?: Array<{ paymentMethod: string }>;
+    customerNotes?: string;
   };
   variant: {
     product: {
@@ -88,6 +89,7 @@ function processExportData(item: ExportItem) {
     totalAmount: Number(item.price) * Number(item.quantity),
     size: item.size ?? 'N/A',
     customerNote: item.customerNote ?? '',
+    orderNote: item.order.customerNotes ?? 'N/A',
     orderStatus: item.order.status,
     paymentStatus: item.order.paymentStatus,
     paymentMethod: item.order.payments?.[0]?.paymentMethod ?? 'N/A',
