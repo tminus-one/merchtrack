@@ -39,7 +39,7 @@ export function OffsitePayment({ isLoading: initialLoading, onVerify, onReject }
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 1;
+  const itemsPerPage = 10;
   const queryClient = useQueryClient();
 
   // Reset to first page when search changes

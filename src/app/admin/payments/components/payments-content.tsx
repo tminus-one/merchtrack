@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { PaymentStatus, PaymentSite } from "@prisma/client";
 import { BiSearch } from "react-icons/bi";
-import { FaMoneyBill } from "react-icons/fa";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,12 +10,10 @@ import { useDebounce } from "use-debounce";
 import { OrdersPaymentTable } from "./orders-payment-table";
 import { OffsitePayment } from "./offsite-payment";
 import { OrderPaymentModalWithQueryParams } from "./order-payment-modal";
-import { TransactionHistory } from "@/app/admin/payments/components/transaction-history";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useOrdersQuery } from "@/hooks/orders.hooks";
 import { usePaymentsQuery } from "@/hooks/payments.hooks";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { validatePayment, rejectPayment } from "@/actions/payments.actions";
 import { useUserStore } from "@/stores/user.store";
@@ -83,16 +80,6 @@ export function PaymentsContent() {
     }
   });
 
-  const { data: paymentsResponse, isLoading: isPaymentsLoading, refetch: paymentsRefetch } = usePaymentsQuery({
-    take: 10,
-    orderBy: { createdAt: 'desc' },
-    where: {
-      isDeleted: false,
-      paymentStatus: {
-        in: [PaymentStatus.VERIFIED, PaymentStatus.PENDING]
-      }
-    }
-  });
 
   const refetchData = () => {
     orderRefetch();
@@ -100,7 +87,7 @@ export function PaymentsContent() {
   };
 
   // Query specifically for pending offsite payments
-  const { data: offsitePaymentsResponse, isLoading: isOffsitePaymentsLoading } = usePaymentsQuery({
+  const { data: offsitePaymentsResponse, isLoading: isOffsitePaymentsLoading, refetch: paymentsRefetch } = usePaymentsQuery({
     where: {
       isDeleted: false,
       paymentStatus: PaymentStatus.PENDING,
@@ -274,21 +261,6 @@ export function PaymentsContent() {
               isLoading={isOffsitePaymentsLoading}
               onVerify={handleVerifyPayment}
               onReject={handleRejectPayment}
-            />
-          </div>
-
-          {/* Recent Transactions */}
-          <div className="rounded-lg border bg-white p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Recent Transactions</h2>
-              <Button variant="outline" size="sm">
-                <FaMoneyBill className="mr-2 size-4" />
-                Export
-              </Button>
-            </div>
-            <TransactionHistory 
-              payments={paymentsResponse?.data} 
-              isLoading={isPaymentsLoading}
             />
           </div>
         </div>

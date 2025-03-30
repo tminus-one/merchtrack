@@ -211,7 +211,7 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
-      paymentMethod: 'CASH',
+      paymentMethod: undefined,
       paymentSite: 'ONSITE',
       paymentType: 'FULL',
       customAmount: undefined,
@@ -539,7 +539,7 @@ export function PaymentDialog({ open, onOpenChange, orderId, onPaymentComplete }
                               field.onChange(value);
                               form.setValue('paymentMethod', value as PaymentMethod);
                             }}
-                            defaultValue={field.value}
+                            
                           >
                             <FormControl>
                               <SelectTrigger>

@@ -284,96 +284,113 @@ export function OrderHistory() {
                                   )}
                                 </Button>
                                 
-                                {((order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') && order.payments.length < 0 ) ? (
-                                  <Button 
-                                    variant="outline"
-                                    className="w-full border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 sm:w-auto"
-                                    onClick={() => handlePaymentModalOpen(order.id)}
-                                  >
-                                    <CircleAlert className="mr-2 size-4" />
+                                {((order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') && 
+                                  (!order.payments || order.payments.length === 0 || 
+                                   !order.payments.some(payment => payment.paymentStatus === 'PENDING' || payment.paymentStatus === 'VERIFIED'))) ? (
+                                    <Button 
+                                      variant="outline"
+                                      className="w-full border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 sm:w-auto"
+                                      onClick={() => handlePaymentModalOpen(order.id)}
+                                    >
+                                      <CircleAlert className="mr-2 size-4" />
                                     Complete Payment
-                                  </Button>
-                                ) : (
-                                  <>
-                                    {/* Show Verification in progress if payment status is PENDING or DOWNPAYMENT but has payment > 0 */}
-                                    {order.paymentStatus === 'PENDING' && order.payments.length > 0 && (
-                                      <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700">
+                                    </Button>
+                                  ) : (
+                                    <>
+                                      {/* Show Verification in progress if payment status is PENDING or DOWNPAYMENT and has pending payment */}
+                                      {(order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') && 
+                                     order.payments && order.payments.some(payment => payment.paymentStatus === 'PENDING') && (
+                                        <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700">
                                         Verification in Progress
-                                      </Badge>
-                                    )}
-
-                                    {order.status === 'READY' && (
-                                      <Button
-                                        onClick={() => handleMarkAsReceived(order.id)}
-                                        variant="outline"
-                                        className="w-full border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 sm:w-auto"
-                                      >
-                                        Mark as Received
-                                      </Button>
-                                    )}
+                                        </Badge>
+                                      )}
                                     
-                                    {order.status === 'DELIVERED' && (
-                                      <>
-                                        {!order.CustomerSatisfactionSurvey?.[0]?.metadata && (
-                                          <Button
-                                            onClick={() => handleTakeSurvey(order.CustomerSatisfactionSurvey?.[0]?.id ?? '')}
-                                            variant="outline"
-                                            className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 sm:w-auto"
-                                          >
-                                            Take Survey
-                                          </Button>
-                                        )}
-                                        
-                                        <DropdownMenu>
-                                          <DropdownMenuTrigger asChild>
+                                      {/* Show Complete Payment if there are only rejected or refunded payments */}
+                                      {(order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') && 
+                                     order.payments && order.payments.length > 0 && 
+                                     !order.payments.some(payment => payment.paymentStatus === 'PENDING' || payment.paymentStatus === 'VERIFIED') && (
+                                        <Button 
+                                          variant="outline"
+                                          className="w-full border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 sm:w-auto"
+                                          onClick={() => handlePaymentModalOpen(order.id)}
+                                        >
+                                          <CircleAlert className="mr-2 size-4" />
+                                        Complete Payment
+                                        </Button>
+                                      )}
+                                    
+                                      {order.status === 'READY' && (
+                                        <Button
+                                          onClick={() => handleMarkAsReceived(order.id)}
+                                          variant="outline"
+                                          className="w-full border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800 sm:w-auto"
+                                        >
+                                        Mark as Received
+                                        </Button>
+                                      )}
+                                    
+                                      {order.status === 'DELIVERED' && (
+                                        <>
+                                          {!order.CustomerSatisfactionSurvey?.[0]?.metadata && (
                                             <Button
+                                              onClick={() => handleTakeSurvey(order.CustomerSatisfactionSurvey?.[0]?.id ?? '')}
                                               variant="outline"
-                                              className="w-full border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-800 sm:w-auto"
+                                              className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 sm:w-auto"
                                             >
-                                              <FaStar className="mr-2" /> Review Items
+                                            Take Survey
                                             </Button>
-                                          </DropdownMenuTrigger>
-                                          <DropdownMenuContent 
-                                            align="end" 
-                                            className="max-h-[300px] w-[280px] overflow-y-auto bg-white"
-                                          >
-                                            {order.orderItems.map((item) => (
-                                              <DropdownMenuItem
-                                                key={item.id}
-                                                onClick={() => item.variant?.product?.slug && handleReviewProduct(item.variant.product.slug)}
-                                                className="flex cursor-pointer items-center gap-2 p-2"
+                                          )}
+                                        
+                                          <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                              <Button
+                                                variant="outline"
+                                                className="w-full border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 hover:text-yellow-800 sm:w-auto"
                                               >
-                                                <div className="relative size-10 shrink-0 overflow-hidden rounded-md">
-                                                  <Image
-                                                    src={item.variant?.product?.imageUrl?.[0] || '/img/profile-placeholder-img.png'}
-                                                    alt={item.variant?.product?.title || 'Product'}
-                                                    fill
-                                                    className="object-cover"
-                                                  />
-                                                </div>
-                                                <span className="line-clamp-2 text-sm">
-                                                  {item.variant?.product?.title || 'Product'}
-                                                </span>
-                                              </DropdownMenuItem>
-                                            ))}
-                                          </DropdownMenuContent>
-                                        </DropdownMenu>
-                                      </>
-                                    )}
+                                                <FaStar className="mr-2" /> Review Items
+                                              </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent 
+                                              align="end" 
+                                              className="max-h-[300px] w-[280px] overflow-y-auto bg-white"
+                                            >
+                                              {order.orderItems.map((item) => (
+                                                <DropdownMenuItem
+                                                  key={item.id}
+                                                  onClick={() => item.variant?.product?.slug && handleReviewProduct(item.variant.product.slug)}
+                                                  className="flex cursor-pointer items-center gap-2 p-2"
+                                                >
+                                                  <div className="relative size-10 shrink-0 overflow-hidden rounded-md">
+                                                    <Image
+                                                      src={item.variant?.product?.imageUrl?.[0] || '/img/profile-placeholder-img.png'}
+                                                      alt={item.variant?.product?.title || 'Product'}
+                                                      fill
+                                                      className="object-cover"
+                                                    />
+                                                  </div>
+                                                  <span className="line-clamp-2 text-sm">
+                                                    {item.variant?.product?.title || 'Product'}
+                                                  </span>
+                                                </DropdownMenuItem>
+                                              ))}
+                                            </DropdownMenuContent>
+                                          </DropdownMenu>
+                                        </>
+                                      )}
 
-                                    {order.status === OrderStatus.PROCESSING && (
-                                      <Button 
-                                        variant="outline" 
-                                        className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 sm:w-auto"
-                                        asChild
-                                      >
-                                        <Link href={`/track-order?id=${order.id}`}>
+                                      {order.status === OrderStatus.PROCESSING && (
+                                        <Button 
+                                          variant="outline" 
+                                          className="w-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 sm:w-auto"
+                                          asChild
+                                        >
+                                          <Link href={`/track-order?id=${order.id}`}>
                                           Track Order
-                                        </Link>
-                                      </Button>
-                                    )}
-                                  </>
-                                )}
+                                          </Link>
+                                        </Button>
+                                      )}
+                                    </>
+                                  )}
                               </div>
                             </div>
                             {expandedOrders[order.id] && (
