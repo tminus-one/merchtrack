@@ -284,7 +284,7 @@ export function OrderHistory() {
                                   )}
                                 </Button>
                                 
-                                {(order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') ? (
+                                {((order.paymentStatus === 'PENDING' || order.paymentStatus === 'DOWNPAYMENT') && order.payments.length < 0 ) ? (
                                   <Button 
                                     variant="outline"
                                     className="w-full border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 sm:w-auto"
@@ -295,6 +295,13 @@ export function OrderHistory() {
                                   </Button>
                                 ) : (
                                   <>
+                                    {/* Show Verification in progress if payment status is PENDING or DOWNPAYMENT but has payment > 0 */}
+                                    {order.paymentStatus === 'PENDING' && order.payments.length > 0 && (
+                                      <Badge variant="outline" className="border-yellow-200 bg-yellow-50 text-yellow-700">
+                                        Verification in Progress
+                                      </Badge>
+                                    )}
+
                                     {order.status === 'READY' && (
                                       <Button
                                         onClick={() => handleMarkAsReceived(order.id)}

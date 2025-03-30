@@ -269,7 +269,8 @@ export function PaymentsContent() {
               </Badge>
             </div>
             <OffsitePayment 
-              payments={offsitePaymentsResponse?.data ?? []} 
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              payments={offsitePaymentsResponse?.data ?? [] as any[]} 
               isLoading={isOffsitePaymentsLoading}
               onVerify={handleVerifyPayment}
               onReject={handleRejectPayment}

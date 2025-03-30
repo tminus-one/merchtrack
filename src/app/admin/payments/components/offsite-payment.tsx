@@ -33,13 +33,13 @@ const notesSchema = z.object({
 
 type NotesFormValues = z.infer<typeof notesSchema>;
 
-export function OffsitePayment({ payments: initialPayments, isLoading: initialLoading, onVerify, onReject }: Readonly<OffsitePaymentProps>) {
+export function OffsitePayment({ isLoading: initialLoading, onVerify, onReject }: Readonly<OffsitePaymentProps>) {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [dialogType, setDialogType] = useState<"verify" | "reject" | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 1;
   const queryClient = useQueryClient();
 
   // Reset to first page when search changes
@@ -56,6 +56,8 @@ export function OffsitePayment({ payments: initialPayments, isLoading: initialLo
 
   // Create a query specifically for filtered offsite payments
   const { data: filteredPayments, isLoading, refetch } = usePaymentsQuery({
+    limit: itemsPerPage,
+    take: itemsPerPage,
     where: {
       isDeleted: false,
       paymentStatus: PaymentStatus.PENDING,
@@ -71,7 +73,7 @@ export function OffsitePayment({ payments: initialPayments, isLoading: initialLo
   });
 
   // Use the queried data instead of the prop data
-  const paymentsToUse = (filteredPayments?.data || initialPayments) as (Payment & { user: User })[];
+  const paymentsToUse = (filteredPayments?.data) as (Payment & { user: User })[];
   const isLoadingToUse = isLoading || initialLoading;
 
   const { mutate: verifyPayment, isPending: isVerifying } = useMutation({
@@ -143,14 +145,6 @@ export function OffsitePayment({ payments: initialPayments, isLoading: initialLo
     );
   }
 
-  // Apply pagination
-  const totalItems = paymentsToUse?.length || 0;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  
-  const paginatedPayments = paymentsToUse?.slice(
-    (currentPage - 1) * itemsPerPage, 
-    currentPage * itemsPerPage
-  );
 
   const getButtonLabel = () => {
     if (isVerifying || isRejecting) return "Processing...";
@@ -175,7 +169,7 @@ export function OffsitePayment({ payments: initialPayments, isLoading: initialLo
           <>
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3">
-                {paginatedPayments.map((payment) => (
+                {filteredPayments?.data.map((payment) => (
                   <div
                     key={payment.id}
                     onClick={() => handlePaymentClick(payment)}
@@ -245,8 +239,8 @@ export function OffsitePayment({ payments: initialPayments, isLoading: initialLo
             {/* Pagination Footer */}
             <PaginationFooter
               currentPage={currentPage}
-              totalPages={totalPages}
-              totalItems={totalItems}
+              totalPages={filteredPayments?.metadata?.lastPage ?? 1}
+              totalItems={filteredPayments?.metadata?.total ?? 0}
               itemsPerPage={itemsPerPage}
               onPageChange={setCurrentPage}
             />
