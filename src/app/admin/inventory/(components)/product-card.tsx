@@ -118,7 +118,10 @@ export function ProductCard({ product }: Readonly<{ product: ExtendedProduct }>)
           </div>
 
           {product.description && (
-            <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} className="text-muted-foreground mt-2 line-clamp-3 text-sm" />
+            <div 
+              suppressHydrationWarning
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} 
+              className="text-muted-foreground mt-2 line-clamp-3 text-sm" />
           )}
 
           <div className="mt-4 space-y-2">

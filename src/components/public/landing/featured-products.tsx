@@ -83,7 +83,8 @@ const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
                       {product.name}
                     </h3>
                   </Link>
-                  <p
+                  <div
+                    suppressHydrationWarning
                     dangerouslySetInnerHTML={{ __html: product.description ? DOMPurify.sanitize(product.description) : `Grab your ${product.name} today.` }} 
                     className="mt-2 line-clamp-2 text-sm text-neutral-7" />
                 </CardContent>

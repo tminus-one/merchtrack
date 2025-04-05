@@ -48,7 +48,8 @@ export default function Products({ data }: Readonly<ProductsProps>) {
                 </CardHeader>
                 <CardContent className="flex flex-1 flex-col p-4">
                   <CardTitle className="mb-2 line-clamp-2 text-lg font-semibold">{product.title}</CardTitle>
-                  <p
+                  <div
+                    suppressHydrationWarning
                     className="mb-4 flex-1 overflow-hidden text-ellipsis text-sm text-gray-600"
                     dangerouslySetInnerHTML={{ __html: product.description as string }}
                   />

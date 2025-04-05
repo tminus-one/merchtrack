@@ -99,7 +99,10 @@ export default function ProductCard({ index = 0, ...product }: Readonly<ProductC
                 {product.title}
               </Link>
             </h3>
-            <div dangerouslySetInnerHTML={{ __html: product.description ? DOMPurify.sanitize(product.description) : `Grab your ${product.title} today.` }} className="line-clamp-1 text-sm text-gray-500" />
+            <div 
+              suppressHydrationWarning
+              dangerouslySetInnerHTML={{ __html: product.description ? DOMPurify.sanitize(product.description) : `Grab your ${product.title} today.` }} 
+              className="line-clamp-1 text-sm text-gray-500" />
           </div>
 
           <div className="flex items-center justify-between">

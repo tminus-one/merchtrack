@@ -89,7 +89,10 @@ export function BasicInformationSection({ description, categoryId }: Readonly<Pr
           {description && (
             <div className="rounded-md bg-gray-100 p-2 text-gray-700">
               <p className='text-semibold text-base font-semibold text-neutral-7'>Current Description</p>
-              <p className='text-sm' dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description)}}/>
+              <div 
+                className='text-sm' 
+                suppressHydrationWarning
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(description)}}/>
             </div>
           )}
           <Controller

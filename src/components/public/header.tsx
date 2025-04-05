@@ -1,18 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
-import { SignInButton, SignUpButton, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils";
+
+// Dynamically import the auth buttons with no SSR
+const AuthButtons = dynamic(
+  () => import("@/components/public/auth-buttons"),
+  { ssr: false, loading: () => <div className="h-9 w-[180px] animate-pulse rounded bg-neutral-100" /> }
+);
 
 const HeaderLP = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { scrollY } = useScroll();
-  const { isSignedIn } = useUser();
   const pathname = usePathname();
   
   const headerBackground = useTransform(
@@ -95,29 +99,10 @@ const HeaderLP = () => {
               ))}
             </div>
             
-            <div className="flex items-center gap-2">
-              {!isSignedIn && (
-                <>
-                  <SignInButton mode="modal" fallbackRedirectUrl='/dashboard'>
-                    <Button variant="outline" size="sm" className="bg-neutral-2 font-semibold">
-                      Sign In
-                    </Button>
-                  </SignInButton>
-                  <SignUpButton mode="modal" fallbackRedirectUrl='/dashboard'>
-                    <Button size="sm" className="font-semibold text-neutral-2">
-                      Sign Up
-                    </Button>
-                  </SignUpButton>
-                </>
-              )}
-              {isSignedIn && (
-                <Button size="sm" className="font-semibold" asChild>
-                  <Link href="/dashboard">
-                    Go to Dashboard
-                  </Link>
-                </Button>
-              )}
-            </div>
+            {/* Client-side only auth buttons */}
+            <Suspense fallback={<div className="h-9 w-[180px] animate-pulse rounded bg-neutral-100" />}>
+              <AuthButtons />
+            </Suspense>
           </motion.div>
         </nav>
       </div>
