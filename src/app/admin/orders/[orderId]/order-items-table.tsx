@@ -1,9 +1,12 @@
 import { FC, useState } from "react";
 import Image from "next/image";
-import { BiTrash } from "react-icons/bi";
+import { BiTrash, BiEdit } from "react-icons/bi";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { removeOrderItem } from "./_actions";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { removeOrderItem, updateOrderItemNote } from "./_actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +14,8 @@ import { ExtendedOrderItem } from "@/types/orders";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
 
 interface OrderItemsTableProps {
   items?: ExtendedOrderItem[];
@@ -29,6 +34,39 @@ export const OrderItemsTable: FC<OrderItemsTableProps> = ({
 }) => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [removalReason, setRemovalReason] = useState("");
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+
+  // Form schema for item notes
+  const itemNoteSchema = z.object({
+    note: z.string().optional()
+  });
+  
+  type ItemNoteFormValues = z.infer<typeof itemNoteSchema>;
+  
+  const itemNoteForm = useForm<ItemNoteFormValues>({
+    resolver: zodResolver(itemNoteSchema),
+    defaultValues: {
+      note: ''
+    }
+  });
+
+  const { mutate: updateItemNote, isPending: isUpdatingNote } = useMutation({
+    mutationFn: async ({ itemId, note }: { itemId: string; note: string }) => {
+      const result = await updateOrderItemNote(orderId, itemId, note, userId);
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      toast.success("Item note updated successfully");
+      setEditingItemId(null);
+      onRemoveItem?.(); // Use the same callback to refresh the data
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to update item note");
+    }
+  });
 
   const { mutate: removeItem, isPending: isRemoving } = useMutation({
     mutationFn: async (itemId: string) => {
@@ -154,9 +192,9 @@ export const OrderItemsTable: FC<OrderItemsTableProps> = ({
               </TableCell>
               <TableCell>
                 {item.customerNote ? (
-                  <Badge variant="outline" className="w-10 justify-center">
+                  <p className="justify-center">
                     {item.customerNote}
-                  </Badge>
+                  </p>
                 ) : (
                   <span className="text-muted-foreground">—</span>
                 )}
@@ -174,11 +212,67 @@ export const OrderItemsTable: FC<OrderItemsTableProps> = ({
               </TableCell>
               <TableCell>
                 {renderRemoveButton(item.id)}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingItemId(item.id);
+                    itemNoteForm.reset({ note: item.customerNote ?? '' });
+                  }}
+                  className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <BiEdit className="size-4" />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      <Dialog 
+        open={!!editingItemId} 
+        onOpenChange={(open) => setEditingItemId(open ? editingItemId : null)}
+      >
+        <DialogContent className="bg-neutral-2">
+          <DialogHeader>
+            <DialogTitle>Edit Note</DialogTitle>
+            <DialogDescription>
+              You can add a note for this item here. It will be displayed in your order details.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...itemNoteForm}>
+            <FormField
+              control={itemNoteForm.control}
+              name="note"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Textarea placeholder="Add a note..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </Form>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditingItemId(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (editingItemId) {
+                  updateItemNote({ itemId: editingItemId, note: itemNoteForm.getValues('note') as string });
+                }
+              }}
+              disabled={isUpdatingNote}
+            >
+              {isUpdatingNote ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

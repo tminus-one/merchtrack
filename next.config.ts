@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
   ],
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb',
+      bodySizeLimit: '20mb',
       allowedOrigins: [
         'https://merchtrack.tech',
         'https://staging.merchtrack.tech',

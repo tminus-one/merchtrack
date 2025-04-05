@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Users, Lightbulb, Award, Heart } from 'lucide-react';
 import { ABOUT_DEVELOPERS, ABOUT_US_CONTENT, ABOUT_DEVELOPERS_LEAD as lead } from '@/constants';
 import PageTitle from '@/components/public/page-title';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 
 function AboutUsBody() {
   const containerVariants = {
@@ -85,7 +86,7 @@ function AboutUsBody() {
                 Our Mission
               </h2>
               <div className="rounded-xl bg-blue-50 p-6">
-                <p className="text-gray-700 sm:text-lg">
+                <p className="text-base text-gray-700">
                   We are dedicated to creating innovative solutions that empower businesses 
                   and individuals to achieve their goals. Through cutting-edge technology 
                   and exceptional service, we strive to make a positive impact in the world.
@@ -117,7 +118,7 @@ function AboutUsBody() {
                       {value.icon}
                     </div>
                     <h3 className={`mb-3 text-lg font-semibold tracking-tight text-gray-800 ${value.hoverText}`}>{value.title}</h3>
-                    <p className="text-gray-600">{value.description}</p>
+                    <p className="text-sm text-gray-700">{value.description}</p>
                   </motion.div>
                 ))}
               </div>
@@ -136,7 +137,7 @@ function AboutUsBody() {
                 </span>
                 Our Team
               </h2>
-              <p className="mb-8 text-gray-700 sm:text-lg">
+              <p className="mb-8 text-base text-gray-700">
                 Our diverse team of experts brings together years of experience in 
                 software development, design, and customer service. We&apos;re passionate 
                 about creating solutions that make a difference.
@@ -149,7 +150,7 @@ function AboutUsBody() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Creativity</h3>
-                      <p className="text-gray-600">Inspiring ideas that shape the future</p>
+                      <p className="text-sm text-gray-700">Inspiring ideas that shape the future</p>
                     </div>
                   </div>
                 </motion.div>
@@ -160,7 +161,7 @@ function AboutUsBody() {
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">Community</h3>
-                      <p className="text-gray-600">Empowering connections and fostering growth</p>
+                      <p className="text-sm text-gray-700">Empowering connections and fostering growth</p>
                     </div>
                   </div>
                 </motion.div>
@@ -189,18 +190,76 @@ function AboutUsBody() {
               >
                 <div className="flex flex-col items-center text-center sm:flex-row sm:text-left">
                   <div className="mb-6 sm:mb-0 sm:mr-8">
-                    <div className="relative mx-auto inline-block size-40 overflow-hidden rounded-xl bg-white p-1 shadow-md sm:mx-0">
-                      <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-200 to-primary-400 opacity-50 blur-md"></div>
-                      <div className="relative size-full overflow-hidden rounded-lg">
-                        <Image
-                          src={lead.image}
-                          alt={`${lead.name}'s Profile Picture`}
-                          height={300}
-                          width={300}
-                          className="size-full object-cover transition-transform duration-300 hover:scale-105"
-                        />
-                      </div>
-                    </div>
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <div className="cursor-pointer">
+                          <div className="relative mx-auto inline-block size-40 overflow-hidden rounded-xl bg-white p-1 shadow-md sm:mx-0">
+                            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-200 to-primary-400 opacity-50 blur-md"></div>
+                            <div className="relative size-full overflow-hidden rounded-lg">
+                              <Image
+                                src={lead.image}
+                                alt={`${lead.name}'s Profile Picture`}
+                                height={300}
+                                width={300}
+                                className="size-full object-cover transition-transform duration-300 hover:scale-105"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </HoverCardTrigger>
+                      <HoverCardContent className="w-80 backdrop-blur-sm">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="overflow-hidden rounded-lg">
+                              <Image 
+                                src={lead.image} 
+                                alt={lead.name}
+                                width={60}
+                                height={60}
+                                className="size-14 object-cover"
+                              />
+                            </div>
+                            <div>
+                              <h4 className="text-lg font-semibold text-primary">{lead.name}</h4>
+                              <p className="text-sm text-gray-600">{lead.role}</p>
+                              <div className="mt-2 flex gap-2">
+                                {lead.github && (
+                                  <a 
+                                    href={`https://github.com/${lead.github}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex size-7 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-colors hover:bg-primary hover:text-white"
+                                  >
+                                    <svg className="size-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M12 2C6.477 2 2 6.477 2 12C2 16.42 4.87 20.17 8.84 21.5C9.34 21.58 9.5 21.27 9.5 21C9.5 20.77 9.5 20.14 9.5 19.31C6.73 19.91 6.14 17.97 6.14 17.97C5.68 16.81 5.03 16.5 5.03 16.5C4.12 15.88 5.1 15.9 5.1 15.9C6.1 15.97 6.63 16.93 6.63 16.93C7.5 18.45 8.97 18 9.54 17.76C9.63 17.11 9.89 16.67 10.17 16.42C7.95 16.17 5.62 15.31 5.62 11.5C5.62 10.39 6 9.5 6.65 8.79C6.55 8.54 6.2 7.5 6.75 6.15C6.75 6.15 7.59 5.88 9.5 7.17C10.29 6.95 11.15 6.84 12 6.84C12.85 6.84 13.71 6.95 14.5 7.17C16.41 5.88 17.25 6.15 17.25 6.15C17.8 7.5 17.45 8.54 17.35 8.79C18 9.5 18.38 10.39 18.38 11.5C18.38 15.32 16.04 16.16 13.81 16.41C14.17 16.72 14.5 17.33 14.5 18.26C14.5 19.6 14.5 20.68 14.5 21C14.5 21.27 14.66 21.59 15.17 21.5C19.14 20.16 22 16.42 22 12C22 6.477 17.523 2 12 2Z" fill="currentColor"/>
+                                    </svg>
+                                  </a>
+                                )}
+                                
+                                {lead.linkedin && (
+                                  <a 
+                                    href={`https://linkedin.com/in/${lead.linkedin}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="flex size-7 items-center justify-center rounded-full bg-gray-100 text-gray-700 transition-colors hover:bg-blue-600 hover:text-white"
+                                  >
+                                    <svg className="size-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M20.47 2H3.53C2.64 2 2 2.64 2 3.53V20.47C2 21.36 2.64 22 3.53 22H20.47C21.36 22 22 21.36 22 20.47V3.53C22 2.64 21.36 2 20.47 2ZM8.09 18.74H5.07V9.24H8.09V18.74ZM6.59 7.98C5.61 7.98 4.82 7.19 4.82 6.21C4.82 5.23 5.61 4.44 6.59 4.44C7.57 4.44 8.36 5.23 8.36 6.21C8.36 7.19 7.56 7.98 6.59 7.98ZM18.91 18.74H15.89V14.47C15.89 13.31 15.87 11.8 14.25 11.8C12.6 11.8 12.35 13.09 12.35 14.41V18.74H9.33V9.24H12.21V10.55H12.25C12.64 9.8 13.58 9.01 15 9.01C18.06 9.01 18.91 11.09 18.91 13.8V18.74Z" fill="currentColor"/>
+                                    </svg>
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="mt-2 space-y-3">
+                            <p className="text-sm text-neutral-7">
+                              {lead.bio ?? "Leading our development team with expertise in full-stack development and a passion for creating elegant, user-friendly applications."}
+                            </p>
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
                   </div>
                   <div>
                     <div className="mb-2 inline-flex rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary">
@@ -208,10 +267,39 @@ function AboutUsBody() {
                     </div>
                     <h3 className="mb-2 text-2xl font-bold text-gray-800">{lead.name}</h3>
                     <p className="mb-4 text-lg text-gray-600">{lead.role}</p>
-                    <p className="text-gray-600">
+                    <p className="text-sm text-gray-600">
                       Leading our development team with expertise in full-stack development
                       and a passion for creating elegant, user-friendly applications.
                     </p>
+                    <div className="mt-4 flex gap-2">
+                      {lead.github && (
+                        <a 
+                          href={`https://github.com/${lead.github}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-primary/10 hover:text-primary"
+                        >
+                          <svg className="size-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2C6.477 2 2 6.477 2 12C2 16.42 4.87 20.17 8.84 21.5C9.34 21.58 9.5 21.27 9.5 21C9.5 20.77 9.5 20.14 9.5 19.31C6.73 19.91 6.14 17.97 6.14 17.97C5.68 16.81 5.03 16.5 5.03 16.5C4.12 15.88 5.1 15.9 5.1 15.9C6.1 15.97 6.63 16.93 6.63 16.93C7.5 18.45 8.97 18 9.54 17.76C9.63 17.11 9.89 16.67 10.17 16.42C7.95 16.17 5.62 15.31 5.62 11.5C5.62 10.39 6 9.5 6.65 8.79C6.55 8.54 6.2 7.5 6.75 6.15C6.75 6.15 7.59 5.88 9.5 7.17C10.29 6.95 11.15 6.84 12 6.84C12.85 6.84 13.71 6.95 14.5 7.17C16.41 5.88 17.25 6.15 17.25 6.15C17.8 7.5 17.45 8.54 17.35 8.79C18 9.5 18.38 10.39 18.38 11.5C18.38 15.32 16.04 16.16 13.81 16.41C14.17 16.72 14.5 17.33 14.5 18.26C14.5 19.6 14.5 20.68 14.5 21C14.5 21.27 14.66 21.59 15.17 21.5C19.14 20.16 22 16.42 22 12C22 6.477 17.523 2 12 2Z" fill="currentColor"/>
+                          </svg>
+                          <span>@{lead.github}</span>
+                        </a>
+                      )}
+                      
+                      {lead.linkedin && (
+                        <a 
+                          href={`https://linkedin.com/in/${lead.linkedin}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1 rounded-md bg-gray-100 px-3 py-1 text-sm text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                        >
+                          <svg className="size-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20.47 2H3.53C2.64 2 2 2.64 2 3.53V20.47C2 21.36 2.64 22 3.53 22H20.47C21.36 22 22 21.36 22 20.47V3.53C22 2.64 21.36 2 20.47 2ZM8.09 18.74H5.07V9.24H8.09V18.74ZM6.59 7.98C5.61 7.98 4.82 7.19 4.82 6.21C4.82 5.23 5.61 4.44 6.59 4.44C7.57 4.44 8.36 5.23 8.36 6.21C8.36 7.19 7.56 7.98 6.59 7.98ZM18.91 18.74H15.89V14.47C15.89 13.31 15.87 11.8 14.25 11.8C12.6 11.8 12.35 13.09 12.35 14.41V18.74H9.33V9.24H12.21V10.55H12.25C12.64 9.8 13.58 9.01 15 9.01C18.06 9.01 18.91 11.09 18.91 13.8V18.74Z" fill="currentColor"/>
+                          </svg>
+                          <span>LinkedIn</span>
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -222,21 +310,221 @@ function AboutUsBody() {
                   <motion.div 
                     key={index} 
                     variants={itemVariants}
-                    className="group overflow-hidden rounded-xl bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-blue-50 hover:shadow-md"
+                    className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:bg-blue-50 hover:shadow-md"
                   >
-                    <div className="mb-4 overflow-hidden rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 shadow-inner">
-                      <Image
-                        src={developer.image}
-                        alt={`${developer.name}'s Profile Picture`}
-                        height={300}
-                        width={300}
-                        className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                    <h3 className="mb-1 text-lg font-semibold text-gray-800 group-hover:text-primary">{developer.name}</h3>
-                    <p className="text-sm text-gray-600">{developer.role}</p>
+                    <HoverCard>
+                      <HoverCardTrigger asChild>
+                        <div className="cursor-pointer">
+                          <div className="from-primary-50 mb-4 overflow-hidden rounded-xl bg-gradient-to-r to-primary-100 shadow-inner">
+                            <Image
+                              src={developer.image}
+                              alt={`${developer.name}'s Profile Picture`}
+                              height={300}
+                              width={300}
+                              className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          </div>
+                          <h3 className="mb-1 text-lg font-semibold text-gray-800 group-hover:text-primary">{developer.name}</h3>
+                          <p className="text-sm text-gray-600">{developer.role}</p>
+                        </div>
+                      </HoverCardTrigger>
+                      <HoverCardContent className="w-72 backdrop-blur-sm">
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="overflow-hidden rounded-lg">
+                              <Image 
+                                src={developer.image} 
+                                alt={developer.name}
+                                width={50}
+                                height={50}
+                                className="size-12 object-cover"
+                              />
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-primary">{developer.name}</h4>
+                              <p className="text-xs text-gray-500">{developer.role}</p>
+                            </div>
+                          </div>
+                          
+                          <p className="text-sm text-gray-600">
+                            {developer.bio || "Software developer passionate about creating elegant, user-friendly applications."}
+                          </p>
+                          
+                          <div className="mt-2 flex gap-2">
+                            {developer.github && (
+                              <a 
+                                href={`https://github.com/${developer.github}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 rounded-md bg-gray-100 px-3 py-1 text-xs text-gray-700 transition-colors hover:bg-primary/10 hover:text-primary"
+                              >
+                                <svg className="size-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M12 2C6.477 2 2 6.477 2 12C2 16.42 4.87 20.17 8.84 21.5C9.34 21.58 9.5 21.27 9.5 21C9.5 20.77 9.5 20.14 9.5 19.31C6.73 19.91 6.14 17.97 6.14 17.97C5.68 16.81 5.03 16.5 5.03 16.5C4.12 15.88 5.1 15.9 5.1 15.9C6.1 15.97 6.63 16.93 6.63 16.93C7.5 18.45 8.97 18 9.54 17.76C9.63 17.11 9.89 16.67 10.17 16.42C7.95 16.17 5.62 15.31 5.62 11.5C5.62 10.39 6 9.5 6.65 8.79C6.55 8.54 6.2 7.5 6.75 6.15C6.75 6.15 7.59 5.88 9.5 7.17C10.29 6.95 11.15 6.84 12 6.84C12.85 6.84 13.71 6.95 14.5 7.17C16.41 5.88 17.25 6.15 17.25 6.15C17.8 7.5 17.45 8.54 17.35 8.79C18 9.5 18.38 10.39 18.38 11.5C18.38 15.32 16.04 16.16 13.81 16.41C14.17 16.72 14.5 17.33 14.5 18.26C14.5 19.6 14.5 20.68 14.5 21C14.5 21.27 14.66 21.59 15.17 21.5C19.14 20.16 22 16.42 22 12C22 6.477 17.523 2 12 2Z" fill="currentColor"/>
+                                </svg>
+                                <span>@{developer.github}</span>
+                              </a>
+                            )}
+                            
+                            {developer.linkedin && (
+                              <a 
+                                href={`https://linkedin.com/in/${developer.linkedin}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 rounded-md bg-gray-100 px-3 py-1 text-xs text-gray-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                              >
+                                <svg className="size-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M20.47 2H3.53C2.64 2 2 2.64 2 3.53V20.47C2 21.36 2.64 22 3.53 22H20.47C21.36 22 22 21.36 22 20.47V3.53C22 2.64 21.36 2 20.47 2ZM8.09 18.74H5.07V9.24H8.09V18.74ZM6.59 7.98C5.61 7.98 4.82 7.19 4.82 6.21C4.82 5.23 5.61 4.44 6.59 4.44C7.57 4.44 8.36 5.23 8.36 6.21C8.36 7.19 7.56 7.98 6.59 7.98ZM18.91 18.74H15.89V14.47C15.89 13.31 15.87 11.8 14.25 11.8C12.6 11.8 12.35 13.09 12.35 14.41V18.74H9.33V9.24H12.21V10.55H12.25C12.64 9.8 13.58 9.01 15 9.01C18.06 9.01 18.91 11.09 18.91 13.8V18.74Z" fill="currentColor"/>
+                                </svg>
+                                <span>LinkedIn</span>
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
                   </motion.div>
                 ))}
+              </div>
+            </motion.div>
+
+            {/* Contact Us Section - Enhanced with creative design */}
+            <motion.div 
+              className="relative z-10 mt-16"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              <div className="absolute -inset-1 -z-10 animate-pulse rounded-2xl bg-gradient-to-r from-primary-300 via-blue-300 to-purple-300 opacity-20 blur-xl"></div>
+              
+              <h2 className="mb-6 flex items-center text-2xl font-bold text-gray-800">
+                <span className="mr-4 flex size-12 items-center justify-center rounded-lg bg-gradient-to-br from-primary-100 to-primary-200 p-2 text-primary shadow-md">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="size-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label='Contact Icon'>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </span>
+                Business Solutions
+              </h2>
+              
+              <div className="relative overflow-hidden rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 p-8 shadow-sm">
+                <div className="absolute bottom-0 right-0 opacity-10">
+                  <svg width="180" height="180" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 16V8.00002C21 6.34317 19.6569 5.00002 18 5.00002H6C4.34315 5.00002 3 6.34317 3 8.00002V16C3 17.6569 4.34315 19 6 19H18C19.6569 19 21 17.6569 21 16Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3 8L10.8906 13.2604C11.5624 13.7083 12.4376 13.7083 13.1094 13.2604L21 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                
+                <div className="flex flex-col items-start gap-8 md:flex-row">
+                  <div className="flex-1">
+                    <h3 className="mb-3 flex items-center text-xl font-bold text-gray-800">
+                      <span className="mr-2 text-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </span>
+                      Enterprise Solutions
+                    </h3>
+                    <p className="mb-4 text-base text-gray-700">
+                      Looking to transform your business with a custom platform? Our team delivers enterprise-grade solutions 
+                      tailored to your unique requirements with the latest technology stack and best practices.
+                    </p>
+                    <ul className="mb-6 space-y-2">
+                      {[
+                        { icon: "💼", text: "Custom Business Platforms" },
+                        { icon: "🛒", text: "E-commerce Solutions" },
+                        { icon: "📊", text: "Analytics Dashboards" },
+                        { icon: "🔄", text: "Process Automation" }
+                      ].map((item, i) => (
+                        <motion.li 
+                          key={i}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 * i, duration: 0.5 }}
+                          className="flex items-center gap-2 text-sm text-gray-600"
+                        >
+                          <span className="bg-primary-50 flex size-6 items-center justify-center rounded-full text-primary">
+                            {item.icon}
+                          </span>
+                          {item.text}
+                        </motion.li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="w-full flex-1">
+                    <div className="rounded-xl border border-blue-50 bg-white p-5 shadow-sm">
+                      <h4 className="mb-4 flex items-center text-lg font-semibold text-gray-800">
+                        <span className="mr-2 text-primary">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </span>
+                        Get in Touch
+                      </h4>
+                      <p className="mb-5 text-sm text-gray-600">
+                        Ready to discuss your project? Our team of experts is just an email away.
+                      </p>
+                      <a 
+                        href="mailto:business@merchtrack.tech" 
+                        className="flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-blue-600 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        business@merchtrack.tech
+                      </a>
+                      
+                      <div className="mt-6 border-t border-gray-100 pt-6">
+                        <p className="mb-2 text-xs font-medium text-gray-500">TRUSTED BY BUSINESSES WORLDWIDE</p>
+                        <div className="flex items-center justify-between opacity-70">
+                          {[1, 2, 3, 4].map((_, i) => (
+                            <div key={i} className="h-4 w-16 animate-pulse rounded-md bg-gray-200"></div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <motion.div 
+                  className="mt-8 flex flex-col justify-center gap-4 sm:flex-row" 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  {[
+                    { 
+                      icon: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>,
+                      title: "Custom Development",
+                      desc: "Tailor-made solutions" 
+                    },
+                    { 
+                      icon: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>,
+                      title: "Fast Deployment",
+                      desc: "Quick time-to-market" 
+                    },
+                    { 
+                      icon: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>,
+                      title: "Secure & Reliable",
+                      desc: "Enterprise-grade security" 
+                    }
+                  ].map((item, i) => (
+                    <div key={i} className="flex flex-1 items-center gap-3 rounded-lg border border-blue-50 bg-white/60 p-4 backdrop-blur-sm">
+                      <div className="bg-primary-50 flex size-10 items-center justify-center rounded-full text-primary">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <h5 className="font-medium text-gray-800">{item.title}</h5>
+                        <p className="text-xs text-gray-500">{item.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
               </div>
             </motion.div>
           </div>

@@ -7,13 +7,28 @@ import { formatCurrency } from '@/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { useRolePricing } from '@/hooks/use-role-pricing';
+import { useUserStore } from '@/stores/user.store';
 
 export function OrderSummary() {
   const { cartItems } = useCartStore();
+  const { user } = useUserStore();
 
   const selectedItems = cartItems.filter(item => item.selected);
   const subtotal = selectedItems.reduce(
-    (total, item) => total + (Number(item.variant.rolePricing?.price) || Number(item.variant.price)) * item.quantity,
+    (total, item) => {
+      const { price } = useRolePricing({
+        variant: {
+          price: Number(item.variant.price),
+          // @ts-expect-error - type assertion is not needed
+          rolePricing: item.variant.rolePricing,
+        },
+        customerCollege: user?.college as College,
+        customerRole: user?.role as Role,
+        productPostedByCollege: item.variant.product.postedBy?.college as College,
+      }); 
+      return total + price * item.quantity;
+    },
     0
   );
 
@@ -49,38 +64,50 @@ export function OrderSummary() {
       <CardContent className="grid gap-6 bg-white">
         <ScrollArea className="h-[40vh] rounded-md border p-4">
           <div className="space-y-4">
-            {selectedItems.map((item) => (
-              <div key={item.variantId} className="flex space-x-4">
-                <div className="relative size-16 overflow-hidden rounded-md border bg-neutral-50">
-                  {item.variant.product?.imageUrl && (
-                    <Image
-                      src={item.variant.product.imageUrl[0]}
-                      alt={item.variant.product.title}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
-                  )}
-                </div>
-                <div className="flex flex-1 flex-col">
-                  <span className="font-medium text-primary">
-                    {item.variant.product?.title}
-                  </span>
-                  <span className="text-muted-foreground text-sm">
-                    {item.variant.variantName}
-                  </span>
-                  <div className="mt-auto flex justify-between">
-                    <span className="text-muted-foreground flex items-center gap-1 text-sm">
-                      <ShoppingBag className="size-4" />
-                      Qty: {item.quantity}
+            {selectedItems.map((item) => {
+              const { price } = useRolePricing({
+                variant: {
+                  price: Number(item.variant.price),
+                  // @ts-expect-error - type assertion is not needed
+                  rolePricing: item.variant.rolePricing,
+                },
+                customerCollege: user?.college as College,
+                customerRole: user?.role as Role,
+                productPostedByCollege: item.variant.product.postedBy?.college as College,
+              }); 
+              return (
+                <div key={item.variantId} className="flex space-x-4">
+                  <div className="relative size-16 overflow-hidden rounded-md border bg-neutral-50">
+                    {item.variant.product?.imageUrl && (
+                      <Image
+                        src={item.variant.product.imageUrl[0]}
+                        alt={item.variant.product.title}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col">
+                    <span className="font-medium text-primary">
+                      {item.variant.product?.title}
                     </span>
-                    <span className="font-medium">
-                      {formatCurrency((Number(item.variant.rolePricing?.price) || Number(item.variant.price)) * item.quantity)}
+                    <span className="text-muted-foreground text-sm">
+                      {item.variant.variantName}
                     </span>
+                    <div className="mt-auto flex justify-between">
+                      <span className="text-muted-foreground flex items-center gap-1 text-sm">
+                        <ShoppingBag className="size-4" />
+                        Qty: {item.quantity}
+                      </span>
+                      <span className="font-medium">
+                        {formatCurrency(price * item.quantity)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </ScrollArea>
 

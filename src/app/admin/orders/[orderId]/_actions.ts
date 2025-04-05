@@ -7,6 +7,7 @@ import { verifyPermission } from "@/utils/permissions";
 import { sendOrderStatusEmail, sendPaymentStatusEmail } from "@/lib/email-service";
 import { generateSurvey } from "@/actions/survey.actions";
 import { formatCurrency } from "@/utils";
+import { createLog } from "@/actions/logs.actions";
 
 /**
  * Updates the status of an order and notifies the customer of the change.
@@ -78,6 +79,7 @@ export async function updateOrderStatus(
         where: { id: orderId },
         data: {
           status: newStatus,
+          paymentStatus: newStatus === OrderStatus.CANCELLED ? OrderPaymentStatus.REFUNDED : existingOrder.paymentStatus,
           processedById: userId,
           customerNotes: `${existingOrder.customerNotes ?? ''}${existingOrder.customerNotes ? '\n' : ''}Status changed to ${newStatus}: ${reason}`,
         },
@@ -440,13 +442,15 @@ export async function refundPayment(
       if (totalPaidAmount > 0) {
         newPaymentStatus = OrderPaymentStatus.DOWNPAYMENT;
       }
+      if (order.status === OrderStatus.CANCELLED) {
+        newPaymentStatus = OrderPaymentStatus.REFUNDED;
+      }
 
       // Update order status
       await tx.order.update({
         where: { id: orderId },
         data: { 
           paymentStatus: newPaymentStatus,
-          status: OrderStatus.PROCESSING,
           processedById: userId,
           customerNotes: `${order.customerNotes ? order.customerNotes + '\n' : ''}Refund processed: ${formatCurrency(amount)} (${reason})`
         }
@@ -621,6 +625,179 @@ export async function removeOrderItem(
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Failed to remove item'
+    };
+  }
+}
+
+/**
+ * Updates the customer notes for an order.
+ */
+export async function updateOrderNotes(
+  orderId: string,
+  notes: string,
+  userId: string
+): Promise<ActionsReturnType<{ success: boolean }>> {
+  if (!await verifyPermission({
+    userId,
+    permissions: {
+      orders: { canUpdate: true }
+    }
+  })) {
+    return {
+      success: false,
+      message: "You don't have permission to update orders"
+    };
+  }
+
+  try {
+    // Get existing order to compare changes
+    const existingOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        customerNotes: true,
+        customer: {
+          select: {
+            email: true,
+            id: true,
+          }
+        }
+      }
+    });
+
+    if (!existingOrder) {
+      return {
+        success: false,
+        message: "Order not found"
+      };
+    }
+
+    // Log the change
+    const change = `Customer notes updated from: "${existingOrder.customerNotes ?? ''}" to "${notes ?? ''}"`;
+
+    // Update the order notes
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        customerNotes: notes,
+      }
+    });
+
+    await createLog({
+      userId: existingOrder.customer.id,
+      reason: "Order notes updated",
+      systemText: change,
+      userText: `Customer notes updated for order ${orderId}`,
+      createdById: userId,
+    });
+
+    revalidatePath(`/admin/orders/${orderId}`);
+    return {
+      success: true,
+      data: { success: true }
+    };
+  } catch (error) {
+    console.error('Failed to update order notes:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update order notes'
+    };
+  }
+}
+
+/**
+ * Updates the customer note for a specific order item.
+ */
+export async function updateOrderItemNote(
+  orderId: string,
+  itemId: string,
+  note: string,
+  userId: string
+): Promise<ActionsReturnType<{ success: boolean }>> {
+  if (!await verifyPermission({
+    userId,
+    permissions: {
+      orders: { canUpdate: true }
+    }
+  })) {
+    return {
+      success: false,
+      message: "You don't have permission to update order items"
+    };
+  }
+
+  try {
+    // Get existing item to compare changes
+    const existingItem = await prisma.orderItem.findUnique({
+      where: { id: itemId },
+      select: {
+        customerNote: true,
+        variant: {
+          select: {
+            product: {
+              select: {
+                title: true
+              }
+            },
+            variantName: true
+          }
+        },
+        order: {
+          select: {
+            customer: {
+              select: {
+                id: true,
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!existingItem) {
+      return {
+        success: false,
+        message: "Order item not found"
+      };
+    }
+
+    // Log the change
+    const productInfo = `${existingItem.variant?.product?.title} - ${existingItem.variant?.variantName}`;
+    const change = `Customer note updated from: "${existingItem.customerNote ?? ''}" to "${note ?? ''}" for item ${productInfo}`;
+
+    // Update the item note
+    await prisma.orderItem.update({
+      where: { id: itemId },
+      data: {
+        customerNote: note
+      }
+    });
+
+    await createLog({
+      userId: existingItem.order.customer.id,
+      reason: "Order item note updated",
+      systemText: change,
+      userText: `Customer note updated for item ${productInfo}`,
+      createdById: userId,
+    });
+
+    // Update the order processed by ID
+    await prisma.order.update({
+      where: { id: orderId },
+      data: {
+        processedById: userId
+      }
+    });
+
+    revalidatePath(`/admin/orders/${orderId}`);
+    return {
+      success: true,
+      data: { success: true }
+    };
+  } catch (error) {
+    console.error('Failed to update order item note:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to update order item note'
     };
   }
 }

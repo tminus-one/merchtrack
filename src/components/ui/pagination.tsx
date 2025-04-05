@@ -29,35 +29,32 @@ export function Pagination({
 }: Readonly<PaginationProps>) {
   const goToPage = (newPage: number) => {
     if (newPage >= 1 && newPage <= total) {
+      // If we're scrolling, we need to handle the scroll after the state update
       if (scrollToId) {
-        // First update the page state
-        onChange(newPage);
-        
-        // Then wait for React to finish rendering with the updated state
-        setTimeout(() => {
-          // Use requestAnimationFrame to ensure we're in the next paint cycle
+        const element = document.getElementById(scrollToId);
+        if (element) {
+          // Call onChange first
+          onChange(newPage);
+          
+          // Then schedule the scroll for the next paint cycle
           requestAnimationFrame(() => {
-            const element = document.getElementById(scrollToId);
-            if (element) {
-              // Recalculate position after the DOM has updated
-              const elementRect = element.getBoundingClientRect();
-              const absoluteElementTop = elementRect.top + window.scrollY;
-              const middle = absoluteElementTop - (window.innerHeight / 2) + (elementRect.height / 2);
-              
-              window.scrollTo({
-                top: middle,
-                behavior: 'smooth'
-              });
-            }
+            const elementRect = element.getBoundingClientRect();
+            const absoluteElementTop = elementRect.top + window.scrollY;
+            const middle = absoluteElementTop - (window.innerHeight / 2) + (elementRect.height / 2);
+            
+            window.scrollTo({
+              top: middle,
+              behavior: 'smooth'
+            });
           });
-        }, 150); // Delay to ensure content has loaded
-        
-        // Return early to prevent the onChange call below
-        return;
+        } else {
+          // If element not found, just update the page
+          onChange(newPage);
+        }
+      } else {
+        // No scrolling needed, just update the page
+        onChange(newPage);
       }
-      
-      // Only call onChange if we're not scrolling
-      onChange(newPage);
     }
   };
 

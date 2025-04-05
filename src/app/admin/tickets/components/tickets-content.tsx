@@ -10,6 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTicketsQuery } from "@/hooks/tickets.hooks";
 import { useUserStore } from "@/stores/user.store";
+import { PaginationFooter } from "@/app/admin/survey/components/pagination-footer";
+
+const ITEMS_PER_PAGE = 5; 
 
 export default function TicketsContent() {
   const [searchInput, setSearchInput] = useState("");
@@ -17,9 +20,14 @@ export default function TicketsContent() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("ALL");
   const [assignedToFilter, setAssignedToFilter] = useState("ALL");
+  const [page, setPage] = useState(1);
   const { userId } = useUserStore();
 
   const { data: tickets, isLoading, refetch } = useTicketsQuery({
+    page,
+    take: ITEMS_PER_PAGE,
+    skip: (page - 1) * ITEMS_PER_PAGE,
+    limit: ITEMS_PER_PAGE,
     where: {
       ...(statusFilter !== "ALL" && { status: statusFilter }),
       ...(priorityFilter !== "ALL" && { priority: priorityFilter }),
@@ -118,6 +126,13 @@ export default function TicketsContent() {
           />
         </ScrollArea>
       </Card>
+      <PaginationFooter 
+        currentPage={page} 
+        onPageChange={setPage} 
+        totalItems={tickets?.metadata.total ?? 0} 
+        itemsPerPage={ITEMS_PER_PAGE} 
+        totalPages={tickets?.metadata.lastPage ?? 1}
+      />
     </div>
   );
 }

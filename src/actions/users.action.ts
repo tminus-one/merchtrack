@@ -109,6 +109,7 @@ export async function getUsers({userId, params}: GetUsersParams): Promise<Action
     };
   }
   
+  
   const { skip, take, page } = calculatePagination(params);
 
   try {
@@ -123,7 +124,9 @@ export async function getUsers({userId, params}: GetUsersParams): Promise<Action
           take,
           orderBy: params.orderBy,
         }),
-        prisma.user.count()
+        prisma.user.count({
+          where: params.where
+        })
       ]);
     }
 

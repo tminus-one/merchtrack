@@ -1,0 +1,64 @@
+name: 6. ROLLBACK - Return Previous versions
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit_tag:
+        description: 'Rollback version'
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: 'ubuntu-latest'
+    environment: Production
+    env:
+      DEPLOYED_LINK: https://merchtrack.tech
+      ENVIRONMENT: Production
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+    - name: Check if actor is repository owner
+      run: |
+        if [ "${{ github.actor }}" != "${{ github.repository_owner }}" ]; then
+          echo "This workflow can only be run by the repository owner."
+          exit 1
+        fi
+
+    - name: Validate commit tag format
+      run: |
+        if [[ ! "${{ github.event.inputs.commit_tag }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "Invalid commit tag format. Expected format: <number>.<number>.<number>"
+          exit 1
+        fi
+  
+    - name: Create env file
+      env:
+        DATABASE_URL: ${{ env.DATABASE_URL }}
+      run: |
+        echo "DATABASE_URL=${DATABASE_URL}" > .env
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
+      with:
+        registry: https://index.docker.io/v1/
+        username: ${{ env.DOCKER_USERNAME }}
+        password: ${{ env.DOCKER_PASSWORD }}
+    
+    - name: Pull staging image
+      run: |
+        docker pull gabcat/merchtrack:${{ github.event.inputs.commit_tag }}
+    
+    - name: Tag image for production
+      run: |
+        docker tag gabcat/merchtrack:${{ github.event.inputs.commit_tag }} gabcat/merchtrack:latest
+    
+    - name: Push production tags to Docker Hub
+      run: |
+        docker push gabcat/merchtrack:latest

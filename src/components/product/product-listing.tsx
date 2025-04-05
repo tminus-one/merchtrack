@@ -7,6 +7,7 @@ import { motion, AnimatePresence, useInView } from "framer-motion";
 import { SignInButton } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { Tag } from "lucide-react";
+import { Role } from "@prisma/client";
 import ProductRecommendations from "./product-recommendations";
 import UserReview from "./user-review";
 import ProductReviews from "./product-reviews";
@@ -148,6 +149,9 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
         product: {
           title: product.title,
           imageUrl: product.imageUrl,
+          postedBy: {
+            college: product.postedBy.college as Role
+          }
         }
       }
     });
@@ -229,7 +233,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                   <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-semibold text-primary">{pricingDetails.formattedPrice}</h1>
                   </div>
-                  {pricingDetails.appliedRole !== "OTHERS" && (
+                  {(pricingDetails.appliedRole !== "OTHERS" &&  pricingDetails.formattedPrice !== pricingDetails.originalPrice) && (
                     <p className="text-sm text-green-600">
                       Special pricing for {pricingDetails.appliedRole.toLowerCase().replace('_', ' ')}
                     </p>
@@ -249,7 +253,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
               variants={productVariants}
               custom={1}
             >
-              <p className="text-sm" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}></p>
+              <p className="my-4 mb-6 text-sm" suppressHydrationWarning dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}></p>
               <div className="mt-4 flex flex-wrap gap-1">
                 {product?.tags?.map((tag, index) => (
                   <div key={index} className="mr-1 inline-flex items-center rounded-md bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -306,7 +310,7 @@ const ProductListing: React.FC<ProductListingProps> = ({ product, slug }) => {
                       "h-auto w-full min-w-[120px] border-2 rounded-lg transition-all duration-300 ease-in-out",
                       isSelected 
                         ? "shadow-md ring-2 ring-primary border-primary-300 ring-offset-1 bg-primary-100 hover:bg-primary-100" 
-                        : "hover:border-primary/60 hover:shadow-sm",
+                        : "hover:shadow-sm",
                       isOutOfStock 
                         ? "cursor-not-allowed" 
                         : "cursor-pointer"

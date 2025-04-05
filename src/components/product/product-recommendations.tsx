@@ -23,11 +23,9 @@ export default function ProductRecommendations() {
     page,
   });
 
-  function handlePageChange(page: number) {
+  const handlePageChange = React.useCallback((page: number) => {
     setPage(page);
-  }
-
-
+  }, []);
 
   const totalItems = recommendedProducts?.metadata.total || 0;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);

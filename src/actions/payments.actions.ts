@@ -1,6 +1,6 @@
 'use server';
 
-import { OrderPaymentStatus, Payment, PaymentSite, PaymentStatus, PaymentMethod, Prisma, OrderStatus } from "@prisma/client";
+import { OrderPaymentStatus, Payment, PaymentSite, PaymentStatus, PaymentMethod, Prisma, OrderStatus, User } from "@prisma/client";
 import prisma from "@/lib/db";
 import { QueryParams, PaginatedResponse } from "@/types/common";
 import { GetObjectByTParams } from "@/types/extended";
@@ -41,7 +41,7 @@ import { calculatePagination, processActionReturnData, verifyPermission } from "
 export async function getPayments(
   userId: string,
   params: QueryParams = {}
-): Promise<ActionsReturnType<PaginatedResponse<Payment[]>>> {
+): Promise<ActionsReturnType<PaginatedResponse<(Payment & { user: User })[]>>> {
   const isAuthorized = await verifyPermission({
     userId: userId,
     permissions: {
@@ -67,18 +67,18 @@ export async function getPayments(
           skip,
           take
         }),
-        prisma.payment.count({ where: { isDeleted: false } })
+        prisma.payment.count({ where: isAuthorized ? { ...params.where } : { userId } })
       ]);
     }
 
-    const lastPage = Math.ceil(total as number / take);
+    const lastPage = Math.ceil(total / take);
 
     return {
       success: true,
       data: {
-        data: processActionReturnData(payments, params.limitFields) as Payment[],
+        data: processActionReturnData(payments, params.limitFields) as (Payment & { user: User })[],
         metadata: {
-          total: total as number,
+          total: total,
           page,
           lastPage,
           hasNextPage: page < lastPage,

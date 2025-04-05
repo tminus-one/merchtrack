@@ -57,8 +57,9 @@ const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
+              className="h-full"
             >
-              <Card className="group overflow-hidden shadow-sm">
+              <Card className="group h-full overflow-hidden shadow-sm">
                 <CardHeader className="p-0">
                   <div className="relative aspect-square">
                     <Image
@@ -83,10 +84,10 @@ const FeaturedProducts = ({ products }: FeaturedProductsProps) => {
                     </h3>
                   </Link>
                   <p
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }} 
+                    dangerouslySetInnerHTML={{ __html: product.description ? DOMPurify.sanitize(product.description) : `Grab your ${product.name} today.` }} 
                     className="mt-2 line-clamp-2 text-sm text-neutral-7" />
                 </CardContent>
-                <CardFooter className="p-4 pt-0">
+                <CardFooter className="mb-auto p-4 pt-0">
                   <Link href={`/products/${product.slug}`} className="w-full">
                     <Button variant="outline" className="w-full border-primary text-primary">
                       <ShoppingCart className="mr-2 size-4" />
