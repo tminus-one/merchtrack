@@ -59,7 +59,7 @@ jobs:
         run: |
           cd ~/preview/${{ steps.pr-number.outputs.pr_number }}
           if [ -f "compose.yml" ]; then
-            docker compose down || true
+            sudo docker compose down || true
             echo "Container stopped and removed"
           else
             echo "No compose.yml file found, skipping container removal"
@@ -68,7 +68,7 @@ jobs:
       - name: Remove Docker image
         run: |
           # Try to remove the Docker image
-          docker rmi gabcat/merchtrack:preview-${{ steps.pr-number.outputs.pr_number }} || true
+          sudo docker rmi gabcat/merchtrack:preview-${{ steps.pr-number.outputs.pr_number }} || true
           echo "Docker image removal attempted"
 
       - name: Find and remove Nginx proxy host
