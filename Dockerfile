@@ -7,7 +7,10 @@ COPY . .
 ENV NODE_ENV=production
 ENV APP_ENV=build
 
-RUN npm i -g dotenv-cli@8.0.0 && npx next telemetry disable && dotenv -e .env -- npm run build
+RUN npm i -g dotenv-cli@8.0.0 corepack && \
+    npx next telemetry disable && \
+    corepack enable pnpm && \
+    dotenv -e .env -- pnpm run build
 
 # Stage: Runner
 FROM node:22.12.0-alpine3.21 AS runner
