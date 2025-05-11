@@ -2,6 +2,11 @@ name: 1. PULL REQUEST - Preview Deployment
 
 on:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Pull request number to deploy'
+        required: true
+        type: number
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -12,37 +17,32 @@ jobs:
     runs-on: ubuntu-latest
     environment: Staging
     outputs:
-      pr_number: ${{ github.event.pull_request.number }}
+      pr_number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
       comment_id: ${{ steps.initial_comment.outputs.comment-id }}
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
-
       - name: Find Existing Deployment Comment
         id: find_comment
         uses: peter-evans/find-comment@v3
         with:
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
           comment-author: "github-actions[bot]"
           body-includes: "Deployment"
           token: ${{ secrets.GITHUB_TOKEN }}
-
+          
       - name: Initial Deployment Notification
         id: initial_comment
         uses: peter-evans/create-or-update-comment@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           comment-id: ${{ steps.find_comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
+          issue-number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
           body: |
             # 🔄 Preview Deployment in Progress
 
             <div style="background-color: #e8f5fd; padding: 15px; border-radius: 8px; border-left: 5px solid #2196F3; margin-bottom: 20px;">
               <h2 style="color: #0d47a1; margin-top: 0;">Building Your Preview Environment</h2>
               <p style="font-size: 16px; margin-bottom: 0;">
-                The preview deployment for PR #${{ github.event.pull_request.number }} is now being prepared.
+                The preview deployment for PR #${{ github.event.pull_request.number || github.event.inputs.pr_number }} is now being prepared.
               </p>
             </div>
 
@@ -68,6 +68,12 @@ jobs:
             </div>
           edit-mode: ${{ steps.find_comment.outputs.comment-id != '' && 'replace' || 'append' }}
 
+      - name: Checkout PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
       - name: Log in to Docker Hub
         uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3
         with:
@@ -85,59 +91,15 @@ jobs:
           doppler secrets download --no-file --format env > .env
           echo "Secrets downloaded to .env file."
 
-      - name: Configure AWS CLI
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region ${{ secrets.AWS_DEFAULT_REGION }}
-
-      - name: Check Database Public Accessibility
-        id: check-db
-        run: |
-          DB_INFO=$(aws lightsail get-relational-database --relational-database-name merchtrack-db-sgp1)
-          IS_PUBLIC=$(echo "$DB_INFO" | jq -r '.relationalDatabase.publiclyAccessible')
-          echo "is_public=$IS_PUBLIC" >> $GITHUB_OUTPUT
-
-      - name: Open Database to Public Network
-        if: ${{ steps.check-db.outputs.is_public == 'false' }}
-        run: |
-          aws lightsail update-relational-database \
-            --relational-database-name merchtrack-db-sgp1 \
-            --publicly-accessible
-
-      - name: Wait for Database Availability
-        run: |
-          MAX_ATTEMPTS=30
-          ATTEMPT=1
-
-          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-            DB_STATUS=$(aws lightsail get-relational-database --relational-database-name merchtrack-db-sgp1 | jq -r '.relationalDatabase.state')
-            
-            if [ "$DB_STATUS" = "available" ]; then
-              echo "Database is available!"
-              break
-            fi
-            
-            echo "Attempt $ATTEMPT: Database status is $DB_STATUS. Waiting 10 seconds..."
-            sleep 10
-            ATTEMPT=$((ATTEMPT + 1))
-          done
-
-          if [ $ATTEMPT -gt $MAX_ATTEMPTS ]; then
-            echo "Database did not become available within the timeout period"
-            exit 1
-          fi
-
       - name: Build client image and push to Docker Hub
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         with:
           context: .
           file: ./Dockerfile
           tags: |
-            gabcat/merchtrack:preview-${{ github.event.pull_request.number }}
-          cache-from: |
-            type=registry,ref=gabcat/merchtrack:cache
-          cache-to: type=inline
+            gabcat/merchtrack:preview-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          cache-from: type=registry,ref=gabcat/merchtrack:cache
+          cache-to: type=registry,ref=gabcat/merchtrack:cache, mode=max
           push: true
 
       - name: Remove env file
@@ -146,13 +108,6 @@ jobs:
           if [ -f .env ]; then
             rm .env || echo "Warning: Failed to remove .env file"
           fi
-
-      - name: Close Database to Public Network
-        if: always()
-        run: |
-          aws lightsail update-relational-database \
-            --relational-database-name merchtrack-db-sgp1 \
-            --no-publicly-accessible
 
   deploy:
     permissions:
@@ -320,7 +275,7 @@ jobs:
             <div style="background-color: #fbe9e7; padding: 15px; border-radius: 8px; border-left: 5px solid #ff5722; margin-bottom: 20px;">
               <h2 style="color: #d84315; margin-top: 0;">Preview Deployment Issues</h2>
               <p style="font-size: 16px; margin-bottom: 0;">
-                The preview deployment for PR #${{ github.event.pull_request.number }} has encountered errors and could not be completed.
+                The preview deployment for PR #${{ needs.build.outputs.pr_number }} has encountered errors and could not be completed.
               </p>
             </div>
 
