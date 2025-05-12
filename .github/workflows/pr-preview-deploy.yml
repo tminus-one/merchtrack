@@ -91,6 +91,9 @@ jobs:
           doppler secrets download --no-file --format env > .env
           echo "Secrets downloaded to .env file."
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build client image and push to Docker Hub
         uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
         with:
@@ -98,8 +101,8 @@ jobs:
           file: ./Dockerfile
           tags: |
             gabcat/merchtrack:preview-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
-          cache-from: type=registry,ref=gabcat/merchtrack:cache
-          cache-to: type=registry,ref=gabcat/merchtrack:cache, mode=max
+          cache-from: type=registry,ref=gabcat/merchtrack:staging
+          cache-to: type=inline,mode=min
           push: true
 
       - name: Remove env file
@@ -178,7 +181,7 @@ jobs:
         if: steps.check_compose.outputs.compose_exists == 'true'
         run: |
           cd ~/preview/${{ needs.build.outputs.pr_number }}
-          docker compose down || true
+          sudo docker compose down || true
 
       - name: Delete old image if exists
         run: |
@@ -193,11 +196,11 @@ jobs:
             CONTAINERS=$(docker ps -a --filter ancestor=gabcat/merchtrack:preview-${{ needs.build.outputs.pr_number }} -q)
             if [ ! -z "$CONTAINERS" ]; then
               echo "Removing containers using the old image"
-              docker rm -f $CONTAINERS
+              sudo docker rm -f $CONTAINERS
             fi
             # Remove the old image
             echo "Removing old image"
-            docker rmi -f $OLD_IMAGE_ID
+            sudo docker rmi -f $OLD_IMAGE_ID
           else
             echo "No old image found to remove"
           fi

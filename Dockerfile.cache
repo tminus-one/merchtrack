@@ -9,17 +9,5 @@ COPY pnpm-lock.yaml package.json ./
 COPY prisma ./prisma
 
 RUN apk add --no-cache libc6-compat
+RUN npm install -g bun && bun install
 
-# Use npm to install pnpm instead of corepack to avoid signature verification issues
-RUN npm install -g pnpm
-
-# Create .npmrc file to enable necessary build scripts
-RUN echo "enable-pre-post-scripts=true" > .npmrc && \
-    echo "auto-install-peers=true" >> .npmrc && \
-    echo "strict-peer-dependencies=false" >> .npmrc
-
-# Install dependencies with build scripts enabled for critical packages
-RUN pnpm install --unsafe-perm
-
-# Approve specific build scripts for required dependencies
-RUN pnpm approve-builds @clerk/shared @prisma/client @prisma/engines @sentry/cli bun esbuild prisma sharp
