@@ -1,4 +1,4 @@
-name: 2. CACHE - Build & Push
+name: Cache Build (Deprecated)
 
 on:
   workflow_dispatch: 

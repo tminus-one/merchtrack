@@ -9,7 +9,6 @@ import {
 import { FaAddressBook } from "react-icons/fa6";
 import { RiSurveyFill } from "react-icons/ri";
 import type { IconType } from 'react-icons';
-import { OrderStatus } from '@prisma/client';
 import { IoTicket } from 'react-icons/io5';
   
 export type AdminNavigation = {
@@ -64,13 +63,4 @@ export const AdminLinks: AdminNavigation[] = [
     href: "/admin/logs",
     icon: FaAddressBook,
   }
-];
-
-export const ADMIN_TABS = [
-  { value: null, label: 'All' },
-  { value: OrderStatus.PENDING, label: 'Pending' },
-  { value: OrderStatus.PROCESSING, label: 'Processing' },
-  { value: OrderStatus.READY, label: 'Ready To Pickup' },
-  { value: OrderStatus.CANCELLED, label: 'Canceled' },
-  { value: OrderStatus.DELIVERED, label: 'Unpaid' },
 ];

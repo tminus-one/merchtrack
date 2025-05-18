@@ -1,4 +1,4 @@
-name: 5. MIGRATION - Database Migration
+name: Database Migration
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
 jobs:
   migrate-database:
     runs-on: ubuntu-24.04
-    environment: Migration
+    environment: Staging
     permissions:
       contents: write
       pull-requests: write

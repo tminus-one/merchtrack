@@ -1,4 +1,4 @@
-name: 4. PRODUCTION - Deploy and version tag image
+name: 2. PRODUCTION - Deploy and version tag image
 
 on:
   workflow_dispatch:
@@ -17,35 +17,17 @@ jobs:
     runs-on: 'ubuntu-latest'
     environment: Production
     env:
-      DEPLOYED_LINK: https://merchtrack.tech
-      ENVIRONMENT: Production
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
-    - name: Check if actor is repository owner
-      run: |
-        if [ "${{ github.actor }}" != "${{ github.repository_owner }}" ]; then
-          echo "This workflow can only be run by the repository owner."
-          exit 1
-        fi
-
     - name: Validate commit tag format
       run: |
         if [[ ! "${{ github.event.inputs.commit_tag }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
           echo "Invalid commit tag format. Expected format: <number>.<number>.<number>"
           exit 1
         fi
-
-    - uses: actions/checkout@v4
-      with:
-        ref: main
-        fetch-depth: 0
-
-    - uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 #v2.0.1
-      with:
-        bun-version: latest
   
     - name: Create env file
       env:

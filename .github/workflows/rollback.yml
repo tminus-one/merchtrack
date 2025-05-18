@@ -1,4 +1,4 @@
-name: 6. ROLLBACK - Return Previous versions
+name: 3. ROLLBACK - Return Previous versions
 
 on:
   workflow_dispatch:
@@ -17,20 +17,11 @@ jobs:
     runs-on: 'ubuntu-latest'
     environment: Production
     env:
-      DEPLOYED_LINK: https://merchtrack.tech
-      ENVIRONMENT: Production
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
     steps:
-    - name: Check if actor is repository owner
-      run: |
-        if [ "${{ github.actor }}" != "${{ github.repository_owner }}" ]; then
-          echo "This workflow can only be run by the repository owner."
-          exit 1
-        fi
-
     - name: Validate commit tag format
       run: |
         if [[ ! "${{ github.event.inputs.commit_tag }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
