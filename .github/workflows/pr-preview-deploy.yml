@@ -13,9 +13,11 @@ on:
       - main
 
 jobs:
-  build:
+  notification:
     runs-on: ubuntu-latest
-    environment: Staging
+    permissions:
+      contents: read
+      pull-requests: write
     outputs:
       pr_number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
       comment_id: ${{ steps.initial_comment.outputs.comment-id }}
@@ -68,6 +70,12 @@ jobs:
             </div>
           edit-mode: ${{ steps.find_comment.outputs.comment-id != '' && 'replace' || 'append' }}
 
+  build:
+    runs-on: blacksmith-8vcpu-ubuntu-2404
+    environment: Staging
+    outputs:
+      pr_number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+    steps:
       - name: Checkout PR
         uses: actions/checkout@v4
         with:
@@ -119,7 +127,7 @@ jobs:
       pull-requests: write
       deployments: write
     runs-on: self-hosted
-    needs: build
+    needs: [notification, build]
     environment: Staging
     steps:
       - name: Navigate to preview directory
@@ -127,13 +135,13 @@ jobs:
           cd ~
           mkdir -p preview
           cd preview
-          mkdir -p ${{ needs.build.outputs.pr_number }}
-          cd ${{ needs.build.outputs.pr_number }}
+          mkdir -p ${{ needs.notification.outputs.pr_number }}
+          cd ${{ needs.notification.outputs.pr_number }}
 
       - name: Check for existing compose file
         id: check_compose
         run: |
-          cd ~/preview/${{ needs.build.outputs.pr_number }}
+          cd ~/preview/${{ needs.notification.outputs.pr_number }}
           if [ -f "compose.yml" ]; then
             echo "compose_exists=true" >> $GITHUB_OUTPUT
           else
@@ -143,12 +151,12 @@ jobs:
       - name: Create compose file if it doesn't exist
         if: steps.check_compose.outputs.compose_exists == 'false'
         run: |
-          cd ~/preview/${{ needs.build.outputs.pr_number }}
+          cd ~/preview/${{ needs.notification.outputs.pr_number }}
           cat > compose.yml << 'EOF'
           services:
-            preview-${{ needs.build.outputs.pr_number }}:
-              image: gabcat/merchtrack:preview-${{ needs.build.outputs.pr_number }}
-              container_name: merchtrack-preview-${{ needs.build.outputs.pr_number }}
+            preview-${{ needs.notification.outputs.pr_number }}:
+              image: gabcat/merchtrack:preview-${{ needs.notification.outputs.pr_number }}
+              container_name: merchtrack-preview-${{ needs.notification.outputs.pr_number }}
               restart: "unless-stopped"
               env_file: .env
               environment:
@@ -171,7 +179,7 @@ jobs:
 
       - name: Setup Doppler Configuration
         run: |
-          cd ~/preview/${{ needs.build.outputs.pr_number }}
+          cd ~/preview/${{ needs.notification.outputs.pr_number }}
           doppler setup --no-prompt --token ${{ secrets.DOPPLER_CI_TOKEN }} --project ${{ secrets.DOPPLER_TARGET_PROJECT }} --config stg_ci
           echo "Doppler configuration complete for project ${{ secrets.DOPPLER_TARGET_PROJECT }} with config ${{ secrets.DOPPLER_TARGET_CONFIG }}"
           doppler secrets download --no-file --format env > .env
@@ -180,20 +188,20 @@ jobs:
       - name: Stop existing container if it exists
         if: steps.check_compose.outputs.compose_exists == 'true'
         run: |
-          cd ~/preview/${{ needs.build.outputs.pr_number }}
+          cd ~/preview/${{ needs.notification.outputs.pr_number }}
           sudo docker compose down || true
 
       - name: Delete old image if exists
         run: |
-          cd ~/preview/${{ needs.build.outputs.pr_number }}
+          cd ~/preview/${{ needs.notification.outputs.pr_number }}
           # Get the image ID of the old image if it exists
           set +e
-          OLD_IMAGE_ID=$(docker images -q gabcat/merchtrack:preview-${{ needs.build.outputs.pr_number }} 2>/dev/null)
+          OLD_IMAGE_ID=$(docker images -q gabcat/merchtrack:preview-${{ needs.notification.outputs.pr_number }} 2>/dev/null)
           set -e 
           if [ ! -z "$OLD_IMAGE_ID" ]; then
             echo "Old image found with ID: $OLD_IMAGE_ID"
             # Remove any containers using the image
-            CONTAINERS=$(docker ps -a --filter ancestor=gabcat/merchtrack:preview-${{ needs.build.outputs.pr_number }} -q)
+            CONTAINERS=$(docker ps -a --filter ancestor=gabcat/merchtrack:preview-${{ needs.notification.outputs.pr_number }} -q)
             if [ ! -z "$CONTAINERS" ]; then
               echo "Removing containers using the old image"
               sudo docker rm -f $CONTAINERS
@@ -207,8 +215,8 @@ jobs:
 
       - name: Pull new image and start container
         run: |
-          cd ~/preview/${{ needs.build.outputs.pr_number }}
-          sudo docker pull gabcat/merchtrack:preview-${{ needs.build.outputs.pr_number }}
+          cd ~/preview/${{ needs.notification.outputs.pr_number }}
+          sudo docker pull gabcat/merchtrack:preview-${{ needs.notification.outputs.pr_number }}
           sudo docker compose up -d
 
       - name: Create Nginx Proxy Manager host
@@ -216,7 +224,7 @@ jobs:
           cd ~/npm-api
           set +e
           # Check if proxy host already exists
-          DOMAIN="preview-${{ needs.build.outputs.pr_number }}.merchtrack.tech"
+          DOMAIN="preview-${{ needs.notification.outputs.pr_number }}.merchtrack.tech"
           echo "Looking for domain: $DOMAIN in configuration files..."
 
           # Search for the domain in the Nginx Proxy Manager configuration files
@@ -251,7 +259,7 @@ jobs:
               --cert-email "admin@merchtrack.tech" \
               --dns-provider cloudflare \
               --dns-credentials '{"dns_cloudflare_email":"${{ secrets.CLOUDFLARE_EMAIL }}","dns_cloudflare_api_key":"${{ secrets.CLOUDFLARE_API_KEY }}"}' \
-              -i "merchtrack-preview-${{ needs.build.outputs.pr_number }}" \
+              -i "merchtrack-preview-${{ needs.notification.outputs.pr_number }}" \
               -p 3000 \
               -f "http" \
               -b "true" \
@@ -263,13 +271,16 @@ jobs:
           fi
   failure-notification:
     runs-on: ubuntu-latest
-    needs: [build, deploy]
+    permissions:
+      contents: read
+      pull-requests: write
+    needs: [notification, build, deploy]
     if: failure()
     steps:
       - name: Update Deployment Comment with Failure
         uses: peter-evans/create-or-update-comment@v4
         with:
-          comment-id: ${{ needs.build.outputs.comment_id }}
+          comment-id: ${{ needs.notification.outputs.comment_id }}
           token: ${{ secrets.GITHUB_TOKEN }}
           edit-mode: replace
           body: |
@@ -278,7 +289,7 @@ jobs:
             <div style="background-color: #fbe9e7; padding: 15px; border-radius: 8px; border-left: 5px solid #ff5722; margin-bottom: 20px;">
               <h2 style="color: #d84315; margin-top: 0;">Preview Deployment Issues</h2>
               <p style="font-size: 16px; margin-bottom: 0;">
-                The preview deployment for PR #${{ needs.build.outputs.pr_number }} has encountered errors and could not be completed.
+                The preview deployment for PR #${{ needs.notification.outputs.pr_number }} has encountered errors and could not be completed.
               </p>
             </div>
 
@@ -310,13 +321,16 @@ jobs:
             </div>
   notify:
     runs-on: ubuntu-latest
-    needs: [build, deploy]
+    permissions:
+      contents: read
+      pull-requests: write
+    needs: [notification, build, deploy]
     if: success()
     steps:
       - name: Update Comment with Success
         uses: peter-evans/create-or-update-comment@v4
         with:
-          comment-id: ${{ needs.build.outputs.comment_id }}
+          comment-id: ${{ needs.notification.outputs.comment_id }}
           token: ${{ secrets.GITHUB_TOKEN }}
           edit-mode: replace
           body: |
@@ -324,14 +338,14 @@ jobs:
 
             <div align="center">
               <h2 style="color: #4CAF50; background-color: #e8f5e9; padding: 10px; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                PR #${{ needs.build.outputs.pr_number }} has been successfully deployed for preview testing
+                PR #${{ needs.notification.outputs.pr_number }} has been successfully deployed for preview testing
               </h2>
             </div>
 
             <table style="width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
             <tr style="background-color: #f0f4f8;">
               <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">📌 <b>Preview URL:</b></td>
-              <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><a href="https://preview-${{ needs.build.outputs.pr_number }}.merchtrack.tech" style="color: #2196F3; text-decoration: none; font-weight: bold;">https://preview-${{ needs.build.outputs.pr_number }}.merchtrack.tech</a></td>
+              <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;"><a href="https://preview-${{ needs.notification.outputs.pr_number }}.merchtrack.tech" style="color: #2196F3; text-decoration: none; font-weight: bold;">https://preview-${{ needs.notification.outputs.pr_number }}.merchtrack.tech</a></td>
             </tr>
             <tr style="background-color: #ffffff;">
               <td style="padding: 12px; border-bottom: 1px solid #e0e0e0;">⏰ <b>Deployed at:</b></td>
@@ -356,5 +370,5 @@ jobs:
             -H "X-Auth-Email: ${{ secrets.CLOUDFLARE_EMAIL }}" \
             -H "X-Auth-Key: ${{ secrets.CLOUDFLARE_API_KEY }}" \
             -d '{
-              "hosts": ["preview-${{ needs.build.outputs.pr_number }}.merchtrack.tech"]
+              "hosts": ["preview-${{ needs.notification.outputs.pr_number }}.merchtrack.tech"]
             }'

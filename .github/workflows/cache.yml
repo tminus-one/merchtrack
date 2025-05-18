@@ -1,11 +1,11 @@
-name: 2. CACHE - Build & Push
+name: Cache Build (Deprecated)
 
 on:
   workflow_dispatch: 
 
 jobs:
   client-build-and-push:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     environment: Cache
     permissions:
       contents: write

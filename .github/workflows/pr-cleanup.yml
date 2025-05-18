@@ -1,4 +1,4 @@
-name: 2. PULL REQUEST - Cleanup Environment
+name: PR Cleanup
 
 on:
   pull_request:
