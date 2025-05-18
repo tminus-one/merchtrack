@@ -5,7 +5,7 @@ on:
 
 jobs:
   client-build-and-push:
-    runs-on: warp-ubuntu-latest-x64-4x
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     environment: Cache
     permissions:
       contents: write
@@ -30,11 +30,9 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build cache image and push to Docker Hub
-        uses: docker/build-push-action@48aba3b46d1b1fec4febb7c5d0c644b249a11355 # v6.10.0
+        uses: useblacksmith/build-push-action@v1
         with:
           context: .
           file: ./Dockerfile.cache
           tags: gabcat/merchtrack:cache
-          cache-from: type=registry,ref=gabcat/merchtrack:cache
-          cache-to: type=registry,ref=gabcat/merchtrack:cache, mode=max
           push: true
