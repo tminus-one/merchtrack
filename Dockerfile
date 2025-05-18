@@ -15,7 +15,7 @@ COPY prisma ./prisma
 RUN apk add --no-cache libc6-compat
 RUN npm install -g bun
 
-RUN bun install
+RUN bun install --frozen-lockfile
 
 
 # STAGE 2: BUILD
