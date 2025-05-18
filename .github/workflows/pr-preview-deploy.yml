@@ -15,6 +15,9 @@ on:
 jobs:
   notification:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     outputs:
       pr_number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
       comment_id: ${{ steps.initial_comment.outputs.comment-id }}
@@ -268,6 +271,9 @@ jobs:
           fi
   failure-notification:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     needs: [notification, build, deploy]
     if: failure()
     steps:
@@ -315,6 +321,9 @@ jobs:
             </div>
   notify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     needs: [notification, build, deploy]
     if: success()
     steps:
