@@ -11,7 +11,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint --fix",
-    "postinstall": "prisma generate",
     "migrate": "prisma migrate deploy"
   },
   "dependencies": {
